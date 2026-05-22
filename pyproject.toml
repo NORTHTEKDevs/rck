@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rck"
+version = "15.0.0"
+description = "Resonant Cognitive Kernel: an auditable, hallucination-free alternative to LLMs built on hyperdimensional computing. Reasons via explicit chains, learns by deriving (not retraining), runs on CPU."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Kristian Baer", email = "kristianb43r@gmail.com" },
+]
+keywords = [
+    "knowledge-graph",
+    "symbolic-ai",
+    "neuro-symbolic",
+    "hyperdimensional-computing",
+    "vsa",
+    "hrr",
+    "reasoning",
+    "explainable-ai",
+    "llm-alternative",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "numpy>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "build>=1.0"]
+mcp = ["mcp>=1.0"]
+polisher = ["torch>=2.0"]
+
+[project.urls]
+Homepage = "https://github.com/NORTHTEKDevs/rck"
+Documentation = "https://github.com/NORTHTEKDevs/rck/tree/main/docs"
+Repository = "https://github.com/NORTHTEKDevs/rck"
+Issues = "https://github.com/NORTHTEKDevs/rck/issues"
+Changelog = "https://github.com/NORTHTEKDevs/rck/blob/main/CHANGELOG.md"
+
+[project.scripts]
+rck = "rck.cli:main"
+rck-server = "rck.server:main"
+rck-gen-server = "rck.gen_server:main"
+rck-mcp = "rck.mcp_server:main"
+
+[tool.setuptools.packages.find]
+include = ["rck*"]
+exclude = ["tests*", "examples*", "docs*", "scripts*", "private*"]

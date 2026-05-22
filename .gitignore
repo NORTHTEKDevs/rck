@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg
+wheels/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Project-local
+private/
+checkpoints/
+data/*.json
+data/*.jsonl
+!data/commonsense_kb.jsonl
+!data/extended_kb.jsonl
+!data/ultra_kb.jsonl
+!data/massive_kb.jsonl
+!data/tiny_shakespeare.txt
+!data/world_knowledge.txt
+!data/demo_corpus.txt

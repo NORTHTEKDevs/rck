@@ -1,0 +1,47 @@
+The sky is blue.
+The grass is green.
+The sun is yellow.
+The night is dark.
+The ocean is blue.
+The leaf is green.
+The blood is red.
+The snow is white.
+The rose is red.
+The lemon is yellow.
+The capital of France is Paris.
+The capital of Germany is Berlin.
+The capital of Italy is Rome.
+The capital of Japan is Tokyo.
+The capital of Egypt is Cairo.
+The capital of Spain is Madrid.
+The capital of Russia is Moscow.
+The capital of China is Beijing.
+The capital of Brazil is Brasilia.
+The capital of Canada is Ottawa.
+Alice lives in Paris.
+Bob lives in Berlin.
+Carol lives in Rome.
+Dave lives in Tokyo.
+Eve lives in Cairo.
+Shakespeare wrote Hamlet.
+Shakespeare wrote Macbeth.
+Tolkien wrote LordOfTheRings.
+Orwell wrote 1984.
+Dickens wrote OliverTwist.
+The cat has fur.
+The dog has fur.
+The bird has feathers.
+The fish has scales.
+The snake has scales.
+The cow has horns.
+The elephant has tusks.
+The lion has mane.
+The tiger has stripes.
+The zebra has stripes.
+The size of the elephant is huge.
+The size of the mouse is tiny.
+The size of the ant is tiny.
+The size of the whale is huge.
+The age of Alice is 30.
+The age of Bob is 25.
+The age of Carol is 40.
