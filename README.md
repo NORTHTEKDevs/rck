@@ -8,6 +8,18 @@
 
 ---
 
+## About this work
+
+RCK was designed and built by Kristian Baer in close collaboration
+with Anthropic's Claude. Architectural choices were made by the author
+after research; implementation and drafting were AI-assisted. Every
+empirical claim in the [paper](papers/rck-architecture/) is
+reproducible from this repo — each number in §5 traces to a script in
+`scripts/` and a JSON output in `data/`. The author welcomes scrutiny,
+issues, and corrections.
+
+---
+
 ## What is this
 
 RCK is a working AI that **isn't a language model**.
