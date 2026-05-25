@@ -4,7 +4,7 @@
 > RCK reasons in explicit chains, learns by deriving (not retraining),
 > runs on CPU, and shows you the receipts for every answer.
 
-[![tests](https://img.shields.io/badge/tests-714%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.0.0-blue)](CHANGELOG.md)
+[![tests](https://img.shields.io/badge/tests-719%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.1.0-blue)](CHANGELOG.md)
 
 ---
 
@@ -43,7 +43,7 @@ The result is an agent that:
 | Costs ~$0 to operate | ✗ | ✓ |
 | Reasons 30+ hops deep | ✗ | ✓ |
 
-It's small (~30 modules, ~7k lines of Python). It's testable (**714
+It's small (~30 modules, ~7k lines of Python). It's testable (**719
 passing tests**). It's research-grade but production-shaped.
 
 ---
@@ -259,7 +259,7 @@ docs/
   guide/               # tutorials (start here)
   design/              # architectural design docs
 examples/              # runnable demos
-tests/                 # 714 tests
+tests/                 # 719 tests
 scripts/               # benchmark + ingestion scripts
 ```
 
@@ -267,7 +267,7 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.0.0** — current. 714 passing tests. API stable.
+* **v15.1.0** — current. 719 passing tests. API stable.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
 * MIT licensed.
 
@@ -282,7 +282,7 @@ If you use RCK in research, please cite:
   author  = {Baer, Kristian},
   title   = {RCK: Resonant Cognitive Kernel},
   year    = {2026},
-  version = {15.0.0},
+  version = {15.1.0},
   url     = {https://github.com/NORTHTEKDevs/rck}
 }
 ```

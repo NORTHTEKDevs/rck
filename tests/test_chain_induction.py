@@ -113,9 +113,10 @@ def test_induce_speeds_up_subsequent_lookup():
     assert score > 0.10
 
 
-def test_induce_falls_back_to_implies_when_first_hop_not_lifting():
-    """Chains starting with a non-lifting relation (e.g. country,
-    causes) should NOT inherit the last hop's relation."""
+def test_induce_rejects_non_lifting_chain_by_default():
+    """Chains whose first hop is not a lifting relation (e.g. causes)
+    cannot be ascribed a meaningful induced relation. Default policy
+    rejects them rather than emitting a vapid `implies` placeholder."""
     kb = ShardedKnowledgeBase(dim=4096, n_shards=16, seed=0)
     bulk_load_triples(kb, [
         ("winter", "causes", "snow"),
@@ -126,10 +127,104 @@ def test_induce_falls_back_to_implies_when_first_hop_not_lifting():
         return
     induced = induce_from_chain(kb, result, "winter")
     assert induced is not None
-    # First hop is `causes` (not in lifting set) -> relation falls back
-    # to the generic induce_relation.
+    assert induced.rejected_reason is not None
+    assert "no meaningful induced relation" in induced.rejected_reason
+
+
+def test_induce_allows_generic_implies_when_opted_in():
+    """Legacy behaviour: callers that want every walked chain
+    recorded (regardless of relation semantics) can opt in via the
+    `allow_generic_implies` policy flag."""
+    from rck.chain_induction import InductionPolicy
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=16, seed=0)
+    bulk_load_triples(kb, [
+        ("winter", "causes", "snow"),
+        ("snow", "isa", "weather"),
+    ])
+    result = walk_chain(kb, "winter", [Hop("causes"), Hop("isa")])
+    if result.answer is None:
+        return
+    induced = induce_from_chain(
+        kb, result, "winter",
+        policy=InductionPolicy(allow_generic_implies=True),
+    )
+    assert induced is not None
     assert induced.rejected_reason is None
     assert induced.relation == "implies"
+
+
+def test_induce_rejects_partof_has_chain():
+    """`partof -> has` should NOT forward: a wing is part of a bird and
+    a bird has a beak, but a wing does not have a beak. The type-
+    signature gate blocks this."""
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=16, seed=0)
+    bulk_load_triples(kb, [
+        ("wing", "partof", "bird"),
+        ("bird", "has", "beak"),
+    ])
+    result = walk_chain(kb, "wing", [Hop("partof"), Hop("has")])
+    if result.answer is None:
+        return
+    induced = induce_from_chain(kb, result, "wing")
+    assert induced is not None
+    assert induced.rejected_reason is not None
+    assert "type-signature mismatch" in induced.rejected_reason
+
+
+def test_induce_rejects_locatedin_size_chain():
+    """`locatedin -> size` should NOT forward: a kitchen is in a house
+    and a house may be large, but that doesn't make the kitchen large."""
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=16, seed=0)
+    bulk_load_triples(kb, [
+        ("kitchen", "locatedin", "house"),
+        ("house", "size", "large"),
+    ])
+    result = walk_chain(kb, "kitchen", [Hop("locatedin"), Hop("size")])
+    if result.answer is None:
+        return
+    induced = induce_from_chain(kb, result, "kitchen")
+    assert induced is not None
+    assert induced.rejected_reason is not None
+    assert "type-signature mismatch" in induced.rejected_reason
+
+
+def test_induce_partof_locatedin_chain_passes():
+    """`partof -> locatedin` IS a valid transfer: a leaf is part of a
+    tree and the tree is in the forest, therefore the leaf is in the
+    forest."""
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=16, seed=0)
+    bulk_load_triples(kb, [
+        ("leaf", "partof", "tree"),
+        ("tree", "locatedin", "forest"),
+    ])
+    result = walk_chain(kb, "leaf", [Hop("partof"), Hop("locatedin")])
+    if result.answer is None:
+        return
+    induced = induce_from_chain(kb, result, "leaf")
+    assert induced is not None
+    assert induced.rejected_reason is None
+    assert induced.relation == "locatedin"
+    assert induced.obj == "forest"
+
+
+def test_induce_lifting_via_class_forwards_relation():
+    """`class` is now a lifting relation -- chain (X class Y, Y has Z)
+    should induce (X has Z), not fall back to `implies`."""
+    from rck.chain_induction import InductionPolicy
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=16, seed=0)
+    bulk_load_triples(kb, [
+        ("owl", "class", "bird"),
+        ("bird", "has", "beak"),
+    ])
+    result = walk_chain(kb, "owl", [Hop("class"), Hop("has")])
+    if result.answer is None:
+        return
+    induced = induce_from_chain(kb, result, "owl",
+                                policy=InductionPolicy(min_confidence=0.05))
+    assert induced is not None
+    assert induced.rejected_reason is None
+    assert induced.relation == "has"
+    assert induced.obj == "beak"
 
 
 def test_induce_filters_inverse_pair_chains():

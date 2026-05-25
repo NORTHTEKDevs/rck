@@ -1,5 +1,64 @@
 # Changelog
 
+## 15.1.0 — 2026-05-24
+
+Chain-induction honesty release. A failure-mode audit of the v15.0
+study showed that the headline "~87% chain-induction precision"
+measured HRR-roundtrip stability rather than semantic correctness:
+~88% of "verified" inductions were `implies`-relation fallbacks, some
+of which encoded false type-confused claims like
+`(shark, implies, blue)` via `[habitat, color]` or
+`(elephant, implies, tree)` via `[has, partof]`. v15.1 retracts that
+framing and ships the corrected pipeline.
+
+### Added
+- **No-meaningful-relation gate**: chains whose first hop is not a
+  lifting relation and which are not same-relation transitive are
+  now rejected rather than stored under a generic `implies` label.
+  `InductionPolicy.allow_generic_implies` (default False) opts back
+  into legacy behaviour.
+- **Type-signature gate**: each lifting-relation family permits only
+  a specific set of last-hop relations. `partof` transfers
+  `{locatedin, madeof, usedfor}` (the part inherits the whole's
+  location, material, use), but NOT `has` (a wing doesn't have what
+  the bird has). `locatedin` transfers only
+  `{continent, country, region, city}`, not `size`/`color`/`isa`.
+  `isa`/`class`/`category` siblings transfer
+  `{isa, has, kind, class, category}`. Encoded as `isa_transfers`,
+  `partof_transfers`, `locatedin_transfers` fields on
+  `InductionPolicy`.
+- **Lifting-relations allowlist expanded** to include `class`,
+  `subclass`, `subtype`, `category` (in addition to the previous
+  `isa, partof, locatedin, memberof, instanceof, kind`).
+- **`scripts/chain_induction_failure_analysis.py`**: failure-mode
+  diagnostic that captures every induction outcome by bucket and
+  writes per-record JSON to `data/chain_induction_failures.json`.
+  This is the reproduction harness for the new §5.1 numbers.
+- Three new tests:
+  `test_induce_rejects_non_lifting_chain_by_default`,
+  `test_induce_allows_generic_implies_when_opted_in`,
+  `test_induce_rejects_partof_has_chain`,
+  `test_induce_rejects_locatedin_size_chain`,
+  `test_induce_partof_locatedin_chain_passes`,
+  `test_induce_lifting_via_class_forwards_relation`.
+
+### Changed
+- Paper §5.1 ("Chain-induction precision") rewritten with honest
+  decomposition: explicitly retracts the 87% headline, presents the
+  six-gate pipeline, and reports 31/31 manually-validated inductions
+  on the 400-probe study with zero HRR self-verify failures (an 8.4%
+  yield on attempts; the 92% rejection rate is the policy correctly
+  refusing to ascribe meaning to non-type-coherent chains).
+- Abstract bullet and §1 "What is new here" updated to match.
+
+### Migration
+- Callers that depended on `implies`-fallback behavior need to set
+  `InductionPolicy(allow_generic_implies=True)` explicitly. All
+  in-tree callers already use the new default and were unaffected.
+
+### Tests
+714 → 719 passing.
+
 ## 15.0.0 — 2026-05-21
 
 The "product-shaped reasoning stack" release. Negation, persistence,

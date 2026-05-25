@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rck"
-version = "15.0.0"
+version = "15.1.0"
 description = "Resonant Cognitive Kernel: an auditable, hallucination-free alternative to LLMs built on hyperdimensional computing. Reasons via explicit chains, learns by deriving (not retraining), runs on CPU."
 readme = "README.md"
 requires-python = ">=3.11"

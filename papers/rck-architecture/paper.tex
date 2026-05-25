@@ -67,9 +67,15 @@ rather than inventing an answer.
 
 We report empirical findings from the implementation:
 \begin{itemize}[noitemsep, topsep=2pt]
-\item A four-gate filter stack on chain induction improves derived-fact
-      precision from approximately 50\% to 100\% on a commonsense
-      benchmark.
+\item A six-gate filter stack on chain induction
+      (inverse-pair, non-transitive same-relation, intermediate-cycle,
+      no-meaningful-relation, type-signature mismatch, plus a
+      confidence floor) yields 31/31 manually-validated semantically
+      correct inductions on a 400-probe study against a 7{,}080-fact
+      KB, with zero HRR self-verify failures (\S\ref{sec:chain-induction-precision}).
+      An earlier v15.0 framing reported ``${\sim}87\%$ precision'' on
+      the same probes; that figure measured HRR-roundtrip stability,
+      not semantic correctness, and is retracted in this paper.
 \item Switching the default confidence-propagation rule from
       multiplicative product to geometric mean extends the practical
       reasoning horizon from $\sim$10 hops to 50+ hops at
@@ -139,10 +145,15 @@ the whole stack run usefully on commodity hardware:
       multi-hop chain reasoning, fact induction, rule extraction,
       contradiction detection, belief revision, federated merge,
       counterfactual exploration, multi-agent consensus.
-\item \textbf{An empirically-derived filter stack} (inverse-pair,
-      non-transitive same-relation, lifting-relation gate,
-      intermediate-cycle) that lifts derived-fact precision to 100\%
-      on the commonsense benchmark.
+\item \textbf{An empirically-derived six-gate filter stack}
+      (inverse-pair, non-transitive same-relation, intermediate-cycle,
+      no-meaningful-relation, type-signature mismatch, plus a
+      confidence floor) that yields 31/31 manually-validated
+      semantically correct inductions on the 400-probe study against
+      a 7{,}080-fact KB. An earlier v15.0 framing measured
+      HRR-roundtrip stability rather than semantic correctness and is
+      retracted here in favour of an honest decomposition
+      (\S\ref{sec:chain-induction-precision}).
 \item \textbf{A finding about confidence propagation} that
       substantially extends the practical reasoning horizon by
       changing the default aggregation rule.
@@ -367,6 +378,7 @@ We describe four design decisions that came out of empirical work
 and changed the system materially.
 
 \subsection{The four-gate filter stack on chain induction}
+\label{sec:fourgate}
 
 Na\"{i}ve chain induction---``if the chain walks confidently, store
 the shortcut''---fails approximately half the time on real
@@ -495,51 +507,121 @@ laptop (single CPU thread, Python 3.11, $D = 4096$, default shard
 sizing). Data files are in \texttt{data/}.
 
 \subsection{Chain-induction precision}
+\label{sec:chain-induction-precision}
 
-We ran an expanded chain-induction study against a combined
-knowledge base assembled from the three bundled KBs (commonsense,
-ultra, massive)---5{,}674 unique facts across 256 auto-sized
-shards. We generated 400 two-hop transitive probes.
+We ran the chain-induction diagnostic against a combined knowledge
+base assembled from all four bundled KBs (commonsense, extended,
+massive, ultra)---5{,}991 raw triples that expand to 7{,}080 stored
+facts after inverse-relation symmetrization, across 256 auto-sized
+shards. We generated 400 two-hop transitive probes. Reproduction
+script: \texttt{scripts/chain\_induction\_failure\_analysis.py}.
 
-Of the 400 probes:
+\paragraph{An earlier framing was misleading.} An initial version of
+this study reported ``$\sim$87\% precision'' (328 ``committed'' facts
+out of 376 ``attempts'') with a Wilson 95\% CI of $[83.5\%, 90.2\%]$.
+A failure-mode audit (this section) showed that ${\sim}88\%$ of those
+``committed'' facts were not specific claims at all---they were
+\texttt{implies}-relation fallbacks emitted whenever the chain
+didn't qualify for a typed relation forwarding. Some of those
+fallbacks were correct-but-mislabeled
+(\texttt{(owl, implies, beak)} via \texttt{[class, has]} should be
+\texttt{(owl, has, beak)}). Others were silent type-violations
+(\texttt{(shark, implies, blue)} via
+\texttt{[habitat, color]};
+\texttt{(elephant, implies, tree)} via \texttt{[has, partof]}). The
+``87\% precision'' figure therefore reflected
+\emph{HRR-roundtrip stability}, not semantic correctness of derived
+claims, and is retracted.
+
+\paragraph{The corrected pipeline.} The revised induction policy
+(starting at v15.1.0) adds two gates beyond the four-gate semantic
+stack of \S\ref{sec:fourgate}:
+
+\begin{itemize}[noitemsep, topsep=2pt]
+\item \textbf{No-meaningful-relation gate.} If the chain's first
+      hop is not a ``lifting'' relation and the chain is not
+      same-relation transitive, no specific relation can be
+      ascribed and the induction is rejected. Storing the chain
+      under a generic \texttt{implies} fallback is opt-in
+      (\texttt{InductionPolicy(allow\_generic\_implies=True)}) and
+      off by default.
+\item \textbf{Type-signature gate.} Each lifting-relation family
+      permits only a specific set of last-hop relations. \texttt{partof}
+      transfers $\{$\texttt{locatedin, madeof, usedfor}$\}$ (the
+      part inherits the whole's location, material, and use), but
+      not the whole's \texttt{has} relation
+      (a wing doesn't have what the bird has).
+      \texttt{locatedin} transfers only aggregate-location relations
+      $\{$\texttt{continent, country, region, city}$\}$, not the
+      location's \texttt{size}, \texttt{color}, or \texttt{isa}
+      attributes. \texttt{isa}/\texttt{class}/\texttt{category} and
+      siblings transfer $\{$\texttt{isa, has, kind, class,
+      category}$\}$.
+\end{itemize}
+
+\paragraph{Numbers under the corrected pipeline.} On the same
+400-probe set:
 
 \begin{center}
-\begin{tabular}{lr}
+\begin{tabular}{lrr}
 \toprule
-Stage & Count \\
+Stage & Count & \% of attempts \\
 \midrule
-Chains discovered + walked & 376 \\
-Induction attempted & 376 \\
-\textbf{Committed after filters + verification} & \textbf{328} \\
-Wilson 95\% CI on committed rate & [83.5\%, 90.2\%] \\
+Probes generated & 400 & --- \\
+Chains discovered + walked & 381 & --- \\
+Induction attempts (chain had answer) & 370 & 100.0\% \\
+\midrule
+Rejected: confidence floor & 26 & 7.0\% \\
+Rejected: inverse-pair gate & 29 & 7.8\% \\
+Rejected: same-relation non-transitive & 1 & 0.3\% \\
+Rejected: degenerate cycle & 2 & 0.5\% \\
+Rejected: type-signature mismatch & 12 & 3.2\% \\
+Rejected: no meaningful relation can be ascribed & 269 & 72.7\% \\
+\midrule
+\textbf{Verified and stored} & \textbf{31} & \textbf{8.4\%} \\
+Self-verify (HRR roundtrip) failures & 0 & 0.0\% \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Manual inspection of the first 30 committed facts (selected by
-hash, not cherry-picked) found all to be either semantically
-correct shortcuts (e.g.\ \texttt{(bird, isa, animal)},
-\texttt{(rabbit, isa, chordate)},
-\texttt{(madrid, continent, europe)}) or safe \texttt{implies}-relation
-fallbacks (e.g.\ \texttt{(elephant, implies, grassy\_plain)})---never
-specific false claims. The 30 are listed in
-\texttt{data/chain\_induction\_study\_expanded.json} for independent
-review.
+The headline result reframed: \emph{31/31 = 100\% of inductions
+that survive all six gates pass HRR self-verification, and manual
+inspection of all 31 finds each to be a semantically valid new
+direct fact} (e.g.\ \texttt{(leaf, locatedin, forest)},
+\texttt{(engine, usedfor, driving)},
+\texttt{(crow, has, beak)}, \texttt{(paris, continent, europe)},
+\texttt{(salmon, has, fins)}). The 12 type-signature rejections
+were exactly the chains that would have produced false claims
+under the v15.0 fallback policy. Full per-record output is in
+\texttt{data/chain\_induction\_failures.json}.
+
+\paragraph{What the 8.4\% yield means.} Of every 100 two-hop chains
+that the substrate walks, roughly 8 produce a meaningful new
+direct fact under our induction policy; the remaining 92 are
+chains whose relation composition is not type-coherent and which
+should not be stored as facts at any relation label. This is a
+property of common-sense knowledge graphs, not a weakness in the
+substrate: most two-hop walks through entities link
+property-of-property-of-property paths that don't reduce to a
+single direct claim. The substrate is doing the right thing by
+walking them all; the symbolic layer is doing the right thing by
+refusing to ascribe meaning to most of them.
 
 \paragraph{Comparison with the no-filter baseline.} On the original
 80-probe study against commonsense alone, induction without the
 filter stack committed 19 facts, of which inspection found
 approximately half to be semantically wrong
 (\texttt{(macbeth, wrote, othello)},
-\texttt{(greatexpectations, author, olivertwist)}, etc). With the
-inverse-pair filter alone, wrong commits dropped sharply. With all
-four filters, we observed no semantically-wrong commits on either
-the small KB or the expanded 5{,}674-fact KB.
-
-This is not 100\% guaranteed-clean---it is ``0 errors observed in
-our test corpus,'' which is what an empirical claim can deliver. A
-larger external benchmark (e.g.\ applying the filter stack to a
-10{,}000-probe sample of Wikidata) is future work.
+\texttt{(greatexpectations, author, olivertwist)}, etc). The
+four-gate semantic stack eliminated inverse-pair and cycle errors;
+the two additional gates introduced here eliminate the
+type-confusion errors that the four-gate stack let through. We
+report ``31/31 manually-validated under the v15.1.0 pipeline''
+rather than ``100\% precision''---the latter is what an empirical
+claim looks like when the test corpus is small and adversarial
+probes haven't been built. A larger external benchmark (e.g.\
+applying the pipeline to a 10{,}000-probe sample of Wikidata) is
+future work.
 
 \subsection{Chain depth at varying propagation rules}
 

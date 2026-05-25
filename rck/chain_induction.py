@@ -58,15 +58,46 @@ class InductionPolicy:
         "hassubtype", "haspart", "contains", "descendantof",
     })
     # "Lifting" relations make the SOURCE inherit properties through
-    # them: X partof Y means anything true about Y is potentially true
-    # about X. We only forward the last relation as the induced one
-    # when the first hop uses a lifting relation. Otherwise we fall
-    # back to the generic `implies` relation so the induced fact's
-    # surface form doesn't make a false claim.
+    # them: X partof Y means SOME things true about Y are potentially
+    # true about X -- but not ALL. Each lifting family permits a
+    # specific tail-relation set (see *_transfers below). A chain
+    # passes the type-signature gate only if (first_hop_family,
+    # last_hop_relation) is in the allowed transfer set.
     lifting_relations: frozenset[str] = frozenset({
         "isa", "partof", "locatedin", "memberof",
-        "instanceof", "kind",
+        "instanceof", "kind", "class", "subclass",
+        "subtype", "category",
     })
+    # Class-style lifting (isa/class/category/...): a subclass inherits
+    # superclass type membership and component-having relations.
+    isa_family: frozenset[str] = frozenset({
+        "isa", "class", "subclass", "subtype", "category",
+        "kind", "instanceof", "memberof",
+    })
+    isa_transfers: frozenset[str] = frozenset({
+        "isa", "has", "kind", "class", "category",
+    })
+    # Partof: a part inherits the whole's location, material, and use.
+    # It does NOT inherit what the whole "has" (a wing doesn't have
+    # a beak even though the bird does).
+    partof_transfers: frozenset[str] = frozenset({
+        "locatedin", "madeof", "usedfor",
+    })
+    # Locatedin: a thing in a location inherits aggregate location
+    # facts (the continent/country/region of where it sits), not
+    # the location's own size/color/use.
+    locatedin_transfers: frozenset[str] = frozenset({
+        "continent", "country", "region", "city",
+    })
+    # When a chain doesn't qualify for relation forwarding (first hop is
+    # not lifting AND chain isn't a same-relation transitive chain), the
+    # legacy behavior was to fall back to a generic `implies` relation
+    # and store the fact anyway. That produced semantically vapid
+    # inductions like (cat, implies, miniature) via [size -> synonym].
+    # Default is now to REJECT such chains; flip this flag to True to
+    # recover the legacy behavior (useful for chain-trace recording or
+    # research where any walked chain should be remembered).
+    allow_generic_implies: bool = False
 
 
 @dataclass
@@ -189,12 +220,53 @@ def induce_from_chain(kb: ShardedKnowledgeBase,
     rels = [r for _, r, _, _ in chain_result.trace]
     last_relation = rels[-1]
     first_relation = rels[0]
+
+    def _allowed_transfers(first: str) -> frozenset[str]:
+        if first in cfg.isa_family:
+            return cfg.isa_transfers
+        if first == "partof":
+            return cfg.partof_transfers
+        if first == "locatedin":
+            return cfg.locatedin_transfers
+        return frozenset()
+
     if all(r == rels[0] for r in rels) and rels[0] in cfg.transitive_relations:
         relation = rels[0]
     elif first_relation in cfg.lifting_relations:
-        relation = last_relation
-    else:
+        allowed = _allowed_transfers(first_relation)
+        if last_relation in allowed:
+            relation = last_relation
+        elif cfg.allow_generic_implies:
+            relation = cfg.induce_relation
+        else:
+            return InducedFact(
+                subject=start.lower(),
+                relation=cfg.induce_relation,
+                obj=chain_result.answer,
+                via=[(s, r, o) for s, r, o, _ in chain_result.trace],
+                confidence=chain_result.confidence,
+                rejected_reason=(
+                    f"type-signature mismatch: chain [{' -> '.join(rels)}] "
+                    f"forwards {last_relation!r} through first-hop "
+                    f"{first_relation!r}, which only permits "
+                    f"{sorted(allowed)!r}"
+                ),
+            )
+    elif cfg.allow_generic_implies:
         relation = cfg.induce_relation
+    else:
+        return InducedFact(
+            subject=start.lower(),
+            relation=cfg.induce_relation,
+            obj=chain_result.answer,
+            via=[(s, r, o) for s, r, o, _ in chain_result.trace],
+            confidence=chain_result.confidence,
+            rejected_reason=(
+                f"no meaningful induced relation for chain "
+                f"[{' -> '.join(rels)}]: first hop {first_relation!r} is not "
+                f"a lifting relation and chain is not same-relation transitive"
+            ),
+        )
     induced = InducedFact(
         subject=start.lower(),
         relation=relation.lower(),
