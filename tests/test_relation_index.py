@@ -44,8 +44,11 @@ def test_index_live_true_for_every_stored_fact():
 def test_index_live_false_for_absent_relation():
     kb = _kb(CHAIN_FACTS)
     idx = kb.relation_index()
-    assert not idx.live("dog", "eats")
-    assert not idx.live("nonexistent", "isa") or True  # may collide-live; only absent RELATION is guaranteed dead
+    # A relation absent from the whole KB is dead for EVERY subject
+    # (a stored relation may collide-live for unrelated subjects, but
+    # an unstored one has no shard anywhere).
+    for subject in ("dog", "cat", "nonexistent", "paris"):
+        assert not idx.live(subject, "eats")
     assert "eats" not in idx.all_relations()
 
 
@@ -131,3 +134,23 @@ def test_discover_accepts_prebuilt_index():
     goal = Goal.symbol("animal")
     chains = discover_chains(kb, "dog", goal, max_depth=3, relation_index=idx)
     assert chains and chains[0].relations == ["isa", "isa"]
+
+
+def test_query_shard_subset_out_of_range_raises():
+    kb = _kb(CHAIN_FACTS)
+    with pytest.raises(ValueError, match="out of range"):
+        kb.query({"S": "dog", "R": "isa"}, "O", shard_subset=[kb.n_shards])
+    with pytest.raises(ValueError, match="out of range"):
+        kb.query({"S": "dog"}, "O", shard_subset=[0, -1])  # fan-out path
+
+
+def test_package_version_matches_pyproject():
+    import tomllib
+    from pathlib import Path
+
+    import rck
+
+    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    with open(pyproject, "rb") as f:
+        declared = tomllib.load(f)["project"]["version"]
+    assert rck.__version__ == declared

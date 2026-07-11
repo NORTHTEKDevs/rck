@@ -1,18 +1,25 @@
 """Resonant Cognitive Kernel.
 
-A compact AI architecture that is fundamentally different from LLMs:
-- Vector Symbolic Architecture as the representation substrate
-- Predictive Coding for local-update perceptual encoding
-- Liquid State Machine for temporal integration
-- Tsetlin Machine for interpretable causal logic clauses
-- Global Workspace Theory for module-broadcast attention
-- Free Energy Principle / Active Inference for goal-directed action
-- Thousand-Brains reference-frame column voting for uncertainty
+A symbolic, non-generative reasoning system that is fundamentally
+different from LLMs. Facts live as discrete (subject, relation,
+object) triples in a sharded HRR/VSA hyperdimensional vector memory;
+reasoning is an explicit, inspectable pipeline: multi-hop chain
+walking with calibrated confidence, gated fact induction, symbolic
+rule extraction and instantiation, contradiction detection with
+belief revision, negative facts, counterfactuals, and federated
+merge. Every stored or derived fact carries provenance, and
+`explain_why` traces any answer back to user-asserted facts.
 
-No backprop. No GPU required. Continual learning by construction.
+Start with `rck.conscious_agent.ConsciousAgent`. No GPU required;
+learning is O(1) fact storage, not retraining.
+
+(The v1.x generative components some module names still reflect --
+PCN, LSM, Tsetlin, workspace -- are an archived earlier prototype,
+kept importable for continuity; they are not part of the v15 thesis.
+See the paper in papers/rck-architecture/.)
 """
 
-__version__ = "15.0.0"
+__version__ = "15.2.0"
 
 from rck.codebook import Codebook
 from rck.vsa import bind, bundle, permute, unbind, cosine, binarize

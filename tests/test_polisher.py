@@ -3,7 +3,10 @@ import json
 import tempfile
 from pathlib import Path
 
-import torch
+import pytest
+
+torch = pytest.importorskip(
+    "torch", reason="polisher tests need the [polisher] extra")
 
 from rck.polisher import (
     NeuralPolisher, PairDataset, PolisherConfig, PolisherModel,

@@ -7,13 +7,15 @@ on:
     branches: [main, master]
 
 jobs:
+  # The stranger's path: base install, exactly what the README says.
+  # mcp/polisher test modules skip cleanly without their extras.
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.11', '3.12']
+        python-version: ['3.11', '3.12', '3.13', '3.14']
 
     steps:
       - uses: actions/checkout@v4
@@ -33,3 +35,22 @@ jobs:
 
       - name: Run quickstart example
         run: python examples/01_quickstart.py
+
+  # Full suite with every optional extra (the 743-test run).
+  test-extras:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install with all extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,mcp,polisher]"
+
+      - name: Run full test suite
+        run: pytest -x -q --tb=short

@@ -54,7 +54,9 @@ def test_multi_task_corpus_includes_all_task_kinds():
 
 def test_streaming_polisher_yields_chunks(tmp_path):
     """Smoke test: streaming should yield SOME chunks for a draft."""
-    import torch
+    import pytest
+    torch = pytest.importorskip(
+        "torch", reason="needs the [polisher] extra")
 
     from rck.polisher import (
         PairDataset, PolisherConfig, PolisherModel, PolisherTokenizer,

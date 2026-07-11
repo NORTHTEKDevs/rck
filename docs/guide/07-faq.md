@@ -104,9 +104,11 @@ are the best bug reports.
 
 ## I want to contribute. Where do I start?
 
-See `CONTRIBUTING.md`. The codebase is ~7k lines; you can grok it in
-an afternoon. The filter stack on derivation is load-bearing — keep
-it intact.
+See `CONTRIBUTING.md`. The codebase is ~18.7k lines of plain numpy
+Python across small single-purpose modules; the core substrate
+(`knowledge_base.py`, `relational.py`, `codebook.py`) is an
+afternoon's read, the full stack a weekend's. The filter stack on
+derivation is load-bearing — keep it intact.
 
 ## Why is it called "Resonant Cognitive Kernel"?
 

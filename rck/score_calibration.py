@@ -26,6 +26,7 @@ what a similarity score is worth as evidence.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -134,9 +135,16 @@ class ScoreCalibrator:
                    n_samples=len(s))
 
     def prob(self, score: float) -> float:
-        """P(correct) for a retrieval with this score."""
-        idx = int(np.searchsorted(self.thresholds, float(score),
-                                  side="left"))
+        """P(correct) for a retrieval with this score.
+
+        A non-finite score (NaN from an upstream bug) maps to the
+        LOWEST-probability block: no evidence, not high confidence.
+        (numpy sorts NaN above everything, which would otherwise
+        silently select the highest block.)"""
+        s = float(score)
+        if math.isnan(s):
+            return float(self.probs[0])
+        idx = int(np.searchsorted(self.thresholds, s, side="left"))
         idx = min(idx, len(self.probs) - 1)
         return float(self.probs[idx])
 

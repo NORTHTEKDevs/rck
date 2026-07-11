@@ -36,7 +36,7 @@ re-executed fresh) and a prior-art audit of every novelty claim.
   loads; eval: held-out commonsense KB), writes
   `data/confidence_calibration_study.json` including the fitted
   calibrator (`ScoreCalibrator.from_dict`).
-- 24 new tests (11 relation-index, 13 calibration). 719 → 743.
+- 27 new tests (13 relation-index/subset, 14 calibration). 719 → 746.
 
 ### Changed
 - **`scripts/chain_discovery_study.py`** rewritten: the paper's old
@@ -84,6 +84,38 @@ re-executed fresh) and a prior-art audit of every novelty claim.
   could inspect `data/chain_induction_failures.json` etc. — the
   public repo shipped no study artifacts at all.
 
+### Fixed (public-readiness pass)
+- **Base installs work now.** `pip install -e ".[dev]"` + `pytest`
+  previously failed collection: `rck.curriculum` imported
+  `rck.polisher` (→ torch) via a dead, unused import — a leak of the
+  optional [polisher] extra into the numpy-only substrate. Removed;
+  the mcp/polisher test modules now `importorskip` their extras, so
+  the base suite runs green without torch or mcp. CI gained a
+  full-extras job alongside the base-install matrix (now also
+  3.13/3.14).
+- `rck.__version__` was stuck at "15.0.0"; now matches pyproject
+  (enforced by a test), and the package docstring described the
+  archived v1.x generative prototype instead of v15.
+- `ScoreCalibrator.prob(NaN)` silently returned the
+  HIGHEST-probability block (numpy sorts NaN above everything); now
+  maps to the lowest.
+- `shard_subset` with out-of-range indices raised a bare IndexError
+  (or silently wrapped negatives); now a clear ValueError.
+- README 60-second demo comment showed a stale score (0.42 vs the
+  real 1.00); README pointed at a nonexistent
+  `docs/guide/07-ingestion.md`; README misdescribed the v15.0
+  retraction as a "100% precision" claim (it was "~87%").
+- docs/guide/02: the symmetrisation example used `capital_of`, which
+  is not in `INVERSE_PAIRS` (it's `capitalof`) and therefore never
+  symmetrised; docs/guide/06: the `record_truth` example lacked the
+  prior `ask_with_idk` episode it needs; docs/guide/07: "~7k lines"
+  claim updated to reality.
+- paper.md gained a rendered References section (36 works — inline
+  citations previously pointed at a bibliography md readers couldn't
+  see) and the 88.7% analogy baseline is now attributed (historical
+  v15.0 argmax-solver number, not re-measured by the shipped
+  script). paper.tex: stale `\date`, one unprefixed script path.
+
 ### Migration
 - None required. Default propagation remains `geometric_mean`;
   `calibrated_product` is opt-in. Discovery behavior is unchanged on
@@ -92,7 +124,8 @@ re-executed fresh) and a prior-art audit of every novelty claim.
   v15.1 search).
 
 ### Tests
-719 → 743 passing.
+719 → 746 passing (full extras; base installs skip the mcp/polisher
+modules).
 
 ## 15.1.0 — 2026-05-24
 

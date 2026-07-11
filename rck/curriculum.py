@@ -25,7 +25,8 @@ import math
 from collections import Counter
 from dataclasses import dataclass, field
 
-from rck.polisher.dataset import PairDataset
+# NOTE: no rck.polisher imports here -- the polisher is an optional
+# [polisher] extra (PyTorch); the core substrate stays numpy-only.
 
 
 TASK_DIFFICULTY = {

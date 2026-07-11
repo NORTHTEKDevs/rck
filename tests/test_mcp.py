@@ -2,6 +2,8 @@ import asyncio
 
 import pytest
 
+pytest.importorskip("mcp", reason="MCP tests need the [mcp] extra")
+
 from mcp.server.fastmcp import FastMCP
 
 from rck.agent import RCKAgent

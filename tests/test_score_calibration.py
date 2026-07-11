@@ -66,6 +66,15 @@ def test_prob_clamps_outside_fitted_range():
     assert cal.prob(2.0) == pytest.approx(cal.prob(0.5))
 
 
+def test_prob_nan_maps_to_lowest_block_not_highest():
+    # numpy sorts NaN above everything; unguarded searchsorted would
+    # hand a NaN score the HIGHEST-probability block.
+    cal = ScoreCalibrator.fit([0.1, 0.2, 0.7, 0.8],
+                              [False, False, True, True])
+    assert cal.prob(float("nan")) == pytest.approx(cal.prob(0.0))
+    assert cal.prob(float("nan")) < cal.prob(0.8)
+
+
 def test_fit_rejects_empty_or_mismatched():
     with pytest.raises(ValueError):
         ScoreCalibrator.fit([], [])

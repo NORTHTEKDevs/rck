@@ -21,7 +21,14 @@ import argparse
 import sys
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
+try:
+    from mcp.server.fastmcp import FastMCP
+except ImportError as e:
+    raise ImportError(
+        "rck.mcp_server requires the 'mcp' extra. Install it with: "
+        "pip install \"rck-kernel[mcp]\" "
+        "(or pip install mcp in a source checkout)."
+    ) from e
 
 from rck.agent import RCKAgent
 from rck.persist import load as persist_load, save as persist_save

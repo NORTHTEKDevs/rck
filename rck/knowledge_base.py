@@ -159,15 +159,26 @@ class ShardedKnowledgeBase:
             its correct shard. False positives caused by codebook cleanup
             noise in OTHER shards get filtered out.
         """
+        if shard_subset is not None:
+            shard_subset = self._validated_subset(shard_subset)
         s, r = str(known.get("S", "")), str(known.get("R", ""))
         if s and r:
             idx = _shard_index(s, r, self.n_shards)
-            if shard_subset is not None and idx not in set(shard_subset):
+            if shard_subset is not None and idx not in shard_subset:
                 return []
             return self._shards[idx].query(self.codebook, known, unknown_role, top_k=top_k)
         # Fan-out: ask every shard, then merge with evidence pooling.
         return self._fanout_query(known, unknown_role, top_k=top_k,
                                   shard_subset=shard_subset)
+
+    def _validated_subset(self, shard_subset: Iterable[int]) -> set[int]:
+        subset = {int(i) for i in shard_subset}
+        bad = sorted(i for i in subset if not 0 <= i < self.n_shards)
+        if bad:
+            raise ValueError(
+                f"shard_subset indices out of range for "
+                f"n_shards={self.n_shards}: {bad}")
+        return subset
 
     # --- cross-shard union -------------------------------------------------
 
@@ -182,7 +193,8 @@ class ShardedKnowledgeBase:
         if shard_subset is None:
             shards = self._shards
         else:
-            shards = [self._shards[i] for i in shard_subset]
+            shards = [self._shards[i]
+                      for i in self._validated_subset(shard_subset)]
         per_symbol_scores: dict[Hashable, list[float]] = {}
         for shard in shards:
             for sym, score in shard.query(self.codebook, known, unknown_role,

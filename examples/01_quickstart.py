@@ -1,6 +1,6 @@
 """01 - Quickstart: the shortest path to a useful RCK agent.
 
-Five minutes from `pip install rck` to seeing the agent
+Five minutes from install (pip install git+https://github.com/NORTHTEKDevs/rck) to seeing the agent
 (1) answer a known question, (2) say "I don't know", (3) reason
 across multiple hops, (4) explain why it knows what it knows.
 

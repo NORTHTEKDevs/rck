@@ -19,18 +19,21 @@ There are no fixed schemas. You invent the relation names you need.
 
 ## Symmetrisation
 
-Some relation pairs are inverses (e.g. `capital_of` / `capital`,
+Some relation pairs are inverses (e.g. `capitalof` / `capital`,
 `partof` / `haspart`, `wrote` / `author`). When you tell RCK one
 direction, it auto-stores the other:
 
 ```python
-agent.tell("rome", "capital_of", "italy")
+agent.tell("rome", "capitalof", "italy")
 ans, _ = agent.knowledge.answer({"S": "italy", "R": "capital"}, "O")
 # -> 'rome'
 ```
 
-The list of recognised inverse pairs is in `rck.bulk_ingest.INVERSE_PAIRS`.
-Add your own to taste.
+The list of recognised inverse pairs is in
+`rck.bulk_ingest.INVERSE_PAIRS`; relation names must match those
+entries exactly (it's `capitalof`, not `capital_of` — an unrecognised
+name is simply stored one-way, with no error). Add your own pairs to
+taste.
 
 ## Bulk loading
 

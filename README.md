@@ -4,7 +4,7 @@
 > RCK reasons in explicit chains, learns by deriving (not retraining),
 > runs on CPU, and shows you the receipts for every answer.
 
-[![tests](https://img.shields.io/badge/tests-743%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.2.0-blue)](CHANGELOG.md)
+[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-746%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.2.0-blue)](CHANGELOG.md)
 
 ---
 
@@ -44,7 +44,7 @@ The result is an agent that:
 | Reasons 30+ hops deep | ✗ | ✓ |
 
 It's small (126 modules, ~18.7k lines of plain numpy Python). It's
-testable (**743 passing tests**). It's research-grade but
+testable (**746 passing tests**). It's research-grade but
 production-shaped.
 
 ---
@@ -70,7 +70,9 @@ pytest -q
 ```
 
 Optional extras: `[mcp]` for the MCP server, `[polisher]` for the
-PyTorch surface-form polisher.
+PyTorch surface-form polisher. On a base install their test modules
+skip cleanly; install `".[dev,mcp,polisher]"` to run the full
+746-test suite.
 
 ---
 
@@ -89,7 +91,7 @@ agent.tell("dog", "has", "fur")
 # Ask with explicit "I don't know" detection.
 res = agent.ask_with_idk({"S": "dog", "R": "isa"}, "O")
 print(res.verbalize())
-# -> "I'm confident: the answer is 'mammal' (score 0.42)."
+# -> "I'm confident: the answer is 'mammal' (score 1.00)."
 
 # Reason 3 hops deep with a discovered chain.
 spec = agent.discover("dog", "animal", max_depth=3)
@@ -122,7 +124,8 @@ capability on a real 716-fact commonsense KB.
   of queries, 1.5-3.0× faster at scale).
 - **Fact induction**: confident chains become new direct edges behind
   a six-gate filter stack — 31/31 manually-validated inductions on
-  the 400-probe study (the earlier "100% precision" framing is
+  the 400-probe study (the earlier v15.0 "~87% precision" framing
+  measured HRR-roundtrip stability, not semantic correctness, and is
   retracted and decomposed honestly in the paper, §5.1).
 - **Cascading induction**: iterate to fixed point.
 - **Rule extraction**: turn repeated patterns into symbolic universal
@@ -242,8 +245,8 @@ publicly benchmarked configuration.
   paraphrase corpus; for now, RCK answers in slightly stilted but
   grammatical sentences. It's not a chatbot.
 * **Ingestion at scale**. The bundled Open IE extractor is rule-based.
-  Eating Wikipedia means plugging in a better extractor; see
-  `docs/guide/07-ingestion.md`.
+  Eating Wikipedia means plugging in a better extractor; see the
+  ingestion answer in `docs/guide/07-faq.md`.
 * **No "knows the whole internet" out of the box**. You feed it facts
   and it grows. The cost gap vs LLMs is 4-5 orders of magnitude.
 * **Capacity cliff** at ~80 facts/shard for D=4096. Auto-shard sizing
@@ -279,7 +282,7 @@ docs/
   guide/               # tutorials (start here)
   design/              # architectural design docs
 examples/              # runnable demos
-tests/                 # 743 tests
+tests/                 # 746 tests
 scripts/               # benchmark + ingestion scripts
 ```
 
@@ -287,7 +290,7 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.2.0** — current. 743 passing tests. API stable.
+* **v15.2.0** — current. 746 passing tests. API stable.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
 * MIT licensed.
 

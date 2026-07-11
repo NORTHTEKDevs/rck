@@ -38,7 +38,7 @@
         \small Independent Researcher\\
         \small Anchorage, Alaska, USA}
 
-\date{May 2026}
+\date{July 2026}
 
 \begin{document}
 
@@ -109,7 +109,7 @@ We report empirical findings from the implementation:
 \end{itemize}
 
 We release the full implementation (\textasciitilde{}18,700 lines of
-Python, 743 tests) under the MIT license at
+Python, 746 tests) under the MIT license at
 \url{https://github.com/NORTHTEKDevs/rck}. Our aim is not to argue
 that RCK replaces LLMs but to show that a coherent alternative
 architecture---one that is auditable, editable, and structurally
@@ -181,7 +181,7 @@ and the engineering that makes it run on commodity hardware:
       asserted negative facts, gated chain induction, symbolic rule
       extraction, counterfactuals, and alignment-free federated
       merge, behind $\sim$50 operations on one
-      \texttt{ConsciousAgent} object, with 743 passing tests.
+      \texttt{ConsciousAgent} object, with 746 passing tests.
 \item \textbf{An empirically-derived six-gate filter stack}
       (inverse-pair, non-transitive same-relation, intermediate-cycle,
       no-meaningful-relation, type-signature mismatch, plus a
@@ -882,10 +882,15 @@ around it.
 On a 115-probe analogy benchmark drawn from the commonsense KB
 (pairs of \texttt{(A, R, B)} and \texttt{(C, R, D)} both stored
 under the same relation), the confidence-weighted Bayesian solver
-achieves 92.2\% relation-inference accuracy and 93.9\%
-final-answer accuracy. Most remaining failures come from
-multi-valued relations (e.g., a dog has fur, legs, tail,
-whiskers---a 5-way ambiguous analogy is essentially a guess) and
+achieves 92.2\% (106/115) relation-inference accuracy and 93.9\%
+(108/115) final-answer accuracy. The 88.7\% baseline quoted in the
+abstract is the earlier argmax-only solver (102/115 on the same
+probes, as reported in the v15.0 study); the shipped script
+benchmarks the current solver only, so the baseline is a historical
+reference point, not a number this revision re-measures. Most
+remaining failures come from multi-valued relations (e.g., a dog
+has fur, legs, tail, whiskers---a 5-way ambiguous analogy is
+essentially a guess) and
 are not true errors.
 
 \subsection{Cross-shard distribution}
@@ -938,7 +943,7 @@ Result & Script & Data file \\
 \texttt{confidence\_calibration\_study.json} \\
 \S 5.4 sparse vs dense &
 \texttt{scripts/sparse\_capacity\_study.py},
-\texttt{run\_capacity\_study.py} &
+\texttt{scripts/run\_capacity\_study.py} &
 \texttt{sparse\_capacity\_study.json},
 \texttt{capacity\_study.json} \\
 \S 5.5 discovery + index &
@@ -967,7 +972,7 @@ CPython 3.14), single CPU thread, default agent settings
 \texttt{pyproject.toml}. Random seeds are set at agent construction
 (\texttt{seed=0} throughout), so accuracy-type numbers reproduce
 exactly; latency-type numbers vary by machine. The test suite
-(\texttt{pytest -q}) is \textbf{743/743} passing on the same
+(\texttt{pytest -q}) is \textbf{746/746} passing on the same
 environment. The v15.2.0 tag on GitHub marks the exact source state
 of this revision.
 
@@ -1263,7 +1268,7 @@ without ceding control over their own data.
 \subsection{Research substrate}
 
 The implementation is small enough to fork ($\sim$18{,}700 lines of
-plain numpy Python, 743 tests, no GPU). Researchers interested in
+plain numpy Python, 746 tests, no GPU). Researchers interested in
 VSA-based reasoning, neuro-symbolic integration, calibration of
 vector-memory retrieval, or empirical study of chain-based induction
 can build directly on it. The filter stack, the propagation rules,

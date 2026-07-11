@@ -112,13 +112,21 @@ queries and pre-discover their chains.
 
 ## Calibration tracking
 
-When the user supplies ground truth for a previous question:
+When the user supplies ground truth for a previous question. There
+must BE a previous question — `record_truth` matches against the
+episode log, so a query that was never asked returns
+`{"updated": False, "reason": "no prior episode"}`:
 
 ```python
-agent.record_truth(
+agent.tell("dog", "isa", "mammal")
+agent.ask_with_idk({"S": "dog", "R": "isa"}, "O")   # logs the episode
+
+result = agent.record_truth(
     {"S": "dog", "R": "isa"}, "O",
     correct_answer="mammal",
 )
+# -> {'updated': True, 'relation': 'isa', 'predicted': 'mammal',
+#     'correct_answer': 'mammal', 'was_correct': True, ...}
 ```
 
 Walks `query_memory` to find the matching episode and updates

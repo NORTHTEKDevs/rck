@@ -21,7 +21,7 @@ We report empirical findings from the implementation:
 - A confidence-weighted analogy solver improves accuracy from 88.7% to 93.9% on a 115-probe commonsense benchmark, while surfacing calibrated probabilities for each candidate.
 - Sparse-binary HRR, while attractive on per-atom memory grounds, has 8–16× lower per-shard capacity than dense bipolar HRR and is **not** a drop-in substrate replacement.
 
-We release the full implementation (~18,700 lines of Python, 743 tests) under the MIT license at <https://github.com/NORTHTEKDevs/rck>. Our aim is not to argue that RCK replaces LLMs but to show that a coherent alternative architecture — one that is auditable, editable, and structurally honest about its own uncertainty — is achievable and useful today, on commodity hardware, with no GPU.
+We release the full implementation (~18,700 lines of Python, 746 tests) under the MIT license at <https://github.com/NORTHTEKDevs/rck>. Our aim is not to argue that RCK replaces LLMs but to show that a coherent alternative architecture — one that is auditable, editable, and structurally honest about its own uncertainty — is achievable and useful today, on commodity hardware, with no GPU.
 
 ---
 
@@ -39,7 +39,7 @@ The individual primitives RCK uses are not new — and the closest prior art is 
 
 What we claim is the combination, its empirical characterization, and the engineering that makes it run on commodity hardware:
 
-- **A complete, integrated, open implementation** — to our knowledge the first single package that combines an HRR/VSA relational substrate with derivation-graph provenance, explain-why, contradiction detection with belief revision, asserted negative facts, gated chain induction, symbolic rule extraction, counterfactuals, and alignment-free federated merge, behind ~50 operations on one `ConsciousAgent` object, with 743 passing tests.
+- **A complete, integrated, open implementation** — to our knowledge the first single package that combines an HRR/VSA relational substrate with derivation-graph provenance, explain-why, contradiction detection with belief revision, asserted negative facts, gated chain induction, symbolic rule extraction, counterfactuals, and alignment-free federated merge, behind ~50 operations on one `ConsciousAgent` object, with 746 passing tests.
 - **An empirically-derived six-gate induction filter stack** whose gates come from inspecting real HRR-substrate failure modes (hub round-trips, cleanup crosstalk, type confusion) — including a published retraction of our own earlier headline number when a failure-mode audit showed it measured the wrong thing (§5.1).
 - **A calibration result**: the first (to our knowledge) published cosine→P(correct) calibration for chain reasoning on an HRR substrate, which both quantifies how miscalibrated raw cosines are (Brier 0.568 → 0.0004) and restores honest multiplicative semantics to multi-hop confidence (§5.3).
 - **A negative result** on sparse HRR substrates that may save other implementers time (§5.4).
@@ -171,7 +171,7 @@ Quantified empirical results in §5.1.
 **The calibrated rule (v15.2).** The principled fix is to stop treating cosines as probabilities and measure what they're actually worth. We fit an isotonic regression (pool-adjacent-violators, with Beta-smoothed block probabilities so the calibrator never claims certainty) on 4,862 labeled retrievals spanning clean to saturated bundle loads: cosine in, empirical P(top-1 correct) out. With calibrated per-hop probabilities, plain multiplication becomes the right rule again:
 
 ```
-chain_confidence = ∏ᵢ P̂(correct | cosineᵢ)  ≈  P(every hop correct)
+chain_confidence = product_i  P_hat(correct | cosine_i)  ~  P(every hop correct)
 ```
 
 under an independence assumption. This is length-sensitive — a 50-hop chain *is* less certain than a 2-hop chain — without collapsing on clean hops, because a clean hop calibrates to ~0.9997, not 0.7. Available as `PropagationConfig(rule="calibrated_product", calibrator=...)`; fitting is one script (`scripts/confidence_calibration_study.py`). Empirical results, including held-out Brier scores and the full depth table, in §5.3.
@@ -279,10 +279,10 @@ Three honest readings. *The diagnosis was right:* the query cut and the speedup 
 
 On a 115-probe analogy benchmark drawn from the commonsense KB, the confidence-weighted Bayesian solver achieves:
 
-- **92.2%** relation-inference accuracy
-- **93.9%** final-answer accuracy
+- **92.2%** (106/115) relation-inference accuracy
+- **93.9%** (108/115) final-answer accuracy
 
-Most remaining failures come from multi-valued relations (e.g., a dog has fur, legs, tail, whiskers — a 5-way ambiguous analogy is essentially a guess) and aren't true errors.
+The 88.7% baseline quoted in the abstract is the earlier argmax-only solver (102/115 on the same probes, as reported in the v15.0 study); the shipped script benchmarks the current solver only, so the baseline is a historical reference point, not a number this revision re-measures. Most remaining failures come from multi-valued relations (e.g., a dog has fur, legs, tail, whiskers — a 5-way ambiguous analogy is essentially a guess) and aren't true errors.
 
 ### 5.7 Cross-shard distribution
 
@@ -307,7 +307,7 @@ All numbers in §5 are reproducible from the public repository, and the canonica
 | §5.7 cross-shard distribution | `scripts/cross_shard_chain_study.py` | `data/cross_shard_chain_study.json` |
 | §5.8 cascade induction | `scripts/cascade_induction_study.py`; rule extraction via `scripts/rule_extraction_study.py`; rule cascade via `examples/v14_full_stack_demo.py` | `data/cascade_induction_study.json`, `data/rule_extraction_study.json` |
 
-All scripts run from the repository root with no external services and no GPU. Environment: Python 3.11+ (numbers in this revision measured on CPython 3.14), single CPU thread, default agent settings (D=4096, auto-sharded). Random seeds are fixed (`seed=0` throughout), so accuracy-type numbers reproduce exactly; latency-type numbers vary by machine. The test suite (`pytest -q`) is **743/743** passing on the same environment. The v15.2.0 tag on GitHub marks the exact source state of this revision.
+All scripts run from the repository root with no external services and no GPU. Environment: Python 3.11+ (numbers in this revision measured on CPython 3.14), single CPU thread, default agent settings (D=4096, auto-sharded). Random seeds are fixed (`seed=0` throughout), so accuracy-type numbers reproduce exactly; latency-type numbers vary by machine. The test suite (`pytest -q`) is **746/746** passing on the same environment. The v15.2.0 tag on GitHub marks the exact source state of this revision.
 
 ---
 
@@ -414,7 +414,7 @@ Multiple parties each have their own KB; merging is a per-shard bundle sum with 
 
 ### 8.5 Research substrate
 
-The implementation is small enough to fork (~18,700 lines of plain numpy Python, 743 tests, no GPU). Researchers interested in VSA-based reasoning, neuro-symbolic integration, calibration of vector-memory retrieval, or empirical study of chain-based induction can build directly on it. The filter stack, the propagation rules, and the calibrator are configuration, not hard-coded behavior, so alternative policies are easy to swap in.
+The implementation is small enough to fork (~18,700 lines of plain numpy Python, 746 tests, no GPU). Researchers interested in VSA-based reasoning, neuro-symbolic integration, calibration of vector-memory retrieval, or empirical study of chain-based induction can build directly on it. The filter stack, the propagation rules, and the calibrator are configuration, not hard-coded behavior, so alternative policies are easy to swap in.
 
 ---
 
@@ -429,6 +429,47 @@ The code is available at <https://github.com/NORTHTEKDevs/rck> under the MIT lic
 ## Acknowledgements
 
 This work was performed independently. The author thanks the foundational contributions of Pentti Kanerva, Tony Plate, Pei Wang, Chris Eliasmith, and the broader vector-symbolic, truth-maintenance, and neuro-symbolic communities, whose decades of work made this system possible to assemble in a year.
+
+## References
+
+- Agrawal, Garima and Kumarage, Tharindu and Alghamdi, Zeyad and Liu, Huan (2024). Can Knowledge Graphs Reduce Hallucinations in LLMs?: A Survey. *Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics*.
+- Alchourrón, Carlos E. and Gärdenfors, Peter and Makinson, David (1985). On the Logic of Theory Change: Partial Meet Contraction and Revision Functions. *Journal of Symbolic Logic 50*.
+- Arnaout, Hiba and Razniewski, Simon and Weikum, Gerhard (2020). Enriching Knowledge Bases with Interesting Negative Statements. *Automated Knowledge Base Construction (AKBC)*.
+- Bach, Stephen H. and Broecheler, Matthias and Huang, Bert and Getoor, Lise (2017). Hinge-Loss Markov Random Fields and Probabilistic Soft Logic. *Journal of Machine Learning Research 18*.
+- Buchanan, Bruce G. and Shortliffe, Edward H. (1984). Rule-Based Expert Systems: The MYCIN Experiments of the Stanford Heuristic Programming Project. *Addison-Wesley*.
+- Carlson, Andrew and Betteridge, Justin and Kisiel, Bryan and Settles, Burr and Hruschka Jr., Estevam R. and Mitchell, Tom M. (2010). Toward an Architecture for Never-Ending Language Learning. *Proceedings of the Twenty-Fourth AAAI Conference on Artificial Intelligence*.
+- Clark, Keith L. (1978). Negation as Failure. In *Logic and Data Bases*, Plenum Press.
+- Crawford, Eric and Gingerich, Matthew and Eliasmith, Chris (2016). Biologically Plausible, Human-Scale Knowledge Representation. *Cognitive Science 40*.
+- de Kleer, Johan (1986). An Assumption-Based TMS. *Artificial Intelligence 28*.
+- Doyle, Jon (1979). A Truth Maintenance System. *Artificial Intelligence 12*.
+- Eliasmith, Chris (2013). How to Build a Brain: A Neural Architecture for Biological Cognition. *Oxford University Press*.
+- Eliasmith, Chris; Stewart, Terrence C.; Choo, Xuan; Bekolay, Trevor; DeWolf, Travis; Tang, Yichuan; Rasmussen, Daniel (2012). A Large-Scale Model of the Functioning Brain. *Science 338*.
+- Galárraga, Luis; Teflioudi, Christina; Hose, Katja; Suchanek, Fabian M. (2013). AMIE: Association Rule Mining under Incomplete Evidence in Ontological Knowledge Bases. *Proceedings of the 22nd International Conference on World Wide Web*.
+- Garcez, Artur d'Avila and Lamb, Luís C. (2020). Neurosymbolic AI: The 3rd Wave. *arXiv:2012.05876*.
+- Gelfond, Michael and Lifschitz, Vladimir (1991). Classical Negation in Logic Programs and Disjunctive Databases. *New Generation Computing 9*.
+- Genest, Christian and Zidek, James V. (1986). Combining Probability Distributions: A Critique and an Annotated Bibliography. *Statistical Science 1*.
+- Heddes, Mike; Nunes, Igor; Vergés, Pere; Kleyko, Denis; Abraham, Danny; Givargis, Tony; Nicolau, Alexandru; Veidenbaum, Alexander (2023). Torchhd: An Open Source Python Library to Support Research on Hyperdimensional Computing and Vector Symbolic Architectures. *Journal of Machine Learning Research 24*.
+- Hersche, Michael; Zeqiri, Mustafa; Benini, Luca; Sebastian, Abu; Rahimi, Abbas (2023). A Neuro-Vector-Symbolic Architecture for Solving Raven's Progressive Matrices. *Nature Machine Intelligence 5*.
+- Huang, Lei et al. (2024). A Survey on Hallucination in Large Language Models: Principles, Taxonomy, Challenges, and Open Questions. *ACM Transactions on Information Systems*.
+- Imani, Mohsen; Kim, Yeseong; Riazi, M. Sadegh; Messerly, John; Liu, Patric; Koushanfar, Farinaz; Rosing, Tajana (2019). A Framework for Collaborative Learning in Secure High-Dimensional Space. *IEEE 12th International Conference on Cloud Computing (CLOUD)*.
+- Jøsang, Audun (2016). Subjective Logic: A Formalism for Reasoning Under Uncertainty. *Springer*.
+- Kanerva, Pentti (2009). Hyperdimensional Computing: An Introduction to Computing in Distributed Representation with High-Dimensional Random Vectors. *Cognitive Computation 1*.
+- Kelly, Matthew A.; Arora, Nipun; West, Robert L.; Reitter, David (2020). Holographic Declarative Memory: Distributional Semantics as the Architecture of Memory. *Cognitive Science 44*.
+- Krompaß, Denis; Baier, Stephan; Tresp, Volker (2015). Type-Constrained Representation Learning in Knowledge Graphs. *Proceedings of the 14th International Semantic Web Conference*.
+- Lao, Ni and Cohen, William W. (2010). Relational Retrieval Using a Combination of Path-Constrained Random Walks. *Machine Learning 81*.
+- Lao, Ni; Mitchell, Tom; Cohen, William W. (2011). Random Walk Inference and Learning in a Large Scale Knowledge Base. *Proceedings of the 2011 Conference on Empirical Methods in Natural Language Processing*.
+- Lenat, Doug and Marcus, Gary (2023). Getting from Generative AI to Trustworthy AI: What LLMs Might Learn from Cyc. *arXiv:2308.04445*.
+- Lewis, Patrick et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. *Advances in Neural Information Processing Systems*.
+- Magesh, Varun; Surani, Faiz; Dahl, Matthew; Suzgun, Mirac; Manning, Christopher D.; Ho, Daniel E. (2024). Hallucination-Free? Assessing the Reliability of Leading AI Legal Research Tools. *arXiv:2405.20362*.
+- Manhaeve, Robin; Dumančić, Sebastijan; Kimmig, Angelika; Demeester, Thomas; De Raedt, Luc (2018). DeepProbLog: Neural Probabilistic Logic Programming. *Advances in Neural Information Processing Systems*.
+- Nickel, Maximilian; Rosasco, Lorenzo; Poggio, Tomaso (2016). Holographic Embeddings of Knowledge Graphs. *Proceedings of the Thirtieth AAAI Conference on Artificial Intelligence*.
+- Plate, Tony A. (1995). Holographic Reduced Representations. *IEEE Transactions on Neural Networks 6*.
+- Richardson, Matthew and Domingos, Pedro (2006). Markov Logic Networks. *Machine Learning 62*.
+- Safavi, Tara; Zhu, Jing; Koutra, Danai (2021). NegatER: Unsupervised Discovery of Negatives in Commonsense Knowledge Bases. *Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing*.
+- Wang, Pei (2006). Rigid Flexibility: The Logic of Intelligence. *Springer*.
+- Zeulin, Nikita; Galinina, Olga; Himayat, Nageen; Andreev, Sergey (2023). Federated Hyperdimensional Computing. *arXiv:2312.15966*.
+
+(The BibTeX source for these entries is `references.bib` in this directory; the LaTeX manuscript cites them inline.)
 
 ## Citing this work
 
