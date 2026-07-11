@@ -27,7 +27,7 @@ import heapq
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Optional
 
-from rck.knowledge_base import ShardedKnowledgeBase
+from rck.knowledge_base import RelationIndex, ShardedKnowledgeBase
 
 
 @dataclass
@@ -94,7 +94,9 @@ def discover_chains(kb: ShardedKnowledgeBase, start: str, goal: Goal,
                     min_link_score: float = 0.10,
                     top_n: int = 3,
                     allow_reverse: bool = False,
-                    skills_prior=None) -> list[DiscoveredChain]:
+                    skills_prior=None,
+                    relation_index: RelationIndex | None = None,
+                    use_relation_index: bool = True) -> list[DiscoveredChain]:
     """Search the KB for chains starting at `start` that satisfy `goal`.
 
     Args:
@@ -108,6 +110,16 @@ def discover_chains(kb: ShardedKnowledgeBase, start: str, goal: Goal,
             appearing in high-confidence skill patterns are tried first.
             This is a pure speedup: the same chains are findable; we
             just hit them earlier in the search.
+        relation_index: optional prebuilt RelationIndex snapshot. Pass one
+            when running many discoveries against an unchanged KB to skip
+            the per-call rebuild. Must be rebuilt after KB writes.
+        use_relation_index: when True (default), skip the HRR query for
+            any (node, relation) whose routed shard holds no fact with
+            that relation, and restrict reverse fan-outs to shards where
+            the relation is live. Pruned queries could only ever return
+            bundle crosstalk, so real chains are unaffected; edges that
+            existed purely as cleanup noise are no longer followed. Set
+            False to reproduce the pre-index (v15.1) search exactly.
 
     Returns up to `top_n` chains, sorted by total confidence.
     """
@@ -119,10 +131,16 @@ def discover_chains(kb: ShardedKnowledgeBase, start: str, goal: Goal,
     found: list[DiscoveredChain] = []
     seen_paths: set[tuple] = set()
 
+    index: RelationIndex | None = None
+    if use_relation_index:
+        index = relation_index if relation_index is not None \
+            else RelationIndex.build(kb)
+
     # The relations we'll try to expand on. If unconstrained, use the
     # KB's known relations (collected from prior queries).
     if relations is None:
-        relations_list = _enumerate_relations(kb)
+        relations_list = index.all_relations() if index is not None \
+            else _enumerate_relations(kb)
     else:
         relations_list = [r.lower() for r in relations]
     if not relations_list:
@@ -165,7 +183,11 @@ def discover_chains(kb: ShardedKnowledgeBase, start: str, goal: Goal,
 
         for rel in relations_list:
             # Forward edges: (node, rel, ?)
-            candidates = kb.query({"S": node, "R": rel}, "O", top_k=beam_width)
+            if index is not None and not index.live(node, rel):
+                candidates = []
+            else:
+                candidates = kb.query({"S": node, "R": rel}, "O",
+                                      top_k=beam_width)
             for sym, score in candidates:
                 if score < min_link_score:
                     continue
@@ -180,8 +202,13 @@ def discover_chains(kb: ShardedKnowledgeBase, start: str, goal: Goal,
                 ))
             # Reverse edges: (?, rel, node) -- only when explicitly enabled.
             if allow_reverse:
+                rev_subset = index.shards_with(rel) if index is not None \
+                    else None
+                if rev_subset == []:
+                    continue
                 rev_candidates = kb.query({"R": rel, "O": node}, "S",
-                                          top_k=beam_width)
+                                          top_k=beam_width,
+                                          shard_subset=rev_subset)
                 for sym, score in rev_candidates:
                     if score < min_link_score:
                         continue

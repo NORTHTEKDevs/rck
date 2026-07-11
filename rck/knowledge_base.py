@@ -41,6 +41,56 @@ def _shard_index(subject: str, relation: str, n_shards: int) -> int:
 
 
 @dataclass
+class RelationIndex:
+    """Snapshot of which relations have facts in which shards.
+
+    Built from the shards' symbolic fact logs, so it is correct under
+    every mutation path (store, forget, shard-level federated merge,
+    session load) at the moment it is built. It does NOT track later
+    writes -- rebuild after mutating the KB. Chain discovery builds a
+    fresh one per call by default, which costs one O(total_facts) scan
+    (the same scan discovery already needed to enumerate relations) and
+    in exchange skips every HRR query against a (subject, relation)
+    shard that holds no fact with that relation.
+    """
+
+    per_shard: list[set[str]]
+
+    @classmethod
+    def build(cls, kb: "ShardedKnowledgeBase") -> "RelationIndex":
+        per_shard: list[set[str]] = []
+        for shard in kb._shards:
+            rels: set[str] = set()
+            for fact in shard.facts():
+                r = fact.get("R")
+                if r is not None:
+                    rels.add(str(r))
+            per_shard.append(rels)
+        return cls(per_shard=per_shard)
+
+    @property
+    def n_shards(self) -> int:
+        return len(self.per_shard)
+
+    def live(self, subject: str, relation: str) -> bool:
+        """True iff the shard that (subject, relation) routes to holds at
+        least one fact with this relation. A False answer proves the
+        forward query (subject, relation, ?) can only return crosstalk
+        noise, so the caller may skip it."""
+        idx = _shard_index(subject, relation, self.n_shards)
+        return relation in self.per_shard[idx]
+
+    def shards_with(self, relation: str) -> list[int]:
+        return [i for i, rels in enumerate(self.per_shard) if relation in rels]
+
+    def all_relations(self) -> list[str]:
+        out: set[str] = set()
+        for rels in self.per_shard:
+            out |= rels
+        return sorted(out)
+
+
+@dataclass
 class ShardedKnowledgeBase:
     """N HRR shards behind a single user-facing API.
 
@@ -87,8 +137,14 @@ class ShardedKnowledgeBase:
             count += 1
         return count
 
+    def relation_index(self) -> RelationIndex:
+        """Fresh snapshot of live relations per shard (see RelationIndex)."""
+        return RelationIndex.build(self)
+
     def query(self, known: dict[str, Hashable], unknown_role: str,
-              top_k: int = 3) -> list[tuple[Hashable, float]]:
+              top_k: int = 3,
+              shard_subset: Iterable[int] | None = None
+              ) -> list[tuple[Hashable, float]]:
         """Retrieve from the shard determined by (S, R) if both are known,
         otherwise broadcast across all shards and merge with cross-shard
         evidence pooling + route-back verification.
@@ -106,9 +162,12 @@ class ShardedKnowledgeBase:
         s, r = str(known.get("S", "")), str(known.get("R", ""))
         if s and r:
             idx = _shard_index(s, r, self.n_shards)
+            if shard_subset is not None and idx not in set(shard_subset):
+                return []
             return self._shards[idx].query(self.codebook, known, unknown_role, top_k=top_k)
         # Fan-out: ask every shard, then merge with evidence pooling.
-        return self._fanout_query(known, unknown_role, top_k=top_k)
+        return self._fanout_query(known, unknown_role, top_k=top_k,
+                                  shard_subset=shard_subset)
 
     # --- cross-shard union -------------------------------------------------
 
@@ -116,10 +175,16 @@ class ShardedKnowledgeBase:
     _UNION_AGREEMENT_BONUS: float = 0.05  # boost per extra-shard agreement
 
     def _fanout_query(self, known: dict[str, Hashable], unknown_role: str,
-                      top_k: int = 3) -> list[tuple[Hashable, float]]:
+                      top_k: int = 3,
+                      shard_subset: Iterable[int] | None = None
+                      ) -> list[tuple[Hashable, float]]:
         # Collect per-shard hits.
+        if shard_subset is None:
+            shards = self._shards
+        else:
+            shards = [self._shards[i] for i in shard_subset]
         per_symbol_scores: dict[Hashable, list[float]] = {}
-        for shard in self._shards:
+        for shard in shards:
             for sym, score in shard.query(self.codebook, known, unknown_role,
                                           top_k=top_k):
                 if score < self._UNION_MIN_SCORE:

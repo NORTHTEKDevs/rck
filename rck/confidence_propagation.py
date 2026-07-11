@@ -5,15 +5,26 @@ reflect the WEAKEST link in the chain, not the strongest. Currently
 the `infer()` engine returns `min(score1, score2) * 0.8` heuristically;
 this module implements the principled version.
 
-Two combination rules:
+Combination rules:
   * **Product rule (independent)**: chain_conf = prod(link_confs).
     Use when each step is independent (no shared uncertainty).
+    Caveat: raw HRR cosines are similarity features, not probabilities,
+    so the raw product collapses exponentially even on clean chains.
   * **Min rule (worst-link)**: chain_conf = min(link_confs) * decay.
     Use when steps share a common epistemic source.
-
-For most KB chains, product rule with a small floor is appropriate.
-The decay term penalises long chains -- each hop adds uncertainty
-even if each individual link is near-certain.
+  * **Geometric mean (default)**: length-normalised product. Keeps long
+    uniformly-strong chains readable, but is length-INsensitive: a
+    50-hop chain of 0.7s scores the same as one hop. A display
+    heuristic, not a probability.
+  * **Calibrated product**: maps each hop's cosine through an
+    empirically-fitted `ScoreCalibrator` (cosine -> P(correct)), then
+    multiplies. This restores real multiplicative semantics: the result
+    approximates P(every hop correct) under an independence assumption,
+    so it is length-sensitive without collapsing on clean hops (a clean
+    retrieval calibrates to ~0.99+, not 0.7). Requires
+    `PropagationConfig(calibrator=...)`; fit one with
+    `scripts/confidence_calibration_study.py`. `chain_decay` is NOT
+    applied -- the length penalty is the product itself.
 """
 from __future__ import annotations
 
@@ -23,9 +34,11 @@ from dataclasses import dataclass
 
 @dataclass
 class PropagationConfig:
-    rule: str = "geometric_mean"  # "product", "min", or "geometric_mean"
-    chain_decay: float = 0.95     # multiplied per hop
+    rule: str = "geometric_mean"  # "product", "min", "geometric_mean",
+                                  # or "calibrated_product"
+    chain_decay: float = 0.95     # multiplied per hop (not for calibrated)
     floor: float = 0.01           # never report below this
+    calibrator: object | None = None  # ScoreCalibrator-like (.prob(float))
 
     def combine(self, link_confs: list[float], chain_length: int) -> float:
         if not link_confs:
@@ -43,6 +56,18 @@ class PropagationConfig:
             for c in link_confs:
                 log_sum += math.log(max(c, 1e-9))
             base = math.exp(log_sum / len(link_confs))
+        elif self.rule == "calibrated_product":
+            if self.calibrator is None:
+                raise ValueError(
+                    "rule 'calibrated_product' needs a calibrator "
+                    "(PropagationConfig(calibrator=ScoreCalibrator...)); "
+                    "fit one with scripts/confidence_calibration_study.py")
+            base = 1.0
+            for c in link_confs:
+                base *= max(0.0, min(1.0, self.calibrator.prob(c)))
+            # No chain_decay: with calibrated per-hop probabilities the
+            # product IS the length penalty (~ P(all hops correct)).
+            return max(self.floor, base)
         else:
             raise ValueError(f"unknown rule {self.rule!r}")
         decayed = base * (self.chain_decay ** max(0, chain_length - 1))
