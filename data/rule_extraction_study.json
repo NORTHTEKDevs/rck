@@ -1,7 +1,7 @@
 {
   "kb_facts": 722,
-  "n_skills": 54,
-  "n_rules": 23,
+  "n_skills": 49,
+  "n_rules": 21,
   "rules": [
     {
       "body": [
@@ -19,7 +19,7 @@
         "continent"
       ],
       "head": "implies",
-      "support": 26,
+      "support": 28,
       "confidence": 1.0,
       "verbal": "forall X0, X1, X2. (X0 capitalof X1) and (X1 continent X2) => (X0 implies X2)"
     },
@@ -195,13 +195,13 @@
     },
     {
       "body": [
-        "capital",
-        "continent"
+        "partof",
+        "partof"
       ],
-      "head": "implies",
+      "head": "partof",
       "support": 2,
       "confidence": 1.0,
-      "verbal": "forall X0, X1, X2. (X0 capital X1) and (X1 continent X2) => (X0 implies X2)"
+      "verbal": "forall X0, X1, X2. (X0 partof X1) and (X1 partof X2) => (X0 partof X2)"
     }
   ]
 }

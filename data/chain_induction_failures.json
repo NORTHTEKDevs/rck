@@ -4,15 +4,14 @@
   "n_attempts": 370,
   "n_verified": 31,
   "precision": 0.0838,
-  "elapsed_s": 106.3,
+  "elapsed_s": 15.26,
   "counts_by_bucket": {
-    "rejected_no_relation": 269,
-    "rejected_inverse": 29,
+    "rejected_no_relation": 270,
+    "rejected_inverse": 30,
     "rejected_confidence": 26,
     "verified": 31,
-    "rejected_cycle": 2,
     "rejected_typesig": 12,
-    "rejected_same_rel": 1
+    "rejected_cycle": 1
   },
   "records": [
     {
@@ -1668,7 +1667,6 @@
       "induced_obj": "big",
       "chain_relations": [
         "population_tier",
-        "genus",
         "synonym"
       ],
       "chain_trace": [
@@ -1680,21 +1678,15 @@
         },
         {
           "s": "huge",
-          "r": "genus",
-          "o": "huge",
-          "score": 0.2065
-        },
-        {
-          "s": "huge",
           "r": "synonym",
           "o": "big",
           "score": 0.2057
         }
       ],
-      "confidence": 0.1709,
+      "confidence": 0.1722,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [population_tier -> genus -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [population_tier -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "india",
@@ -1762,7 +1754,6 @@
       "induced_obj": "big",
       "chain_relations": [
         "population_tier",
-        "genus",
         "synonym"
       ],
       "chain_trace": [
@@ -1774,21 +1765,15 @@
         },
         {
           "s": "huge",
-          "r": "genus",
-          "o": "huge",
-          "score": 0.2065
-        },
-        {
-          "s": "huge",
           "r": "synonym",
           "o": "big",
           "score": 0.2057
         }
       ],
-      "confidence": 0.1701,
+      "confidence": 0.1711,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [population_tier -> genus -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [population_tier -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "russia",
@@ -2175,7 +2160,6 @@
       "induced_obj": "big",
       "chain_relations": [
         "population_tier",
-        "genus",
         "synonym"
       ],
       "chain_trace": [
@@ -2187,21 +2171,15 @@
         },
         {
           "s": "huge",
-          "r": "genus",
-          "o": "huge",
-          "score": 0.2065
-        },
-        {
-          "s": "huge",
           "r": "synonym",
           "o": "big",
           "score": 0.2057
         }
       ],
-      "confidence": 0.1723,
+      "confidence": 0.1744,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [population_tier -> genus -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [population_tier -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "kenya",
@@ -2501,7 +2479,6 @@
       "induced_obj": "big",
       "chain_relations": [
         "population_tier",
-        "genus",
         "synonym"
       ],
       "chain_trace": [
@@ -2513,21 +2490,15 @@
         },
         {
           "s": "huge",
-          "r": "genus",
-          "o": "huge",
-          "score": 0.2065
-        },
-        {
-          "s": "huge",
           "r": "synonym",
           "o": "big",
           "score": 0.2057
         }
       ],
-      "confidence": 0.1819,
+      "confidence": 0.1891,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [population_tier -> genus -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [population_tier -> synonym]: first hop 'population_tier' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "canada",
@@ -3085,7 +3056,7 @@
       "probe_target": "city",
       "induced_subject": "poland",
       "induced_relation": "implies",
-      "induced_obj": "warsaw",
+      "induced_obj": "city",
       "chain_relations": [
         "capital",
         "isa"
@@ -3100,14 +3071,14 @@
         {
           "s": "warsaw",
           "r": "isa",
-          "o": "warsaw",
-          "score": 0.1785
+          "o": "city",
+          "score": 0.155
         }
       ],
-      "confidence": 0.1916,
+      "confidence": 0.1786,
       "verified": false,
-      "bucket": "rejected_cycle",
-      "reason": "answer 'warsaw' is an intermediate node (degenerate cycle, HRR cleanup artefact)"
+      "bucket": "rejected_no_relation",
+      "reason": "no meaningful induced relation for chain [capital -> isa]: first hop 'capital' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "poland",
@@ -3465,7 +3436,6 @@
       "induced_obj": "8100",
       "chain_relations": [
         "population_millions",
-        "cube",
         "square"
       ],
       "chain_trace": [
@@ -3477,21 +3447,15 @@
         },
         {
           "s": "90",
-          "r": "cube",
-          "o": "90",
-          "score": 0.2063
-        },
-        {
-          "s": "90",
           "r": "square",
           "o": "8100",
           "score": 0.2051
         }
       ],
-      "confidence": 0.156,
+      "confidence": 0.1503,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [population_millions -> cube -> square]: first hop 'population_millions' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [population_millions -> square]: first hop 'population_millions' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "iraq",
@@ -7988,7 +7952,7 @@
       "induced_obj": "warandpeace",
       "chain_relations": [
         "author",
-        "author"
+        "wrote"
       ],
       "chain_trace": [
         {
@@ -7999,15 +7963,15 @@
         },
         {
           "s": "tolstoy",
-          "r": "author",
+          "r": "wrote",
           "o": "warandpeace",
-          "score": 0.4047
+          "score": 0.3864
         }
       ],
-      "confidence": 0.3927,
+      "confidence": 0.3837,
       "verified": false,
-      "bucket": "rejected_same_rel",
-      "reason": "non-transitive same-relation chain on 'author' (likely HRR cleanup artefact)"
+      "bucket": "rejected_inverse",
+      "reason": "phantom shortcut: author -> wrote is an inverse pair (round-trip through hub)"
     },
     {
       "probe_start": "dostoevsky",
@@ -10235,7 +10199,6 @@
       "induced_obj": "big",
       "chain_relations": [
         "size",
-        "genus",
         "synonym"
       ],
       "chain_trace": [
@@ -10247,21 +10210,15 @@
         },
         {
           "s": "huge",
-          "r": "genus",
-          "o": "huge",
-          "score": 0.2065
-        },
-        {
-          "s": "huge",
           "r": "synonym",
           "o": "big",
           "score": 0.2057
         }
       ],
-      "confidence": 0.1779,
+      "confidence": 0.1829,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [size -> genus -> synonym]: first hop 'size' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [size -> synonym]: first hop 'size' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "mountain",
@@ -10590,7 +10547,6 @@
       "induced_obj": "2",
       "chain_relations": [
         "equals",
-        "hassubtype",
         "value"
       ],
       "chain_trace": [
@@ -10602,21 +10558,15 @@
         },
         {
           "s": "two",
-          "r": "hassubtype",
-          "o": "two",
-          "score": 0.211
-        },
-        {
-          "s": "two",
           "r": "value",
           "o": "2",
           "score": 0.1947
         }
       ],
-      "confidence": 0.1824,
+      "confidence": 0.188,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [equals -> hassubtype -> value]: first hop 'equals' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [equals -> value]: first hop 'equals' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "two_plus_two",
@@ -10713,7 +10663,6 @@
       "induced_obj": "10",
       "chain_relations": [
         "equals",
-        "isa",
         "value"
       ],
       "chain_trace": [
@@ -10725,21 +10674,15 @@
         },
         {
           "s": "ten",
-          "r": "isa",
-          "o": "ten",
-          "score": 0.4389
-        },
-        {
-          "s": "ten",
           "r": "value",
           "o": "10",
           "score": 0.181
         }
       ],
-      "confidence": 0.2263,
+      "confidence": 0.1801,
       "verified": false,
       "bucket": "rejected_no_relation",
-      "reason": "no meaningful induced relation for chain [equals -> isa -> value]: first hop 'equals' is not a lifting relation and chain is not same-relation transitive"
+      "reason": "no meaningful induced relation for chain [equals -> value]: first hop 'equals' is not a lifting relation and chain is not same-relation transitive"
     },
     {
       "probe_start": "two_times_three",

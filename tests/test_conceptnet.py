@@ -125,3 +125,38 @@ def test_import_with_provenance_tags():
     assert rec is not None
     assert "conceptnet" in rec.tags
     assert rec.source == "conceptnet5.7"
+
+
+def test_parse_real_format_json_metadata_column():
+    """Real conceptnet-assertions-5.7.0.csv rows carry the weight inside
+    a JSON metadata blob in column 5 (there is no bare weight column).
+    The loader shipped for two releases parsing column 5 as a float,
+    which silently yielded ZERO triples on the actual download."""
+    import json as _json
+
+    row = "\t".join([
+        "/a/[/r/IsA/,/c/en/dog/,/c/en/animal/]",
+        "/r/IsA",
+        "/c/en/dog",
+        "/c/en/animal/n",
+        _json.dumps({"dataset": "/d/conceptnet/4/en",
+                     "license": "cc:by/4.0",
+                     "weight": 2.828}),
+    ])
+    low = "\t".join([
+        "/a/[/r/IsA/,/c/en/cat/,/c/en/animal/]",
+        "/r/IsA",
+        "/c/en/cat",
+        "/c/en/animal",
+        _json.dumps({"dataset": "/d/wiktionary/en", "weight": 1.0}),
+    ])
+    p = tempfile.NamedTemporaryFile("w", suffix=".tsv", delete=False,
+                                    encoding="utf-8")
+    p.write(row + "\n" + low + "\n")
+    p.close()
+    try:
+        triples = list(parse_conceptnet_tsv(p.name, language="en",
+                                            min_weight=2.0))
+    finally:
+        Path(p.name).unlink()
+    assert triples == [("dog", "isa", "animal", 2.828)]

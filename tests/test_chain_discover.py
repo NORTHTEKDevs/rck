@@ -105,7 +105,14 @@ def test_discover_uses_reverse_edges_when_allowed():
     # The reverse direction MUST appear at least once: there's no forward
     # path from country to paris in the unsymmetrised KB.
     assert "reverse" in chain.directions
-    assert chain.trace[-1][2] == "paris"
+    # The reached node is the trace's subject for a reverse hop and its
+    # object for a forward hop. (Pre-v15.3 this asserted trace[-1][2] ==
+    # "paris", which only held because global cleanup surfaced a phantom
+    # forward edge out of bundle crosstalk; shard-local cleanup finds the
+    # real all-reverse path country <-isa- france <-locatedin- paris.)
+    last = chain.trace[-1]
+    reached = last[0] if chain.directions[-1] == "reverse" else last[2]
+    assert reached == "paris"
 
 
 def test_conscious_agent_discover_then_reason():

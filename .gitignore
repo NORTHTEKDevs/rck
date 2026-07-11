@@ -32,6 +32,7 @@ checkpoints/
 # artifacts. Regenerate with the matching scripts/*.py.
 data/*.jsonl
 !data/commonsense_kb.jsonl
+!data/conceptnet_scale_100k.jsonl
 !data/extended_kb.jsonl
 !data/ultra_kb.jsonl
 !data/massive_kb.jsonl

@@ -1,5 +1,66 @@
 # Changelog
 
+## 15.3.0 — 2026-07-11
+
+Scale release: 100,000 real-world facts on a laptop, single CPU
+thread, sub-millisecond queries.
+
+### Added
+- **Shard-local cleanup** (default): a shard's bundle is the sum of
+  its own fact vectors, so cleanup only needs to consider the
+  shard's own unknown-role symbols — a few dozen candidates instead
+  of the whole vocabulary. Per-query cost becomes independent of
+  vocabulary size, and cross-shard false positives strictly
+  decrease. Candidates are collected fresh from the fact log every
+  query (no cache to go stale under store/forget/merge/session
+  load). `cleanup="global"` on every query path reproduces the
+  pre-15.3 behavior exactly. `Codebook.cleanup_among()` is the new
+  primitive.
+- **Scale study** (`scripts/scale_study.py`, paper §5.6): first
+  100,000 unique English ConceptNet 5.7 assertions (min-weight 2.0,
+  19 relations, 81,086 entities; exact subset committed as
+  `data/conceptnet_scale_100k.jsonl` so the study reproduces
+  offline). Measured, single CPU thread: ingest 6.6 s
+  (~15,000 facts/s), RSS 535 MB, recall@1 100.0% on 1,000 sampled
+  stored facts, query median 0.33 ms / p95 1.03 ms, 97% two-hop
+  discovery at 30 ms median, IDK margin intact (absent p95 ~0.05 vs
+  present p5 ~0.10). Lifts the paper's honest capacity ceiling from
+  7,080 to 100,000 benchmarked facts.
+- 11 new tests (10 local-cleanup incl. staleness-under-merge/forget,
+  1 ConceptNet real-format regression).
+
+### Fixed
+- **`parse_conceptnet_tsv` never worked on the real download**: the
+  actual conceptnet-assertions-5.7.0.csv carries the weight inside
+  a JSON metadata blob in column 5; the parser read column 5 as a
+  bare float, threw on every row, and silently yielded zero
+  triples. The test fixture matched the imagined format, not the
+  real one — a real-format regression test now pins it.
+- `rss_mb` measurement on Windows (proper `K32GetProcessMemoryInfo`
+  argtypes).
+
+### Changed
+- All committed study outputs regenerated under shard-local
+  cleanup. Unchanged: depth table, analogy (93.9%), cross-shard,
+  cascade (+6), capacity cliff (~80/shard), induction headline
+  (31/31 verified, 8.4% yield; two chains moved between rejection
+  buckets). Changed: held-out calibration Brier is now 0.0038 (was
+  0.0004; the absent-probe noise floor moved) — still 150× better
+  than raw cosine; calibrated 50-hop confidence 0.985 (was 0.979);
+  rule-extraction study yields 21 rules (was 23; two
+  noise-supported rules no longer form). Discovery per-probe
+  latency gained a small constant at small vocabularies (the
+  local-cleanup tradeoff, reported in §5.5) in exchange for
+  vocabulary-independence at scale.
+- One pre-existing test (`test_discover_uses_reverse_edges_when_
+  allowed`) asserted a chain whose final hop only existed as global
+  cleanup crosstalk; under local cleanup the search finds the real
+  all-reverse path at confidence 1.0, and the test now asserts the
+  reached node direction-aware.
+
+### Tests
+746 → 757 passing (full extras).
+
 ## 15.2.0 — 2026-07-11
 
 Calibrated-confidence + honest-benchmarks release. Driven by a

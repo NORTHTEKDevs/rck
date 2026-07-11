@@ -96,6 +96,29 @@ class Codebook:
             self._refresh_cache()
         return self._matrix_cache, self._symbols_cache
 
+    def cleanup_among(self, query: np.ndarray, symbols: list,
+                      top_k: int = 1) -> list[tuple[Hashable, float]]:
+        """Cleanup restricted to an explicit candidate set.
+
+        Cost is O(len(symbols) * dim) regardless of vocabulary size --
+        this is what makes per-query cost independent of total KB
+        vocabulary when the caller knows which symbols could possibly
+        match (e.g. a shard's own fact-log symbols)."""
+        if not symbols:
+            return []
+        mat = np.stack([self.encode(s) for s in symbols]
+                       ).astype(np.float32)
+        q = query.astype(np.float32)
+        qn = float(np.linalg.norm(q))
+        if qn == 0:
+            return []
+        norms = np.linalg.norm(mat, axis=1) + 1e-12
+        scores = (mat @ q) / (norms * qn)
+        k = min(top_k, len(symbols))
+        idx = np.argpartition(-scores, k - 1)[:k]
+        idx = idx[np.argsort(-scores[idx])]
+        return [(symbols[i], float(scores[i])) for i in idx]
+
     def fast_cleanup(self, query: np.ndarray, top_k: int = 1) -> list[tuple[Hashable, float]]:
         """Vectorized cleanup using a cached normalised codebook matrix."""
         if self._cache_dirty:

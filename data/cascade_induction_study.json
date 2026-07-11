@@ -3,7 +3,7 @@
   "final_facts": 722,
   "growth": 6,
   "saturated": true,
-  "elapsed_s": 3.03432380000595,
+  "elapsed_s": 6.472175200004131,
   "rounds": [
     {
       "round": 1,
@@ -24,8 +24,8 @@
     {
       "round": 3,
       "probes_tried": 80,
-      "chains_discovered": 73,
-      "facts_induced": 71,
+      "chains_discovered": 72,
+      "facts_induced": 70,
       "facts_verified": 2,
       "facts_after": 722
     },

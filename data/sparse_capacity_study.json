@@ -35,7 +35,7 @@
       "n_facts": 10,
       "recall_at_1": 0.6,
       "correct": 6,
-      "elapsed_s": 0.004674800002248958,
+      "elapsed_s": 0.004762900003697723,
       "memory_bytes": 16384,
       "codebook_atoms": 24
     },
@@ -45,7 +45,7 @@
       "n_facts": 10,
       "recall_at_1": 1.0,
       "correct": 10,
-      "elapsed_s": 0.0056087999837473035,
+      "elapsed_s": 0.0055831000208854675,
       "memory_bytes": 16384,
       "codebook_atoms": 24
     },
@@ -55,7 +55,7 @@
       "n_facts": 10,
       "recall_at_1": 0.9,
       "correct": 9,
-      "elapsed_s": 0.0054419999942183495,
+      "elapsed_s": 0.0056016999878920615,
       "memory_bytes": 32768,
       "codebook_atoms": 24
     },
@@ -65,7 +65,7 @@
       "n_facts": 20,
       "recall_at_1": 0.95,
       "correct": 19,
-      "elapsed_s": 0.02841430000262335,
+      "elapsed_s": 0.02721430000383407,
       "memory_bytes": 32768,
       "codebook_atoms": 44
     },
@@ -75,7 +75,7 @@
       "n_facts": 20,
       "recall_at_1": 0.95,
       "correct": 19,
-      "elapsed_s": 0.027581000002101064,
+      "elapsed_s": 0.027173499984201044,
       "memory_bytes": 65536,
       "codebook_atoms": 44
     }

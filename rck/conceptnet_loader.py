@@ -21,6 +21,7 @@ synthetic ConceptNet-shaped fixture.
 from __future__ import annotations
 
 import csv
+import json
 import re
 import time
 from collections.abc import Iterable
@@ -109,14 +110,22 @@ def parse_conceptnet_tsv(
                 break
             if len(row) < 5:
                 continue
-            _uri, rel_uri, start_uri, end_uri, weight_str = row[:5]
+            _uri, rel_uri, start_uri, end_uri, meta = row[:5]
             mapped_rel = map_relation(rel_uri)
             if mapped_rel is None:
                 continue
+            # Column 5 of the real conceptnet-assertions-5.7.0.csv is a
+            # JSON metadata blob with the weight inside it (there is no
+            # bare numeric weight column). Accept a bare float too, for
+            # simplified fixtures.
             try:
-                weight = float(weight_str)
+                weight = float(meta)
             except ValueError:
-                continue
+                try:
+                    weight = float(json.loads(meta).get("weight", 1.0))
+                except (ValueError, KeyError, TypeError,
+                        json.JSONDecodeError):
+                    continue
             if weight < min_weight:
                 continue
             start = parse_uri(start_uri)

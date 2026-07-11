@@ -3,8 +3,10 @@
 > **An auditable, hallucination-free alternative to LLMs.**
 > RCK reasons in explicit chains, learns by deriving (not retraining),
 > runs on CPU, and shows you the receipts for every answer.
+> 100,000 real-world facts in 535 MB: sub-millisecond queries,
+> 100.0% recall@1, one CPU thread.
 
-[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-746%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.2.0-blue)](CHANGELOG.md)
+[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-757%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.3.0-blue)](CHANGELOG.md)
 
 ---
 
@@ -43,8 +45,8 @@ The result is an agent that:
 | Costs ~$0 to operate | ✗ | ✓ |
 | Reasons 30+ hops deep | ✗ | ✓ |
 
-It's small (126 modules, ~18.7k lines of plain numpy Python). It's
-testable (**746 passing tests**). It's research-grade but
+It's small (126 modules, ~18.8k lines of plain numpy Python). It's
+testable (**757 passing tests**). It's research-grade but
 production-shaped.
 
 ---
@@ -72,7 +74,7 @@ pytest -q
 Optional extras: `[mcp]` for the MCP server, `[polisher]` for the
 PyTorch surface-form polisher. On a base install their test modules
 skip cleanly; install `".[dev,mcp,polisher]"` to run the full
-746-test suite.
+757-test suite.
 
 ---
 
@@ -119,9 +121,13 @@ capability on a real 716-fact commonsense KB.
   confidence to 30+ hops, and the v15.2 `calibrated_product` rule
   reports honest probabilities (a clean 50-hop chain ≈ 0.98,
   decaying with length).
-- **Chain discovery** via BFS over the HRR graph (~12ms on the
-  bundled 716-fact KB; a per-shard live-relation index cuts 31-67%
-  of queries, 1.5-3.0× faster at scale).
+- **Chain discovery** via BFS over the HRR graph (~21ms on the
+  bundled 716-fact KB, 30ms median on ConceptNet-100k; a per-shard
+  live-relation index cuts 31-66% of queries, 1.4-2.8× faster).
+- **Scale** (v15.3): 100,000 real ConceptNet facts — 6.6s ingest,
+  100.0% recall@1, 0.33ms median query, 535 MB, single thread.
+  Shard-local cleanup makes per-query cost independent of
+  vocabulary size (paper §4.5, §5.6).
 - **Fact induction**: confident chains become new direct edges behind
   a six-gate filter stack — 31/31 manually-validated inductions on
   the 400-probe study (the earlier v15.0 "~87% precision" framing
@@ -159,7 +165,7 @@ capability on a real 716-fact commonsense KB.
   into per-relation accuracy stats.
 - **Score calibration** (v15.2): isotonic cosine→P(correct) mapping
   (`rck.score_calibration`) — raw cosines are similarity features,
-  not probabilities (held-out Brier 0.568 raw vs 0.0004 calibrated).
+  not probabilities (held-out Brier 0.568 raw vs 0.0038 calibrated).
 - **Chain cache** (LRU, versioned, auto-invalidated on KB writes).
 - **Skill clustering** + **promotion to rules**.
 - **Episodic consolidation** (a "dreaming" pass that pre-warms stable
@@ -224,17 +230,24 @@ machine-dependent:
 | Operation | Time |
 |---|---|
 | Direct retrieval | <1 ms |
-| 2-hop chain discovery | ~12 ms |
+| 2-hop chain discovery | ~21 ms |
 | 50-hop chain walk | ~25 ms |
 | Cascading induction (4 rounds) | ~3 s |
 | `agent.maintain()` full pass | ~5 s |
 
-At the largest bundled configuration (7,080 facts, 76 relations,
-128 shards) discovery averages ~390 ms/probe with the live-relation
-index (3.0× faster than without; 67% of HRR queries skipped).
-Memory: <50 MB at 1k facts. Designed to scale further via
-auto-sharding (see `rck.shard_sizing`); 7,080 facts is the largest
-publicly benchmarked configuration.
+At scale (ConceptNet English, single CPU thread, auto-sharded —
+`scripts/scale_study.py`, subset committed in `data/`):
+
+| Facts | Ingest | RSS | recall@1 | Query median | 2-hop discovery |
+|---:|---:|---:|---:|---:|---:|
+| 10,000 | 0.7 s | 135 MB | 99.9% | 0.22 ms | 83% @ 5 ms |
+| 30,000 | 2.4 s | 253 MB | 100.0% | 0.35 ms | 90% @ 18 ms |
+| 100,000 | 6.6 s | 535 MB | 100.0% | 0.33 ms | 97% @ 30 ms |
+
+Query cost is independent of vocabulary size (shard-local cleanup,
+v15.3): 100,000 facts answers as fast as 700. 100,000 facts is the
+largest publicly benchmarked configuration; millions should follow
+the same shard arithmetic but are unverified.
 
 ---
 
@@ -282,7 +295,7 @@ docs/
   guide/               # tutorials (start here)
   design/              # architectural design docs
 examples/              # runnable demos
-tests/                 # 746 tests
+tests/                 # 757 tests
 scripts/               # benchmark + ingestion scripts
 ```
 
@@ -290,7 +303,7 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.2.0** — current. 746 passing tests. API stable.
+* **v15.2.0** — current. 757 passing tests. API stable.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
 * MIT licensed.
 
@@ -305,7 +318,7 @@ If you use RCK in research, please cite:
   author  = {Baer, Kristian},
   title   = {RCK: Resonant Cognitive Kernel},
   year    = {2026},
-  version = {15.2.0},
+  version = {15.3.0},
   url     = {https://github.com/NORTHTEKDevs/rck}
 }
 ```

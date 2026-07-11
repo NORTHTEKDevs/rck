@@ -99,6 +99,7 @@ class RelationalMemory:
         known: dict[str, Hashable],
         unknown_role: str,
         top_k: int = 3,
+        cleanup: str = "local",
     ) -> list[tuple[Hashable, float]]:
         """Given some role->symbol bindings, recover the value of the
         unknown role by unbinding the matching fact.
@@ -106,15 +107,38 @@ class RelationalMemory:
         key = prod over known: bind(role_i, codebook[sym_i])   * role[unknown]
         probe = memory * key
         cleanup(probe)
+
+        cleanup="local" (default, v15.3) restricts cleanup to the
+        symbols this memory has actually stored under `unknown_role`.
+        The bundle is the sum of this memory's own fact vectors, so
+        nothing else can be unbound from it -- restricting the
+        candidate set makes per-query cost independent of vocabulary
+        size and strictly reduces false positives from other shards'
+        symbols. Candidates are collected fresh from the fact log on
+        every query, so no cache can go stale under store / forget /
+        merge / session-load. cleanup="global" reproduces the pre-15.3
+        behavior (cleanup against the entire codebook).
         """
         if unknown_role in known:
             raise ValueError("unknown_role cannot also be in known")
+        if cleanup not in ("local", "global"):
+            raise ValueError(
+                f"cleanup must be 'local' or 'global', got {cleanup!r}")
         key = np.ones(self.dim, dtype=np.int8)
         for role, sym in known.items():
             sym_hv = codebook.encode(sym)
             key = bind(key, bind(self.role(role), sym_hv))
         key = bind(key, self.role(unknown_role))
         probe = self._memory * key.astype(np.float32)
+        if cleanup == "local":
+            seen: set = set()
+            candidates = []
+            for f in self._facts:
+                v = f.get(unknown_role)
+                if v is not None and v not in seen:
+                    seen.add(v)
+                    candidates.append(v)
+            return codebook.cleanup_among(probe, candidates, top_k=top_k)
         return codebook.fast_cleanup(probe, top_k=top_k)
 
     def answer(

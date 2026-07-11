@@ -13,8 +13,8 @@
       "n_shards": 16,
       "n_probes": 30,
       "indexed": {
-        "avg_ms": 12.040273329087844,
-        "p95_ms": 41.61509500845568,
+        "avg_ms": 20.926746665888157,
+        "p95_ms": 65.97153997281566,
         "discovered": 29,
         "discovery_rate": 0.9666666666666667,
         "depth_distribution": {
@@ -28,11 +28,11 @@
           "locatedin": 6,
           "has": 5
         },
-        "hrr_queries_total": 2196
+        "hrr_queries_total": 2164
       },
       "no_index": {
-        "avg_ms": 17.930633332192276,
-        "p95_ms": 50.699804998293985,
+        "avg_ms": 30.09329000681949,
+        "p95_ms": 90.38403500744607,
         "discovered": 29,
         "discovery_rate": 0.9666666666666667,
         "depth_distribution": {
@@ -46,10 +46,10 @@
           "locatedin": 6,
           "has": 5
         },
-        "hrr_queries_total": 3186
+        "hrr_queries_total": 3132
       },
-      "speedup": 1.4892214522135503,
-      "hrr_query_cut": 0.3107344632768362
+      "speedup": 1.4380300238389823,
+      "hrr_query_cut": 0.3090676883780332
     },
     {
       "tier": "+extended",
@@ -62,8 +62,8 @@
       "n_shards": 32,
       "n_probes": 30,
       "indexed": {
-        "avg_ms": 14.22351333409703,
-        "p95_ms": 46.70865501393564,
+        "avg_ms": 20.655210001859814,
+        "p95_ms": 69.93404995300807,
         "discovered": 27,
         "discovery_rate": 0.9,
         "depth_distribution": {
@@ -77,11 +77,11 @@
           "usedfor": 6,
           "has": 4
         },
-        "hrr_queries_total": 2329
+        "hrr_queries_total": 2255
       },
       "no_index": {
-        "avg_ms": 29.732359998160973,
-        "p95_ms": 97.4521750031272,
+        "avg_ms": 41.34509333525784,
+        "p95_ms": 136.12603002402466,
         "discovered": 27,
         "discovery_rate": 0.9,
         "depth_distribution": {
@@ -95,10 +95,10 @@
           "usedfor": 6,
           "has": 4
         },
-        "hrr_queries_total": 4758
+        "hrr_queries_total": 4602
       },
-      "speedup": 2.0903667961477335,
-      "hrr_query_cut": 0.510508617065994
+      "speedup": 2.0016786724286555,
+      "hrr_query_cut": 0.5099956540634507
     },
     {
       "tier": "+ultra",
@@ -112,45 +112,45 @@
       "n_shards": 64,
       "n_probes": 30,
       "indexed": {
-        "avg_ms": 157.15583333027703,
-        "p95_ms": 479.4842899980722,
+        "avg_ms": 268.1446666577055,
+        "p95_ms": 677.876019992982,
         "discovered": 27,
         "discovery_rate": 0.9,
         "depth_distribution": {
-          "2": 8,
-          "3": 2,
-          "4": 17
+          "2": 10,
+          "4": 9,
+          "3": 8
         },
         "top_relations": {
-          "hassubtype": 32,
+          "hassubtype": 23,
           "order": 12,
           "size": 9,
           "family": 8,
           "synonym": 7
         },
-        "hrr_queries_total": 20617
+        "hrr_queries_total": 17560
       },
       "no_index": {
-        "avg_ms": 349.3849466671236,
-        "p95_ms": 1130.5873349992908,
+        "avg_ms": 605.9528666664846,
+        "p95_ms": 1556.7636749736266,
         "discovered": 27,
         "discovery_rate": 0.9,
         "depth_distribution": {
-          "2": 8,
-          "3": 2,
-          "4": 17
+          "2": 10,
+          "4": 9,
+          "3": 8
         },
         "top_relations": {
-          "hassubtype": 32,
+          "hassubtype": 23,
           "order": 12,
           "size": 9,
           "family": 8,
           "synonym": 7
         },
-        "hrr_queries_total": 50655
+        "hrr_queries_total": 43450
       },
-      "speedup": 2.2231751711873136,
-      "hrr_query_cut": 0.5929918073240549
+      "speedup": 2.259798317898305,
+      "hrr_query_cut": 0.5958573072497123
     },
     {
       "tier": "+massive",
@@ -165,8 +165,8 @@
       "n_shards": 128,
       "n_probes": 30,
       "indexed": {
-        "avg_ms": 389.0522833360592,
-        "p95_ms": 942.1596950036474,
+        "avg_ms": 561.3584466666604,
+        "p95_ms": 1377.7014499995857,
         "discovered": 22,
         "discovery_rate": 0.7333333333333333,
         "depth_distribution": {
@@ -181,11 +181,11 @@
           "hassubtype": 6,
           "has": 6
         },
-        "hrr_queries_total": 45544
+        "hrr_queries_total": 39912
       },
       "no_index": {
-        "avg_ms": 1183.3719466657687,
-        "p95_ms": 2900.9162300106254,
+        "avg_ms": 1569.7534833316847,
+        "p95_ms": 3786.0597399936523,
         "discovered": 22,
         "discovery_rate": 0.7333333333333333,
         "depth_distribution": {
@@ -200,10 +200,10 @@
           "hassubtype": 6,
           "has": 6
         },
-        "hrr_queries_total": 135954
+        "hrr_queries_total": 119022
       },
-      "speedup": 3.0416784513344823,
-      "hrr_query_cut": 0.6650043397031349
+      "speedup": 2.7963478462876292,
+      "hrr_query_cut": 0.6646670363462217
     }
   ]
 }

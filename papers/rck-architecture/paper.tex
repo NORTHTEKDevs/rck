@@ -90,16 +90,24 @@ We report empirical findings from the implementation:
       probability: on a held-out benchmark, treating cosines as
       probabilities gives a Brier score of 0.568, while an isotonic
       (PAV) calibration fitted on 4{,}862 labeled retrievals achieves
-      0.0004. Multiplying \emph{calibrated} per-hop probabilities
-      yields chain confidence approximating
+      0.0038---150$\times$ lower. Multiplying \emph{calibrated}
+      per-hop probabilities yields chain confidence approximating
       $P(\text{every hop correct})$: a clean 50-hop chain reports
-      0.979---high, but honestly decaying with length
+      0.985---high, but honestly decaying with length
       (\S\ref{sec:calibration}).
-\item A per-shard \textbf{live-relation index} cuts 31--67\% of HRR
-      queries during BFS chain discovery, for 1.5--3.0$\times$
+\item A per-shard \textbf{live-relation index} cuts 31--66\% of HRR
+      queries during BFS chain discovery, for 1.4--2.8$\times$
       wall-clock speedups with identical discovered chains,
       confirming that relation-count rather than fact-count dominates
       discovery cost (\S\ref{sec:discovery}).
+\item \textbf{The substrate holds 100{,}000 real-world facts on a
+      laptop.} On the first 100k English ConceptNet assertions
+      (81{,}086 entities): ingest in 6.6 seconds, 100.0\% recall@1
+      on sampled stored facts, 0.33\,ms median query, 535\,MB
+      resident, 97\% two-hop discovery at 30\,ms median---single CPU
+      thread. The enabler is shard-local cleanup: a shard's bundle
+      can only contain what that shard stored, so per-query cost is
+      independent of vocabulary size (\S\ref{sec:scale}).
 \item A confidence-weighted analogy solver improves accuracy from
       88.7\% to 93.9\% on a 115-probe commonsense benchmark, while
       surfacing calibrated probabilities for each candidate.
@@ -108,8 +116,8 @@ We report empirical findings from the implementation:
       HRR and is not a drop-in substrate replacement.
 \end{itemize}
 
-We release the full implementation (\textasciitilde{}18,700 lines of
-Python, 746 tests) under the MIT license at
+We release the full implementation (\textasciitilde{}18,800 lines of
+Python, 757 tests) under the MIT license at
 \url{https://github.com/NORTHTEKDevs/rck}. Our aim is not to argue
 that RCK replaces LLMs but to show that a coherent alternative
 architecture---one that is auditable, editable, and structurally
@@ -144,7 +152,7 @@ up as confident sentences.
 This paper describes that system. RCK is a working, tested,
 publicly-available implementation. It is not a research prototype; it
 ships as a Python package and runs on a laptop. It is also not
-finished---we treat the release described here (v15.2) as a stable
+finished---we treat the release described here (v15.3) as a stable
 foundation rather than a final form.
 
 \subsection{What is new here}
@@ -181,7 +189,7 @@ and the engineering that makes it run on commodity hardware:
       asserted negative facts, gated chain induction, symbolic rule
       extraction, counterfactuals, and alignment-free federated
       merge, behind $\sim$50 operations on one
-      \texttt{ConsciousAgent} object, with 746 passing tests.
+      \texttt{ConsciousAgent} object, with 757 passing tests.
 \item \textbf{An empirically-derived six-gate filter stack}
       (inverse-pair, non-transitive same-relation, intermediate-cycle,
       no-meaningful-relation, type-signature mismatch, plus a
@@ -195,10 +203,15 @@ and the engineering that makes it run on commodity hardware:
       knowledge) cosine$\to$P(correct) calibration for chain
       reasoning on an HRR substrate, which both quantifies how
       miscalibrated raw cosines are (held-out Brier 0.568 $\to$
-      0.0004) and restores honest multiplicative semantics to
+      0.0038) and restores honest multiplicative semantics to
       multi-hop confidence (\S\ref{sec:calibration}).
 \item \textbf{A negative result} on sparse HRR substrates that may
       save other implementers time.
+\item \textbf{A scaling result}: shard-local cleanup makes per-query
+      cost independent of vocabulary size, taking the same substrate
+      from a 7{,}080-fact ceiling to 100{,}000 real ConceptNet facts
+      at 100.0\% recall@1 and sub-millisecond queries on one CPU
+      thread (\S\ref{sec:scale}).
 \item \textbf{A practical artifact}: a system someone can install
       from the public repository today, run on a laptop, and
       integrate into a real product via the bundled MCP server.
@@ -634,6 +647,36 @@ answer) pairs, normalized via softmax with a tunable temperature,
 substantially improves both the chosen answer's accuracy and the
 calibration of the reported confidence (\S\ref{sec:findings}).
 
+\subsection{Shard-local cleanup (v15.3)}
+\label{sec:localcleanup}
+
+Through v15.2, every retrieval cleaned up against the entire
+codebook---one matmul over all symbols the agent had ever seen. That
+is $O(\text{vocabulary})$ work per query and a vocabulary-sized
+matrix in memory, which is what actually capped the benchmarks at a
+few thousand facts.
+
+The fix follows from an invariant the substrate already guarantees:
+a shard's bundle is the sum of that shard's own fact vectors, so the
+only signal that can be unbound from it is a symbol stored in that
+shard, in that role. Cleanup therefore only needs to consider the
+shard's own unknown-role symbols---a few dozen candidates instead of
+the whole vocabulary. Candidates are collected fresh from the
+shard's fact log on every query, so there is no cache to go stale
+under store, forget, federated merge, or session load.
+
+Three consequences, all measured. Per-query cost becomes independent
+of vocabulary size (\S\ref{sec:scale}: 0.33\,ms median at 100{,}000
+facts). Cross-shard false positives strictly decrease---one of our
+own regression tests had encoded a phantom forward edge that global
+cleanup surfaced from bundle crosstalk; under local cleanup the
+search finds the real path instead, at higher confidence. And there
+is a small constant cost: at small vocabularies the per-query
+candidate collection is slightly slower than the old cached global
+matmul (\S\ref{sec:discovery}'s table vs.\ its v15.2 predecessor).
+\texttt{cleanup="global"} remains available on every query path for
+exact pre-v15.3 behavior.
+
 \section{Empirical findings}
 \label{sec:findings}
 
@@ -692,11 +735,11 @@ Chains discovered + walked & 381 & --- \\
 Induction attempts (chain had answer) & 370 & 100.0\% \\
 \midrule
 Rejected: confidence floor & 26 & 7.0\% \\
-Rejected: inverse-pair gate & 29 & 7.8\% \\
-Rejected: same-relation non-transitive & 1 & 0.3\% \\
-Rejected: degenerate cycle & 2 & 0.5\% \\
+Rejected: inverse-pair gate & 30 & 8.1\% \\
+Rejected: same-relation non-transitive & 0 & 0.0\% \\
+Rejected: degenerate cycle & 1 & 0.3\% \\
 Rejected: type-signature mismatch & 12 & 3.2\% \\
-Rejected: no meaningful relation can be ascribed & 269 & 72.7\% \\
+Rejected: no meaningful relation can be ascribed & 270 & 73.0\% \\
 \midrule
 \textbf{Verified and stored} & \textbf{31} & \textbf{8.4\%} \\
 Self-verify (HRR roundtrip) failures & 0 & 0.0\% \\
@@ -745,7 +788,7 @@ Geometric mean preserves ``weak''-or-better confidence to depth 50+
 ``weak''), and the \texttt{min} rule (worst-link) gives similar
 results. Under the calibrated product rule of
 \S\ref{sec:calibration}, the same clean chains report 1.000 at depth
-1 down to 0.979 at depth 50---the honest probability that all fifty
+1 down to 0.985 at depth 50---the honest probability that all fifty
 calibrated hops are simultaneously correct, decreasing with every
 hop added.
 
@@ -772,8 +815,8 @@ with Beta(1,1)-smoothed block probabilities on the pooled 4{,}862
 samples, and evaluate on a held-out set the calibrator never saw:
 the real commonsense KB (705 samples).
 
-Held-out Brier scores: \textbf{0.5683} treating the raw cosine as a
-probability, \textbf{0.0004} calibrated. The raw-cosine column
+Held-out Brier scores: \textbf{0.5681} treating the raw cosine as a
+probability, \textbf{0.0038} calibrated---150$\times$ lower. The raw-cosine column
 quantifies \S4.2's claim---cosines are drastically miscalibrated as
 probabilities (correct answers on this KB cluster near 0.10--0.24
 cosine and are essentially always right; treating 0.15 as ``15\%
@@ -788,7 +831,7 @@ Two design details matter. \emph{Smoothing:} each isotonic block
 reports $(\text{successes} + 1)/(n + 2)$---the Beta(1,1) posterior
 mean---so no block ever claims probability exactly 1.0, which is
 what keeps 50-hop calibrated products below certainty
-($0.9997^{50} \approx 0.979$) instead of saturating.
+($\approx 0.985$ at depth 50) instead of saturating.
 \emph{Independence caveat:} the product reads as
 $P(\text{all hops correct})$ only if hop errors are independent;
 correlated failures (e.g.\ one saturated shard serving several hops)
@@ -856,26 +899,93 @@ repeats; warm-started; single thread:
 \toprule
 KB tier & Facts & Rels & Shards & Rate & Avg ms & Queries cut & Speedup \\
 \midrule
-commonsense & 716 & 21 & 16 & 97\% & 12.0 & 31\% & 1.5$\times$ \\
-+extended & 1{,}495 & 33 & 32 & 90\% & 14.2 & 51\% & 2.1$\times$ \\
-+ultra & 3{,}666 & 49 & 64 & 90\% & 157.2 & 59\% & 2.2$\times$ \\
-+massive & 7{,}080 & 76 & 128 & 73\% & 389.1 & 67\% & 3.0$\times$ \\
+commonsense & 716 & 21 & 16 & 97\% & 20.9 & 31\% & 1.4$\times$ \\
++extended & 1{,}495 & 33 & 32 & 90\% & 20.7 & 51\% & 2.0$\times$ \\
++ultra & 3{,}666 & 49 & 64 & 90\% & 268.1 & 60\% & 2.3$\times$ \\
++massive & 7{,}080 & 76 & 128 & 73\% & 561.4 & 66\% & 2.8$\times$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Three honest readings. \emph{The diagnosis was right:} the query cut
-and the speedup both grow with relation count (31\% $\to$ 67\%,
-1.5$\times$ $\to$ 3.0$\times$), confirming relation-count scaling
-dominates. \emph{Absolute latency is machine- and load-dependent:}
-wall-clock on this benchmark varies up to $\sim$4$\times$
-run-to-run under OS scheduling noise, which is why the study reports
-per-probe medians and machine-independent query counts alongside.
-\emph{Discovery rate degrades at scale:} 97\% on the smallest tier
-down to 73\% at 7{,}080 facts / 76 relations with beam width 3 and
-depth $\leq 4$---deeper beams recover some of this at proportional
-cost. We report the degradation rather than tuning the benchmark
-around it.
+Four honest readings. \emph{The diagnosis was right:} the query cut
+and the speedup both grow with relation count (31\% $\to$ 66\%,
+1.4$\times$ $\to$ 2.8$\times$), confirming relation-count scaling
+dominates---and the 100{,}000-fact ConceptNet KB of
+\S\ref{sec:scale}, with only 19 relations, discovers at a median of
+31\,ms, faster than the 76-relation 7{,}080-fact tier here.
+\emph{Absolute latency is machine- and load-dependent:} wall-clock
+on this benchmark varies up to $\sim$4$\times$ run-to-run under OS
+scheduling noise, which is why the study reports per-probe medians
+and machine-independent query counts alongside. \emph{Shard-local
+cleanup trades a constant for scalability:} per-query cost gained a
+small constant overhead (candidate collection from the fact log)
+that global cached cleanup does not pay at small
+vocabularies---visible in this table versus the v15.2
+numbers---in exchange for per-query cost that no longer grows with
+vocabulary at all (\S\ref{sec:scale}). \emph{Discovery rate degrades
+on relation-heavy KBs:} 97\% on the smallest tier down to 73\% at
+7{,}080 facts / 76 relations with beam width 3 and depth $\leq
+4$---deeper beams recover some of this at proportional cost. We
+report the degradation rather than tuning the benchmark around it.
+
+\subsection{Scale: 100{,}000 real-world facts on a laptop}
+\label{sec:scale}
+
+Everything above runs on KBs of a few thousand facts, and ``tested
+to $\sim$7{,}000 facts'' was this paper's honest ceiling through
+v15.2. This study measures the substrate at 10--100$\times$ that,
+on real-world knowledge: the first 100{,}000 unique English
+ConceptNet 5.7 assertions at min-weight 2.0 (19 relations, 81{,}086
+entities). The exact subset ships in the repository
+(\texttt{data/conceptnet\_scale\_100k.jsonl}), so the study
+reproduces offline; regenerating the subset from the public
+ConceptNet download is two scripted steps.
+
+The enabler is shard-local cleanup (\S\ref{sec:localcleanup}):
+per-query cost depends on shard fill, not vocabulary, so queries
+cost the same at 100{,}000 facts as at 700. (Global cleanup at this
+scale would also mean materializing a $\sim$1.3\,GB codebook matrix;
+the local path never builds it.)
+
+Per tier---1{,}000 sampled stored facts for recall (valid-object-set
+labeling; ConceptNet is heavily multi-valued), 300 never-stored
+probes for IDK safety, 30 two-hop probes for discovery, single
+process, $D=4096$, auto-sharded:
+
+\begin{center}
+\small
+\begin{tabular}{rrrrrrrrr}
+\toprule
+Facts & Shards & Ingest & RSS & r@1 & r@3 & Q med & Q p95 & Disc \\
+\midrule
+10{,}000 & 256 & 0.7\,s & 135\,MB & 99.9\% & 100.0\% & 0.22\,ms & 0.81\,ms & 83\% @ 5\,ms \\
+30{,}000 & 512 & 2.4\,s & 253\,MB & 100.0\% & 100.0\% & 0.35\,ms & 0.94\,ms & 90\% @ 18\,ms \\
+100{,}000 & 2{,}048 & 6.6\,s & 535\,MB & 100.0\% & 100.0\% & 0.33\,ms & 1.03\,ms & 97\% @ 30\,ms \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Five readings. \emph{Recall holds at 100\%} because auto-sharding
+keeps per-shard fill ($\sim$49 at the top tier) under the measured
+$\sim$80-fact cliff---the sharding thesis verified at 100{,}000 real
+facts rather than extrapolated. \emph{Query latency is flat}
+(0.2--0.35\,ms median) across a 10$\times$ size range:
+vocabulary-independence in practice, on a single CPU thread with no
+index structures beyond the shards themselves. \emph{``I don't
+know'' survives scale:} never-stored probes score at most $\sim$0.05
+at p95 while stored facts sit above $\sim$0.10 at p5, at every
+tier---the IDK margin does not erode as the KB grows.
+\emph{Discovery gets better, not worse:} 83\% $\to$ 97\% as the
+graph densifies (more alternative two-hop paths), at 5--30\,ms
+medians---consistent with \S\ref{sec:discovery}'s finding that
+relation count (19 here), not fact count, dominates BFS cost.
+\emph{Ingest is O(1) per fact in practice:} $\sim$13{,}000--15{,}000
+facts per second, so the full 100k KB builds in under seven seconds.
+
+The honest bound: 100{,}000 facts is the largest configuration we
+have benchmarked. Millions should follow the same shard arithmetic,
+but that remains unverified---the claim stops where the measurements
+stop.
 
 \subsection{Analogical reasoning accuracy}
 
@@ -916,10 +1026,11 @@ is dramatically more productive because rules are reusable: in the
 full-stack demo, extracting rules from the skill library and
 applying them forward grows the same KB 718 $\to$ 843 ($+125$)
 (\texttt{examples/v14\_full\_stack\_demo.py}). A dedicated
-extraction study against the post-cascade 722-fact KB yields 23
+extraction study against the post-cascade 722-fact KB yields 21
 rules at min-support 2, min-confidence 0.5
 (\texttt{scripts/rule\_extraction\_study.py} $\to$
-\texttt{data/rule\_extraction\_study.json}).
+\texttt{data/rule\_extraction\_study.json}; two noise-supported
+rules from the v15.2 run no longer form under shard-local cleanup).
 
 \subsection{Reproducibility}
 
@@ -949,13 +1060,18 @@ Result & Script & Data file \\
 \S 5.5 discovery + index &
 \texttt{scripts/chain\_discovery\_study.py} &
 \texttt{chain\_discovery\_study.json} \\
-\S 5.6 analogy &
+\S 5.6 scale (ConceptNet 100k) &
+\texttt{scripts/scale\_study.py}
+(subset via \texttt{scripts/import\_conceptnet.py}) &
+\texttt{scale\_study.json},
+\texttt{conceptnet\_scale\_100k.jsonl} \\
+\S 5.7 analogy &
 \texttt{scripts/analogy\_study.py} &
 \texttt{analogy\_study.json} \\
-\S 5.7 cross-shard &
+\S 5.8 cross-shard &
 \texttt{scripts/cross\_shard\_chain\_study.py} &
 \texttt{cross\_shard\_chain\_study.json} \\
-\S 5.8 cascade induction &
+\S 5.9 cascade induction &
 \texttt{scripts/cascade\_induction\_study.py};
 rule extraction via \texttt{scripts/rule\_extraction\_study.py};
 rule cascade via \texttt{examples/v14\_full\_stack\_demo.py} &
@@ -972,8 +1088,8 @@ CPython 3.14), single CPU thread, default agent settings
 \texttt{pyproject.toml}. Random seeds are set at agent construction
 (\texttt{seed=0} throughout), so accuracy-type numbers reproduce
 exactly; latency-type numbers vary by machine. The test suite
-(\texttt{pytest -q}) is \textbf{746/746} passing on the same
-environment. The v15.2.0 tag on GitHub marks the exact source state
+(\texttt{pytest -q}) is \textbf{757/757} passing on the same
+environment. The v15.3.0 tag on GitHub marks the exact source state
 of this revision.
 
 \section{Comparison with related work}
@@ -1130,20 +1246,22 @@ or ambiguous text. Scaling RCK to Wikipedia-grade knowledge bases
 requires a better triple extractor, possibly itself an LLM run as a
 one-time ingestion pass.
 
-\paragraph{Capacity at scale.} The largest real-KB configuration
-benchmarked in this paper is 7{,}080 facts
-(\S\ref{sec:discovery}); calibration training sampled synthetic
-loads to 12{,}000 facts, and the per-shard recall cliff
-($\sim$80 facts/shard at $D=4096$) is measured. Scaling to millions
-of facts should work via auto-sharding
-(\texttt{rck.shard\_sizing}), but this has not been benchmarked
-publicly.
+\paragraph{Capacity at scale.} The largest configuration
+benchmarked in this paper is 100{,}000 real ConceptNet facts at
+100.0\% recall@1 and sub-millisecond queries (\S\ref{sec:scale}).
+The per-shard recall cliff ($\sim$80 facts/shard at $D=4096$) is
+measured, and auto-sharding keeps fill under it. Millions of facts
+should follow the same shard arithmetic---more shards, same
+per-shard physics---but have not been benchmarked; the claim stops
+where the measurements stop.
 
-\paragraph{Discovery completeness at scale.} BFS discovery hit-rate
-degrades from 97\% (716 facts) to 73\% (7{,}080 facts, 76
-relations) at the default beam width and depth
-(\S\ref{sec:discovery}). Wider beams recover coverage at linear
-cost; we have not yet characterized the frontier.
+\paragraph{Discovery completeness on relation-heavy KBs.} BFS
+discovery hit-rate degrades from 97\% (716 facts, 21 relations) to
+73\% (7{,}080 facts, 76 relations) at the default beam width and
+depth (\S\ref{sec:discovery}); on the 19-relation ConceptNet KB it
+holds 97\% at 100{,}000 facts (\S\ref{sec:scale}). Relation count,
+not fact count, is the pressure. Wider beams recover coverage at
+linear cost; we have not yet characterized the frontier.
 
 \paragraph{Confidence semantics.} The calibrated product
 (\S\ref{sec:calibration}) assumes hop independence; correlated hop
@@ -1268,7 +1386,7 @@ without ceding control over their own data.
 \subsection{Research substrate}
 
 The implementation is small enough to fork ($\sim$18{,}700 lines of
-plain numpy Python, 746 tests, no GPU). Researchers interested in
+plain numpy Python, 757 tests, no GPU). Researchers interested in
 VSA-based reasoning, neuro-symbolic integration, calibration of
 vector-memory retrieval, or empirical study of chain-based induction
 can build directly on it. The filter stack, the propagation rules,

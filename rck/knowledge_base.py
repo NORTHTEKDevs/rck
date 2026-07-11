@@ -143,7 +143,8 @@ class ShardedKnowledgeBase:
 
     def query(self, known: dict[str, Hashable], unknown_role: str,
               top_k: int = 3,
-              shard_subset: Iterable[int] | None = None
+              shard_subset: Iterable[int] | None = None,
+              cleanup: str = "local"
               ) -> list[tuple[Hashable, float]]:
         """Retrieve from the shard determined by (S, R) if both are known,
         otherwise broadcast across all shards and merge with cross-shard
@@ -166,10 +167,13 @@ class ShardedKnowledgeBase:
             idx = _shard_index(s, r, self.n_shards)
             if shard_subset is not None and idx not in shard_subset:
                 return []
-            return self._shards[idx].query(self.codebook, known, unknown_role, top_k=top_k)
+            return self._shards[idx].query(self.codebook, known,
+                                           unknown_role, top_k=top_k,
+                                           cleanup=cleanup)
         # Fan-out: ask every shard, then merge with evidence pooling.
         return self._fanout_query(known, unknown_role, top_k=top_k,
-                                  shard_subset=shard_subset)
+                                  shard_subset=shard_subset,
+                                  cleanup=cleanup)
 
     def _validated_subset(self, shard_subset: Iterable[int]) -> set[int]:
         subset = {int(i) for i in shard_subset}
@@ -187,7 +191,8 @@ class ShardedKnowledgeBase:
 
     def _fanout_query(self, known: dict[str, Hashable], unknown_role: str,
                       top_k: int = 3,
-                      shard_subset: Iterable[int] | None = None
+                      shard_subset: Iterable[int] | None = None,
+                      cleanup: str = "local"
                       ) -> list[tuple[Hashable, float]]:
         # Collect per-shard hits.
         if shard_subset is None:
@@ -198,7 +203,7 @@ class ShardedKnowledgeBase:
         per_symbol_scores: dict[Hashable, list[float]] = {}
         for shard in shards:
             for sym, score in shard.query(self.codebook, known, unknown_role,
-                                          top_k=top_k):
+                                          top_k=top_k, cleanup=cleanup):
                 if score < self._UNION_MIN_SCORE:
                     continue
                 per_symbol_scores.setdefault(sym, []).append(float(score))
