@@ -5,13 +5,17 @@ The shortest path to a useful RCK agent.
 ## Install
 
 ```bash
-pip install rck
+pip install git+https://github.com/NORTHTEKDevs/rck
 ```
+
+(The `rck` name on PyPI belongs to an unrelated bioinformatics
+project; the distribution name is `rck-kernel`, the import name is
+`rck`.)
 
 Or for development from source:
 
 ```bash
-git clone https://github.com/kristianb43r/rck
+git clone https://github.com/NORTHTEKDevs/rck
 cd rck
 pip install -e ".[dev]"
 ```

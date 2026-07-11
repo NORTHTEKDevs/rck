@@ -4,7 +4,7 @@
 > RCK reasons in explicit chains, learns by deriving (not retraining),
 > runs on CPU, and shows you the receipts for every answer.
 
-[![tests](https://img.shields.io/badge/tests-719%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.1.0-blue)](CHANGELOG.md)
+[![tests](https://img.shields.io/badge/tests-743%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.2.0-blue)](CHANGELOG.md)
 
 ---
 
@@ -43,16 +43,22 @@ The result is an agent that:
 | Costs ~$0 to operate | ✗ | ✓ |
 | Reasons 30+ hops deep | ✗ | ✓ |
 
-It's small (~30 modules, ~7k lines of Python). It's testable (**719
-passing tests**). It's research-grade but production-shaped.
+It's small (126 modules, ~18.7k lines of plain numpy Python). It's
+testable (**743 passing tests**). It's research-grade but
+production-shaped.
 
 ---
 
 ## Install
 
 ```bash
-pip install rck
+pip install git+https://github.com/NORTHTEKDevs/rck
 ```
+
+> Note: the `rck` name on PyPI belongs to an unrelated
+> bioinformatics project, so install from the repository. If/when
+> this package is published to PyPI it will ship as `rck-kernel`
+> (the import name stays `rck`).
 
 For development:
 
@@ -106,11 +112,18 @@ capability on a real 716-fact commonsense KB.
 
 ### Reasoning
 - **Direct retrieval** with calibrated `KNOWN / AMBIGUOUS / IDK` states.
-- **Multi-hop chain walking** (geometric-mean confidence propagation
-  reaches 50+ hops at usable confidence).
-- **Chain discovery** via BFS over the HRR graph (~15ms typical).
-- **Fact induction**: confident chains become new direct edges with a
-  100%-precision filter stack.
+- **Multi-hop chain walking** — argmax answers stay correct to 50+
+  hops; the default geometric-mean rule reports moderate-or-better
+  confidence to 30+ hops, and the v15.2 `calibrated_product` rule
+  reports honest probabilities (a clean 50-hop chain ≈ 0.98,
+  decaying with length).
+- **Chain discovery** via BFS over the HRR graph (~12ms on the
+  bundled 716-fact KB; a per-shard live-relation index cuts 31-67%
+  of queries, 1.5-3.0× faster at scale).
+- **Fact induction**: confident chains become new direct edges behind
+  a six-gate filter stack — 31/31 manually-validated inductions on
+  the 400-probe study (the earlier "100% precision" framing is
+  retracted and decomposed honestly in the paper, §5.1).
 - **Cascading induction**: iterate to fixed point.
 - **Rule extraction**: turn repeated patterns into symbolic universal
   rules.
@@ -141,6 +154,9 @@ capability on a real 716-fact commonsense KB.
 - **Episodic query memory** with drift detection and replay.
 - **Calibration tally**: `record_truth(...)` feeds ground truth back
   into per-relation accuracy stats.
+- **Score calibration** (v15.2): isotonic cosine→P(correct) mapping
+  (`rck.score_calibration`) — raw cosines are similarity features,
+  not probabilities (held-out Brier 0.568 raw vs 0.0004 calibrated).
 - **Chain cache** (LRU, versioned, auto-invalidated on KB writes).
 - **Skill clustering** + **promotion to rules**.
 - **Episodic consolidation** (a "dreaming" pass that pre-warms stable
@@ -199,19 +215,23 @@ rollup. `docs/guide/` has user-facing tutorials.
 ## Performance
 
 Numbers measured on the bundled commonsense KB (716 facts, D=4096,
-16 shards, Python 3.11, single CPU thread):
+16 shards, Python 3.11+, single CPU thread); latency is
+machine-dependent:
 
 | Operation | Time |
 |---|---|
 | Direct retrieval | <1 ms |
-| 2-hop chain discovery | 8-15 ms |
+| 2-hop chain discovery | ~12 ms |
 | 50-hop chain walk | ~25 ms |
-| Cascading induction (4 rounds) | ~2.4 s |
-| Cascade rule instantiation (3 rounds) | ~1.5 s |
+| Cascading induction (4 rounds) | ~3 s |
 | `agent.maintain()` full pass | ~5 s |
 
-Memory: <50 MB at 1k facts. Scales to millions of facts at
-auto-recommended shard counts (see `rck.shard_sizing`).
+At the largest bundled configuration (7,080 facts, 76 relations,
+128 shards) discovery averages ~390 ms/probe with the live-relation
+index (3.0× faster than without; 67% of HRR queries skipped).
+Memory: <50 MB at 1k facts. Designed to scale further via
+auto-sharding (see `rck.shard_sizing`); 7,080 facts is the largest
+publicly benchmarked configuration.
 
 ---
 
@@ -237,9 +257,9 @@ auto-recommended shard counts (see `rck.shard_sizing`).
 ## Project layout
 
 ```
-rck/                   # the library (~30 modules)
+rck/                   # the library (126 modules)
   conscious_agent.py   # the agent that wires everything together
-  knowledge_base.py    # sharded HRR memory
+  knowledge_base.py    # sharded HRR memory + live-relation index
   chain_walker.py
   chain_discover.py
   chain_induction.py   # with the filter stack
@@ -259,7 +279,7 @@ docs/
   guide/               # tutorials (start here)
   design/              # architectural design docs
 examples/              # runnable demos
-tests/                 # 719 tests
+tests/                 # 743 tests
 scripts/               # benchmark + ingestion scripts
 ```
 
@@ -267,7 +287,7 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.1.0** — current. 719 passing tests. API stable.
+* **v15.2.0** — current. 743 passing tests. API stable.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
 * MIT licensed.
 
@@ -282,7 +302,7 @@ If you use RCK in research, please cite:
   author  = {Baer, Kristian},
   title   = {RCK: Resonant Cognitive Kernel},
   year    = {2026},
-  version = {15.1.0},
+  version = {15.2.0},
   url     = {https://github.com/NORTHTEKDevs/rck}
 }
 ```

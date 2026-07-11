@@ -58,12 +58,14 @@ traced back through a derivation graph to the user-asserted facts
 that grounded it.
 
 The system runs on a single CPU thread, scales to thousands of facts
-in tens of milliseconds, and \textbf{structurally cannot hallucinate
-in the generative sense}---there is no generative model fabricating
-outputs. Retrieval errors are still possible under bundle saturation,
-but they are bounded, measurable, and surface as low confidence
-rather than fluent fabrication; the agent says ``I don't know''
-rather than inventing an answer.
+in tens to hundreds of milliseconds, and \textbf{structurally cannot
+hallucinate in the generative sense}---there is no generative model
+fabricating outputs. That claim is scoped precisely in
+\S\ref{sec:scoping}: it does not mean the knowledge base can never
+contain a false belief (our own v15.1 retraction,
+\S\ref{sec:chain-induction-precision}, is the counterexample); it
+means errors surface as retrievable, auditable, low-confidence facts
+or as an explicit ``I don't know''---never as fluent fabrication.
 
 We report empirical findings from the implementation:
 \begin{itemize}[noitemsep, topsep=2pt]
@@ -77,10 +79,27 @@ We report empirical findings from the implementation:
       the same probes; that figure measured HRR-roundtrip stability,
       not semantic correctness, and is retracted in this paper.
 \item Switching the default confidence-propagation rule from
-      multiplicative product to geometric mean extends the practical
-      reasoning horizon from $\sim$10 hops to 50+ hops at
-      \texttt{moderate} or better confidence, on synthetic linear
-      chains with 100\% retrieval accuracy.
+      multiplicative product to geometric mean extends the
+      reported-confidence horizon from $\sim$10 hops to 30+ hops at
+      \texttt{moderate}-or-better, on synthetic linear chains whose
+      retrieval accuracy is 100\% out to 50 hops. The geometric mean
+      is a display heuristic, not a probability; the next item is the
+      principled successor.
+\item \textbf{Calibrated confidence restores real probabilistic
+      semantics.} A raw HRR cosine is a similarity feature, not a
+      probability: on a held-out benchmark, treating cosines as
+      probabilities gives a Brier score of 0.568, while an isotonic
+      (PAV) calibration fitted on 4{,}862 labeled retrievals achieves
+      0.0004. Multiplying \emph{calibrated} per-hop probabilities
+      yields chain confidence approximating
+      $P(\text{every hop correct})$: a clean 50-hop chain reports
+      0.979---high, but honestly decaying with length
+      (\S\ref{sec:calibration}).
+\item A per-shard \textbf{live-relation index} cuts 31--67\% of HRR
+      queries during BFS chain discovery, for 1.5--3.0$\times$
+      wall-clock speedups with identical discovered chains,
+      confirming that relation-count rather than fact-count dominates
+      discovery cost (\S\ref{sec:discovery}).
 \item A confidence-weighted analogy solver improves accuracy from
       88.7\% to 93.9\% on a 115-probe commonsense benchmark, while
       surfacing calibrated probabilities for each candidate.
@@ -89,8 +108,8 @@ We report empirical findings from the implementation:
       HRR and is not a drop-in substrate replacement.
 \end{itemize}
 
-We release the full implementation (\textasciitilde{}7,000 lines of
-Python, 714 tests) under the MIT license at
+We release the full implementation (\textasciitilde{}18,700 lines of
+Python, 743 tests) under the MIT license at
 \url{https://github.com/NORTHTEKDevs/rck}. Our aim is not to argue
 that RCK replaces LLMs but to show that a coherent alternative
 architecture---one that is auditable, editable, and structurally
@@ -125,26 +144,44 @@ up as confident sentences.
 This paper describes that system. RCK is a working, tested,
 publicly-available implementation. It is not a research prototype; it
 ships as a Python package and runs on a laptop. It is also not
-finished---we treat the v15.0.0 release described here as a stable
+finished---we treat the release described here (v15.2) as a stable
 foundation rather than a final form.
 
 \subsection{What is new here}
 
-The individual primitives RCK uses are not new. Hyperdimensional
-computing \cite{kanerva2009}, holographic reduced representations
-\cite{plate1995}, and neuro-symbolic reasoning architectures
-\cite{wang2006, garcez2019} have been in the literature for decades.
-What is new is the combination, the empirical findings about which
-combinations actually work, and the engineering necessary to make
-the whole stack run usefully on commodity hardware:
+The individual primitives RCK uses are not new---and the closest
+prior art is closer than a casual reading suggests, so we say
+precisely what we do and do not claim. Hyperdimensional computing
+\cite{kanerva2009} and holographic reduced representations
+\cite{plate1995} have carried integrated cognitive systems before
+(the Semantic Pointer Architecture and Spaun
+\cite{eliasmith2012spaun, eliasmith2013}; WordNet-scale HRR encoding
+\cite{crawford2016}; Holographic Declarative Memory inside ACT-R
+\cite{kelly2020hdm}). Justification tracking, explanation, and belief
+revision are the classical territory of truth maintenance systems
+\cite{doyle1979tms, dekleer1986atms}, AGM theory \cite{agm1985}, and
+expert-systems explanation \cite{buchanan1984mycin}. Promoting
+multi-hop paths to new facts behind confidence and type gates is the
+home turf of KG rule mining and path ranking
+\cite{galarraga2013amie, lao2010pra, carlson2010nell}. Explicit
+negative knowledge has its own literature
+\cite{arnaout2020, safavi2021negater}, rooted in the
+classical-negation vs.\ negation-as-failure distinction
+\cite{clark1978, gelfond1991}. Section~\ref{sec:related} engages each
+of these directly.
+
+What we claim is the combination, its empirical characterization,
+and the engineering that makes it run on commodity hardware:
 
 \begin{itemize}
-\item \textbf{A complete, integrated implementation} that exposes
-      $\sim$50 high-level operations on a single \texttt{ConsciousAgent}
-      object: tell, ask with explicit ``I don't know'' detection,
-      multi-hop chain reasoning, fact induction, rule extraction,
-      contradiction detection, belief revision, federated merge,
-      counterfactual exploration, multi-agent consensus.
+\item \textbf{A complete, integrated, open implementation}---to our
+      knowledge the first single package combining an HRR/VSA
+      relational substrate with derivation-graph provenance,
+      explain-why, contradiction detection with belief revision,
+      asserted negative facts, gated chain induction, symbolic rule
+      extraction, counterfactuals, and alignment-free federated
+      merge, behind $\sim$50 operations on one
+      \texttt{ConsciousAgent} object, with 743 passing tests.
 \item \textbf{An empirically-derived six-gate filter stack}
       (inverse-pair, non-transitive same-relation, intermediate-cycle,
       no-meaningful-relation, type-signature mismatch, plus a
@@ -154,14 +191,17 @@ the whole stack run usefully on commodity hardware:
       HRR-roundtrip stability rather than semantic correctness and is
       retracted here in favour of an honest decomposition
       (\S\ref{sec:chain-induction-precision}).
-\item \textbf{A finding about confidence propagation} that
-      substantially extends the practical reasoning horizon by
-      changing the default aggregation rule.
+\item \textbf{A calibration result}: the first published (to our
+      knowledge) cosine$\to$P(correct) calibration for chain
+      reasoning on an HRR substrate, which both quantifies how
+      miscalibrated raw cosines are (held-out Brier 0.568 $\to$
+      0.0004) and restores honest multiplicative semantics to
+      multi-hop confidence (\S\ref{sec:calibration}).
 \item \textbf{A negative result} on sparse HRR substrates that may
       save other implementers time.
 \item \textbf{A practical artifact}: a system someone can install
-      with \texttt{pip} today, run on a laptop, and integrate into
-      a real product.
+      from the public repository today, run on a laptop, and
+      integrate into a real product via the bundled MCP server.
 \end{itemize}
 
 We make no claim that RCK is competitive with frontier LLMs on
@@ -173,6 +213,46 @@ reasoning with citations, fact ingestion with editability,
 contradiction-resilient knowledge management) where RCK's
 auditability, editability, and explicit treatment of uncertainty
 are worth more than the surface fluency of an LLM.
+
+\subsection{What ``hallucination-free'' does and does not mean}
+\label{sec:scoping}
+
+The title's claim invites a specific, well-documented failure mode:
+systems marketed as ``hallucination-free'' that turn out to be merely
+\emph{less} wrong under adversarial audit---Magesh et
+al.~\cite{magesh2024} documented exactly this for legal research
+tools, and the survey literature on graph-grounded LLMs consistently
+concludes ``reduce,'' not ``eliminate'' \cite{agrawal2024}. We
+therefore scope the claim precisely.
+
+\paragraph{What it means.} There is no generative model anywhere in
+the answer path. An answer is a stored or derived $(S, R, O)$ triple
+with a score, or an explicit IDK/AMBIGUOUS state. The system cannot
+produce fluent prose about things never asserted or derived, because
+it cannot produce fluent prose at all (the optional polisher renders
+surface form only, and is off by default). Every answer is traceable
+to user-asserted facts through the derivation graph.
+
+\paragraph{What it does not mean.} It does not mean the knowledge
+base cannot contain false beliefs. Our own v15.1 release is the
+demonstration: under the v15.0 induction policy, the system
+confidently stored type-confused derived facts like
+\texttt{(shark, implies, blue)}---wrong facts, held with unwarranted
+confidence, functionally similar to a hallucination from the user's
+perspective. We found this by auditing our own headline metric,
+retracted the number, and added the two gates that eliminate the
+failure class (\S\ref{sec:chain-induction-precision}). Nor does it
+mean retrieval is infallible: under bundle saturation, cleanup can
+return a wrong symbol---bounded, measurable
+(\S\ref{sec:calibration} quantifies it), and surfaced as low
+confidence, but an error nonetheless.
+
+\paragraph{The precise claim} is: \emph{structurally free of
+generative confabulation; empirically zero false stored inductions
+under the six-gate policy on our test corpus; retrieval error
+bounded, measured, and reported as calibrated confidence.} Wherever
+this paper or the repository says ``hallucination-free,'' this is
+the sense meant.
 
 \section{Background}
 
@@ -231,7 +311,10 @@ The bottom layer is \texttt{ShardedKnowledgeBase}: a list of $N$
 single \texttt{Codebook} of symbol vectors. Facts are routed to a
 shard via \texttt{blake2b}-based stable hashing of
 $(\text{subject}, \text{relation})$. Storage is O(1)\@. Retrieval
-is one bind plus one cleanup against the codebook.
+is one bind plus one cleanup against the codebook. A snapshot
+\texttt{RelationIndex} (v15.2) records which relations have facts in
+which shards, so search-time callers can skip queries that could
+only return crosstalk noise (\S\ref{sec:discovery}).
 
 We expose this layer directly, but most users interact with the
 agent layer above it.
@@ -377,7 +460,7 @@ form. For most uses, the structured output is what callers want.
 We describe four design decisions that came out of empirical work
 and changed the system materially.
 
-\subsection{The four-gate filter stack on chain induction}
+\subsection{The six-gate filter stack on chain induction}
 \label{sec:fourgate}
 
 Na\"{i}ve chain induction---``if the chain walks confidently, store
@@ -405,13 +488,22 @@ on the commonsense KB:
 \item[Degenerate cycles.] When HRR cleanup noise causes the final
       answer to be one of the intermediate nodes, the resulting
       fact is meaningless.
+\item[Silent type confusion (found in v15.1's audit).] A chain whose
+      hops are individually valid can compose into a claim of the
+      wrong \emph{type}: \texttt{(shark, implies, blue)} via
+      \texttt{[habitat, color]}. The v15.0 policy stored these under
+      a generic \texttt{implies} label
+      (\S\ref{sec:chain-induction-precision}).
 \end{description}
 
 We accumulated these failure modes by running induction and
-inspecting every wrong result. The recipe that emerged is four
-local graph filters applied to the chain shape before commit:
+inspecting every wrong result. The recipe that emerged is six gates
+applied before commit (the first four date to v15.0; the v15.1
+audit added the last two):
 
 \begin{enumerate}
+\item \textbf{Confidence floor.} The chain must walk above a minimum
+      propagated confidence at all.
 \item \textbf{Inverse-pair filter.} Reject chains where consecutive
       relations form an inverse pair (\texttt{author/wrote},
       \texttt{partof/haspart}, \texttt{capital/capitalof}, etc).
@@ -423,16 +515,32 @@ local graph filters applied to the chain shape before commit:
       \texttt{contains}, \texttt{descendantof}).
 \item \textbf{Intermediate-cycle filter.} Reject chains whose final
       answer equals an earlier node in the chain.
-\item \textbf{Lifting-relation gate.} The induced relation is the
-      last hop's relation if the first hop is a lifting relation
-      (\texttt{isa}, \texttt{partof}, \texttt{locatedin},
-      \texttt{memberof}); otherwise the induced relation is the
-      generic \texttt{implies}. This prevents propagating a specific
-      relation through a chain whose composition does not preserve
-      its meaning.
+\item \textbf{No-meaningful-relation gate (v15.1).} If the chain's
+      first hop is not a ``lifting'' relation (\texttt{isa},
+      \texttt{partof}, \texttt{locatedin}, \texttt{memberof},
+      \texttt{instanceof}, \texttt{kind}, \texttt{class},
+      \texttt{subclass}, \texttt{subtype}, \texttt{category}) and the
+      chain is not same-relation transitive, no specific relation can
+      be ascribed and the induction is rejected. Storing the chain
+      under a generic \texttt{implies} fallback---the v15.0
+      behavior---is opt-in
+      (\texttt{InductionPolicy(allow\_generic\_implies=True)}) and
+      off by default.
+\item \textbf{Type-signature gate (v15.1).} Each lifting-relation
+      family permits only a specific set of last-hop relations:
+      \texttt{partof} transfers
+      $\{$\texttt{locatedin, madeof, usedfor}$\}$ (the part inherits
+      the whole's location, material, use) but not \texttt{has} (a
+      wing doesn't have what the bird has); \texttt{locatedin}
+      transfers only aggregate-location relations
+      $\{$\texttt{continent, country, region, city}$\}$;
+      \texttt{isa}/\texttt{class}/\texttt{category} transfer
+      $\{$\texttt{isa, has, kind, class, category}$\}$.
 \end{enumerate}
 
-We track precision empirically (\S\ref{sec:findings}).
+The two v15.1 gates are specified with the study that motivated them
+(\S\ref{sec:chain-induction-precision}), and we track precision
+empirically there.
 
 \paragraph{Filter generality.} The transitive set and the
 inverse-pair set are hand-curated. We expect both to be
@@ -448,14 +556,15 @@ configuration. We expose them as
 \texttt{InductionPolicy.lifting\_relations} so a domain user can
 extend them without forking the library.
 
-\subsection{Geometric-mean confidence propagation}
+\subsection{Confidence: from a bad default, to a display heuristic,
+to calibrated probabilities}
 
-In our first version, chain confidence was the product of per-hop
-scores. A clean retrieval at 0.7 cosine similarity over 10 hops
-yields $0.7^{10} \approx 0.028$---under the ``uncertain'' threshold.
-A clean retrieval at 0.7 over 20 hops is essentially zero. We
-treated this as a substrate capacity limit and stopped pursuing
-deeper reasoning.
+\paragraph{The bad default.} In our first version, chain confidence
+was the product of per-hop scores. A clean retrieval at 0.7 cosine
+similarity over 10 hops yields $0.7^{10} \approx 0.028$---under the
+``uncertain'' threshold. A clean retrieval at 0.7 over 20 hops is
+essentially zero. We treated this as a substrate capacity limit and
+stopped pursuing deeper reasoning.
 
 It is not a substrate limit. The substrate happily walks 50-hop
 linear chains at 100\% retrieval accuracy. The product rule is just
@@ -465,15 +574,42 @@ similarity measure that empirically corresponds to nearly 100\%
 correctness on clean lookups. Multiplying these scores collapses
 them exponentially even when every hop is in fact correct.
 
-We changed the default propagation rule to the geometric mean:
+\paragraph{The display heuristic.} We changed the default
+propagation rule to the geometric mean:
 \[
 \text{conf}_{\text{chain}} = \left( \prod_i s_i \right)^{1/n} \cdot \text{decay}^{n-1}
 \]
+The argmax answer is unchanged; reported confidence stays readable
+for long, uniformly-strong chains---\texttt{moderate}-or-better out
+to 30+ hops on the synthetic benchmark (\S\ref{sec:findings}). We
+keep it as the default because it is zero-configuration and monotone
+in the evidence, but we are explicit about what it is: a
+length-normalized score in the long tradition of non-collapsing
+truth-value combinators (fuzzy t-norms, {\L}ukasiewicz logic in PSL
+\cite{bach2017psl}, Markov-logic pooling \cite{richardson2006mln},
+subjective-logic discounting \cite{josang2016}, logarithmic opinion
+pools \cite{genest1986}), chosen by curve-fitting, not derived from
+semantics. Its known weakness is length-\emph{in}sensitivity: a
+50-hop chain of 0.7s scores exactly what a 1-hop 0.7 scores.
 
-The argmax answer is unchanged. The reported confidence is now
-graceful for long chains of uniformly-strong hops. On our synthetic
-50-fact linear chain benchmark, \texttt{moderate}-or-better
-confidence is preserved out to 30+ hops (\S\ref{sec:findings}).
+\paragraph{The calibrated rule (v15.2).} The principled fix is to
+stop treating cosines as probabilities and measure what they are
+actually worth. We fit an isotonic regression
+(pool-adjacent-violators, with Beta-smoothed block probabilities so
+the calibrator never claims certainty) on 4{,}862 labeled retrievals
+spanning clean to saturated bundle loads: cosine in, empirical
+$P(\text{top-1 correct})$ out. With calibrated per-hop
+probabilities, plain multiplication becomes the right rule again:
+\[
+\text{conf}_{\text{chain}} = \prod_i \hat{P}(\text{correct} \mid s_i)
+\;\approx\; P(\text{every hop correct})
+\]
+under an independence assumption. This is length-sensitive---a
+50-hop chain \emph{is} less certain than a 2-hop chain---without
+collapsing on clean hops, because a clean hop calibrates to
+$\sim$0.9997, not 0.7. Available as
+\texttt{PropagationConfig(rule="calibrated\_product",
+calibrator=...)}; empirical results in \S\ref{sec:calibration}.
 
 \subsection{Provenance as a graph, not a tag}
 
@@ -503,8 +639,12 @@ calibration of the reported confidence (\S\ref{sec:findings}).
 
 All numbers in this section come from scripts in the
 \texttt{scripts/} directory of the repository, run on a commodity
-laptop (single CPU thread, Python 3.11, $D = 4096$, default shard
-sizing). Data files are in \texttt{data/}.
+laptop (single CPU thread, Python 3.11+---this revision measured on
+CPython 3.14, $D = 4096$, default shard sizing). The canonical
+output of every study is committed under \texttt{data/}, so each
+table has both a regeneration path and a checked-in artifact.
+Absolute latencies are machine-dependent; machine-independent
+counters (query counts, accuracies, yields) are reported alongside.
 
 \subsection{Chain-induction precision}
 \label{sec:chain-induction-precision}
@@ -534,30 +674,10 @@ fallbacks were correct-but-mislabeled
 claims, and is retracted.
 
 \paragraph{The corrected pipeline.} The revised induction policy
-(starting at v15.1.0) adds two gates beyond the four-gate semantic
-stack of \S\ref{sec:fourgate}:
-
-\begin{itemize}[noitemsep, topsep=2pt]
-\item \textbf{No-meaningful-relation gate.} If the chain's first
-      hop is not a ``lifting'' relation and the chain is not
-      same-relation transitive, no specific relation can be
-      ascribed and the induction is rejected. Storing the chain
-      under a generic \texttt{implies} fallback is opt-in
-      (\texttt{InductionPolicy(allow\_generic\_implies=True)}) and
-      off by default.
-\item \textbf{Type-signature gate.} Each lifting-relation family
-      permits only a specific set of last-hop relations. \texttt{partof}
-      transfers $\{$\texttt{locatedin, madeof, usedfor}$\}$ (the
-      part inherits the whole's location, material, and use), but
-      not the whole's \texttt{has} relation
-      (a wing doesn't have what the bird has).
-      \texttt{locatedin} transfers only aggregate-location relations
-      $\{$\texttt{continent, country, region, city}$\}$, not the
-      location's \texttt{size}, \texttt{color}, or \texttt{isa}
-      attributes. \texttt{isa}/\texttt{class}/\texttt{category} and
-      siblings transfer $\{$\texttt{isa, has, kind, class,
-      category}$\}$.
-\end{itemize}
+(starting at v15.1.0) added the no-meaningful-relation and
+type-signature gates---gates 5 and 6 of the stack specified in
+\S\ref{sec:fourgate}---which are exactly the gates that reject the
+\texttt{implies}-fallback failure class described above.
 
 \paragraph{Numbers under the corrected pipeline.} On the same
 400-probe set:
@@ -607,21 +727,11 @@ single direct claim. The substrate is doing the right thing by
 walking them all; the symbolic layer is doing the right thing by
 refusing to ascribe meaning to most of them.
 
-\paragraph{Comparison with the no-filter baseline.} On the original
-80-probe study against commonsense alone, induction without the
-filter stack committed 19 facts, of which inspection found
-approximately half to be semantically wrong
-(\texttt{(macbeth, wrote, othello)},
-\texttt{(greatexpectations, author, olivertwist)}, etc). The
-four-gate semantic stack eliminated inverse-pair and cycle errors;
-the two additional gates introduced here eliminate the
-type-confusion errors that the four-gate stack let through. We
-report ``31/31 manually-validated under the v15.1.0 pipeline''
-rather than ``100\% precision''---the latter is what an empirical
-claim looks like when the test corpus is small and adversarial
-probes haven't been built. A larger external benchmark (e.g.\
-applying the pipeline to a 10{,}000-probe sample of Wikidata) is
-future work.
+\paragraph{Reporting.} We report ``31/31 manually-validated under
+the v15.1.0 pipeline'' rather than ``100\% precision''---the latter
+is not what a 31-sample empirical claim supports. A larger external
+benchmark (e.g.\ applying the pipeline to a 10{,}000-probe sample of
+Wikidata) is future work.
 
 \subsection{Chain depth at varying propagation rules}
 
@@ -630,8 +740,14 @@ chain depth on a synthetic 50-node linear chain, for three
 propagation rules. Retrieval accuracy is 100\% at every depth---the
 substrate walks the chain correctly---but the product rule's
 reported confidence falls below ``uncertain'' (0.01) by depth 15.
-Geometric mean preserves ``weak''-or-better confidence to depth
-50+, and the \texttt{min} rule (worst-link) gives similar results.
+Geometric mean preserves ``weak''-or-better confidence to depth 50+
+(\texttt{moderate}-or-better to 30+: at depth 50 it reports 0.061,
+``weak''), and the \texttt{min} rule (worst-link) gives similar
+results. Under the calibrated product rule of
+\S\ref{sec:calibration}, the same clean chains report 1.000 at depth
+1 down to 0.979 at depth 50---the honest probability that all fifty
+calibrated hops are simultaneously correct, decreasing with every
+hop added.
 
 \begin{figure}[ht]
 \centering
@@ -643,6 +759,43 @@ Geometric mean (the new default) and \texttt{min} preserve usable
 confidence to depth 50+. The product rule collapses by depth 15.}
 \label{fig:depth}
 \end{figure}
+
+\subsection{Calibrated confidence: what a cosine is worth}
+\label{sec:calibration}
+
+Protocol (\texttt{scripts/confidence\_calibration\_study.py}): we
+sample labeled retrievals from synthetic KBs at five bundle loads
+spanning clean to heavily saturated (500 $\to$ 12{,}000 facts at 64
+shards; per-query label = top-1 answer in the valid-object set, plus
+never-stored probes labeled false), fit a PAV isotonic calibrator
+with Beta(1,1)-smoothed block probabilities on the pooled 4{,}862
+samples, and evaluate on a held-out set the calibrator never saw:
+the real commonsense KB (705 samples).
+
+Held-out Brier scores: \textbf{0.5683} treating the raw cosine as a
+probability, \textbf{0.0004} calibrated. The raw-cosine column
+quantifies \S4.2's claim---cosines are drastically miscalibrated as
+probabilities (correct answers on this KB cluster near 0.10--0.24
+cosine and are essentially always right; treating 0.15 as ``15\%
+probable'' is off by $\sim$85 points). The calibrated map recovers
+held-out accuracy almost perfectly: everything above the noise floor
+is $\sim$certain, everything at the noise floor is $\sim$never
+right, and the transition band (empirical accuracy 88.7\% in the
+third reliability bin) is where calibrated probabilities do real
+work.
+
+Two design details matter. \emph{Smoothing:} each isotonic block
+reports $(\text{successes} + 1)/(n + 2)$---the Beta(1,1) posterior
+mean---so no block ever claims probability exactly 1.0, which is
+what keeps 50-hop calibrated products below certainty
+($0.9997^{50} \approx 0.979$) instead of saturating.
+\emph{Independence caveat:} the product reads as
+$P(\text{all hops correct})$ only if hop errors are independent;
+correlated failures (e.g.\ one saturated shard serving several hops)
+would make it optimistic. We state this rather than hide it---it is
+the same assumption PRA-style path probabilities make
+\cite{lao2010pra}. The fitted calibrator ships in
+\texttt{data/confidence\_calibration\_study.json}.
 
 \subsection{Sparse vs.\ dense substrate capacity}
 
@@ -674,40 +827,55 @@ favor sparse for bundle-based relational memory.}
 \label{fig:capacity}
 \end{figure}
 
-\subsection{Chain discovery latency on real knowledge}
+\subsection{Chain discovery latency, and the live-relation index}
+\label{sec:discovery}
 
-We ran the chain discoverer on three real knowledge bases of
-increasing size: 716, 2{,}599, and 4{,}109 facts. On 30 two-hop
-transitive probes:
+The v15.0 revision of this section reported a three-KB latency table
+and diagnosed that BFS cost is dominated by relation count (one HRR
+query per relation per frontier), proposing a per-shard
+live-relation set as future work. Two things have changed. First,
+the mid-size KBs from that table no longer exist in the repository,
+so the old numbers (14.5/7.7/55.5\,ms) were not reproducible from
+the shipped artifacts---the current study sweeps the four KB tiers
+that \emph{are} shipped, and its data file is committed. Second, we
+implemented the proposed index (v15.2): a \texttt{RelationIndex}
+snapshot built from the shards' fact logs in the same
+$O(\text{total facts})$ scan discovery already needed, letting the
+search skip any (node, relation) whose routed shard holds no fact
+with that relation, and restrict reverse fan-outs to shards where
+the relation lives. A skipped query could only ever have returned
+bundle crosstalk, so real chains are unaffected---measured discovery
+results are identical with and without the index at every tier.
+
+30 two-hop transitive probes per tier; per-probe median of 3
+repeats; warm-started; single thread:
 
 \begin{center}
-\begin{tabular}{rrrrr}
+\small
+\begin{tabular}{lrrrrrrr}
 \toprule
-KB size & Hit rate & Avg latency & Shards & Distinct relations \\
+KB tier & Facts & Rels & Shards & Rate & Avg ms & Queries cut & Speedup \\
 \midrule
-716   & 97\%  & 14.5\,ms & 16  & 21 \\
-2{,}599 & 100\% & 7.7\,ms  & 64  & 22 \\
-4{,}109 & 100\% & 55.5\,ms & 128 & 54 \\
+commonsense & 716 & 21 & 16 & 97\% & 12.0 & 31\% & 1.5$\times$ \\
++extended & 1{,}495 & 33 & 32 & 90\% & 14.2 & 51\% & 2.1$\times$ \\
++ultra & 3{,}666 & 49 & 64 & 90\% & 157.2 & 59\% & 2.2$\times$ \\
++massive & 7{,}080 & 76 & 128 & 73\% & 389.1 & 67\% & 3.0$\times$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The non-monotonic latency from 716 $\to$ 2{,}599 (down) and
-2{,}599 $\to$ 4{,}109 (up) deserves explanation. Per-shard query
-cost is $O(D)$ and roughly constant; what changes is how many
-\emph{relations} BFS has to try at each expansion. The 2{,}599-fact
-KB has approximately the same relation count as the 716-fact KB
-(22 vs 21), but more shards mean each per-shard query is cheaper.
-The 4{,}109-fact KB has 54 distinct relations, and at each BFS
-frontier we issue one query per relation; that dominates. We
-confirmed this by profiling: of the 55.5\,ms on the largest KB,
-$\sim$85\% is spent inside \texttt{kb.query} calls, of which the
-inner loop is the per-relation enumeration.
-
-Two implications: relation-count scaling matters more than
-fact-count scaling for chain discovery, and a future optimization
-is to maintain a per-shard set of ``live'' relations so we only
-query relations that have facts in that shard.
+Three honest readings. \emph{The diagnosis was right:} the query cut
+and the speedup both grow with relation count (31\% $\to$ 67\%,
+1.5$\times$ $\to$ 3.0$\times$), confirming relation-count scaling
+dominates. \emph{Absolute latency is machine- and load-dependent:}
+wall-clock on this benchmark varies up to $\sim$4$\times$
+run-to-run under OS scheduling noise, which is why the study reports
+per-probe medians and machine-independent query counts alongside.
+\emph{Discovery rate degrades at scale:} 97\% on the smallest tier
+down to 73\% at 7{,}080 facts / 76 relations with beam width 3 and
+depth $\leq 4$---deeper beams recover some of this at proportional
+cost. We report the degradation rather than tuning the benchmark
+around it.
 
 \subsection{Analogical reasoning accuracy}
 
@@ -731,14 +899,22 @@ shard.
 
 \subsection{Cascading induction}
 
-Iterating chain induction to a fixed point (each round picks up
-the shortcuts produced by the previous one) produces approximately
-11 new verified facts on the commonsense KB in 4 rounds; round 2
-typically out-produces round 1, confirming the cascade effect.
-Rule-based cascading (extracting rules from the skill library and
-applying them forward in a loop) is dramatically more productive
-because rules are reusable: on the same KB, rule cascade adds 121
-verified facts in 3 rounds, growing the KB from 718 to 839 facts.
+Iterating chain induction to a fixed point (each round picks up the
+shortcuts produced by the previous one) produces \textbf{6 new
+verified facts in 4 rounds} on the commonsense KB ($2+2+2+0$,
+saturating at round 4; dominant pattern
+\texttt{locatedin $\to$ continent}), growing the KB 716 $\to$ 722.
+An earlier draft reported ``$\sim$11 facts, with round 2
+out-producing round 1''; the committed study data supports neither
+detail, so we report the reproducible numbers. Rule-based cascading
+is dramatically more productive because rules are reusable: in the
+full-stack demo, extracting rules from the skill library and
+applying them forward grows the same KB 718 $\to$ 843 ($+125$)
+(\texttt{examples/v14\_full\_stack\_demo.py}). A dedicated
+extraction study against the post-cascade 722-fact KB yields 23
+rules at min-support 2, min-confidence 0.5
+(\texttt{scripts/rule\_extraction\_study.py} $\to$
+\texttt{data/rule\_extraction\_study.json}).
 
 \subsection{Reproducibility}
 
@@ -752,69 +928,170 @@ repository. We list the artifacts explicitly:
 Result & Script & Data file \\
 \midrule
 \S 5.1 induction precision &
-\texttt{scripts/chain\_induction\_study.py}; inline expansion in
-\texttt{papers/rck-architecture/figures/generate\_figures.py} &
-\texttt{chain\_induction\_study.json}, \texttt{chain\_induction\_study\_expanded.json} \\
+\texttt{scripts/chain\_induction\_failure\_analysis.py} &
+\texttt{chain\_induction\_failures.json} \\
 \S 5.2 chain depth &
 \texttt{scripts/chain\_depth\_study.py} &
 \texttt{chain\_depth\_study.json} \\
-\S 5.3 sparse vs dense &
+\S 5.3 confidence calibration &
+\texttt{scripts/confidence\_calibration\_study.py} &
+\texttt{confidence\_calibration\_study.json} \\
+\S 5.4 sparse vs dense &
 \texttt{scripts/sparse\_capacity\_study.py},
 \texttt{run\_capacity\_study.py} &
 \texttt{sparse\_capacity\_study.json},
 \texttt{capacity\_study.json} \\
-\S 5.4 discovery latency &
+\S 5.5 discovery + index &
 \texttt{scripts/chain\_discovery\_study.py} &
 \texttt{chain\_discovery\_study.json} \\
-\S 5.5 analogy &
+\S 5.6 analogy &
 \texttt{scripts/analogy\_study.py} &
 \texttt{analogy\_study.json} \\
-\S 5.6 cross-shard &
+\S 5.7 cross-shard &
 \texttt{scripts/cross\_shard\_chain\_study.py} &
 \texttt{cross\_shard\_chain\_study.json} \\
-\S 5.7 cascade induction &
-\texttt{scripts/cascade\_induction\_study.py} &
-\texttt{cascade\_induction\_study.json} \\
+\S 5.8 cascade induction &
+\texttt{scripts/cascade\_induction\_study.py};
+rule extraction via \texttt{scripts/rule\_extraction\_study.py};
+rule cascade via \texttt{examples/v14\_full\_stack\_demo.py} &
+\texttt{cascade\_induction\_study.json},
+\texttt{rule\_extraction\_study.json} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
 All scripts run from the repository root with no external services
-and no GPU. Environment: Python 3.11, single CPU thread, default
-agent settings ($D = 4096$, auto-sharded). Pinned dependencies in
+and no GPU. Environment: Python 3.11+ (this revision measured on
+CPython 3.14), single CPU thread, default agent settings
+($D = 4096$, auto-sharded). Pinned dependencies in
 \texttt{pyproject.toml}. Random seeds are set at agent construction
-(\texttt{seed=0} throughout). The test suite
-(\texttt{pytest -q}) is \textbf{714/714} passing on the same
-environment. The commit hash of the v15.0.0 release is on the
-GitHub release page.
+(\texttt{seed=0} throughout), so accuracy-type numbers reproduce
+exactly; latency-type numbers vary by machine. The test suite
+(\texttt{pytest -q}) is \textbf{743/743} passing on the same
+environment. The v15.2.0 tag on GitHub marks the exact source state
+of this revision.
 
 \section{Comparison with related work}
+\label{sec:related}
 
-\paragraph{LLMs.} Modern LLMs (GPT, Claude, Gemini) operate by
-predicting the next token given context. They lack a mechanism for
-distinguishing knowledge from confabulation: every output is
-generated, including ``explanations'' for previous outputs. Retrieval-augmented
-generation (RAG) mitigates but does not eliminate the problem
+\paragraph{LLMs.} Modern LLMs operate by predicting the next token
+given context. They lack a mechanism for distinguishing knowledge
+from confabulation: every output is generated, including
+``explanations'' for previous outputs. Retrieval-augmented
+generation mitigates but does not eliminate the problem
 \cite{rag2020}, because the generator can still hallucinate around
-retrieved facts. RCK is structurally different: we retrieve
-discrete facts and reason over them; the optional polisher only
-renders the surface form. The cost profile is also very different:
-training a frontier LLM costs $\sim$\$100M and serving incurs
-per-token API costs; RCK runs on a laptop for cents in electricity.
+retrieved facts; the graph-grounding survey literature consistently
+reaches ``reduce, not eliminate'' \cite{agrawal2024}. RCK is
+structurally different: it retrieves discrete facts and reasons
+over them; the optional polisher only renders surface form.
+
+\paragraph{HRR-based cognitive architectures---the closest prior
+art.} The Semantic Pointer Architecture and the Spaun model
+\cite{eliasmith2012spaun, eliasmith2013} built integrated cognition
+on exactly the substrate RCK uses---Plate's HRRs---a decade earlier,
+and Crawford, Gingerich \& Eliasmith \cite{crawford2016} encoded the
+entire WordNet lexical KB (100k+ terms) as HRR structures, so RCK is
+neither the first integrated HRR reasoning system nor the largest
+HRR knowledge store. Holographic Declarative Memory
+\cite{kelly2020hdm} put an HRR memory inside ACT-R. RCK differs in
+goal and shape: those systems model cognition (often in spiking
+neurons, with psychological plausibility as the criterion); RCK is a
+knowledge-engineering artifact---explicit editable triples,
+derivation-graph provenance, contradiction handling, negative facts,
+and a test suite---optimized for auditability rather than biological
+plausibility. We know of no prior system in this lineage that ships
+that combination.
+
+\paragraph{Truth maintenance, belief revision, and explanation.}
+RCK's provenance graph, \texttt{explain\_why}, and conflict
+resolution are, mechanically, a justification-based TMS
+\cite{doyle1979tms} with contradiction handling in the spirit of the
+ATMS \cite{dekleer1986atms}, belief revision in the AGM tradition
+\cite{agm1985}, and WHY-style explanation going back to MYCIN
+\cite{buchanan1984mycin}. Cyc has carried per-assertion provenance
+and natural-language justification for decades---Lenat \& Marcus
+\cite{lenat2023} make the Cyc-vs-LLM trustworthiness argument
+directly. RCK's contribution here is not the mechanism but the
+substrate integration: the HRR memory itself has no derivation
+semantics, so the provenance graph is the symbolic side-channel that
+restores auditability over a lossy vector store---and it survives
+federated bundle merges.
+
+\paragraph{KG completion, rule mining, and path ranking.} Promoting
+multi-hop paths to new edges behind confidence and structural gates
+is the core move of AMIE's rule mining \cite{galarraga2013amie}, the
+Path Ranking Algorithm \cite{lao2010pra, lao2011}, NELL's coupled
+learning with a confidence-assigning knowledge integrator
+\cite{carlson2010nell}, and type-constrained KG completion
+\cite{krompass2015}. RCK's six-gate stack belongs to this family.
+What is different: the gates were derived from HRR-specific failure
+modes (cleanup crosstalk, hub round-trips through auto-symmetrized
+inverses) that symbolic and embedding stores do not exhibit, and the
+validation methodology---400 probes, manual inspection of every
+committed fact, and a published retraction of the earlier
+metric---is, as far as we know, unusual in its explicitness at this
+scale.
+
+\paragraph{Negative knowledge.} Storing explicit negatives so a
+system can refute rather than merely fail to find is an active
+research program \cite{arnaout2020, safavi2021negater}, with formal
+roots in the classical-negation vs.\ negation-as-failure distinction
+\cite{clark1978, gelfond1991}. RCK does not claim the idea; its
+contribution is carrying asserted negatives (\texttt{NOT\_R}) inside
+a VSA substrate, propagating them through taxonomic relations, and
+consulting them as a hard gate in induction and rule instantiation.
+
+\paragraph{Confidence propagation.} Non-collapsing combination rules
+for chained uncertain evidence have deep prior art: NARS's
+truth-value algebra \cite{wang2006}, {\L}ukasiewicz t-norms in
+probabilistic soft logic \cite{bach2017psl}, Markov logic's
+log-linear pooling \cite{richardson2006mln}, subjective logic's
+trust discounting \cite{josang2016}, and the logarithmic opinion
+pool---a weighted geometric mean---studied since the 1980s
+\cite{genest1986}. RCK's geometric mean is a member of that family
+chosen empirically, and we make no theoretical claim for it. The
+calibration result (\S\ref{sec:calibration}) is the part we have not
+found precedent for on this substrate: measuring the
+cosine$\to$accuracy curve of HRR cleanup under varying bundle load
+and using it to restore multiplicative path semantics, in the spirit
+of PRA's path probabilities \cite{lao2010pra} but with the
+probabilities measured rather than assumed.
+
+\paragraph{Vector-symbolic architectures.} VSAs \cite{kanerva2009,
+plate1995} provide the primitives; torchhd \cite{heddes2023torchhd}
+is the reference library; the neuro-vector-symbolic architecture of
+Hersche et al.\ \cite{hersche2023nvsa} solves Raven's matrices with
+VSA algebra over neural perception; HolE \cite{nickel2016hole}
+brought Plate's circular correlation to KG link prediction as a
+\emph{learned} embedding model. RCK differs from the embedding line
+in that nothing is learned---facts are stored and retrieved
+algebraically, so a fact can be added, edited, or deleted in O(1)
+without retraining---and from the perception line in that its scope
+is knowledge management, not visual abstraction. Among open
+implementations we know of, RCK is the most complete \emph{symbolic
+KB-reasoning stack} (provenance, revision, negation, induction,
+federation) on a VSA substrate; we would welcome corrections to that
+claim.
+
+\paragraph{Federated and multi-party HD computing.} Aggregating
+hyperdimensional representations across parties by vector addition
+is established in federated HDC \cite{fedhdc2023}, with secure HD
+computation offload in SecureHD \cite{imani2019securehd}. RCK's
+merge is the same additive-bundling pattern; what it adds is that
+agents share a deterministically name-hashed codebook, so merging
+needs no entity-alignment or embedding-reconciliation step, and
+per-fact provenance (source tags, derivations) survives the
+sum---the merged agent can still cite which contributor asserted
+what.
 
 \paragraph{NARS.} NARS \cite{wang2006} shares with RCK the
 commitment to non-axiomatic, evidence-based reasoning with explicit
-confidence. NARS has a more principled truth-value algebra than
-RCK's geometric-mean propagation---its frequency/confidence pairs
-derive from a documented theoretical framework, while ours emerged
-from empirical curve-fitting. NARS also has a more developed
-inference rule set, refined over two decades. RCK trades that
-theoretical maturity for HRR-substrate cheapness and an empirical
-filter stack on derivation that came out of running the system on
-real KBs. Cross-pollination is an open direction we would welcome:
-NARS-style truth-value algebra on top of RCK's substrate, or
-RCK-style filter empirics on top of NARS's inference engine, both
-seem promising.
+confidence, with a more principled truth-value algebra and a far
+more developed inference rule set. RCK trades that theoretical
+maturity for HRR-substrate cheapness and empirically-derived gates.
+Cross-pollination is an open direction we would welcome: NARS-style
+truth values on RCK's substrate, or RCK-style filter empirics in
+NARS's engine.
 
 \paragraph{Knowledge graphs and graph databases.} Graph databases
 (Neo4j, RDF stores) provide discrete, queryable, editable triples
@@ -824,20 +1101,14 @@ the HRR substrate (cheap fuzzy retrieval), the derivation pipeline
 graph. A graph database is roughly RCK without the substrate or
 the reasoning layer.
 
-\paragraph{Neuro-symbolic systems.} DeepProbLog \cite{deepproblog2018}
-embeds neural perception into logical programs; the logic is
-expressive but the system is large and Prolog-centric. RCK takes
-the opposite direction: embed logic into a neural-shaped substrate
-that's small and fast. The trade-off is expressiveness vs.\
-operational simplicity.
-
-\paragraph{Vector-symbolic architectures.} VSAs \cite{kanerva2009}
-including HRR, BSC, and FHRR provide the underlying primitives we
-use. Recent work in this space (torchhd, vsa-toolkit, the HD
-computing community at IBM Research) focuses on classification and
-sequence learning. RCK is, to our knowledge, the most complete
-implementation of a relational/symbolic reasoning system built on a
-VSA substrate.
+\paragraph{Neuro-symbolic systems.} The broader neuro-symbolic
+program \cite{garcez2019} seeks principled integrations of learning
+and reasoning. DeepProbLog \cite{deepproblog2018} embeds neural
+perception into logical programs; the logic is expressive but the
+system is large and Prolog-centric. RCK takes the opposite
+direction: embed symbolic knowledge management into a neural-shaped
+substrate that is small and fast. The trade-off is expressiveness
+vs.\ operational simplicity.
 
 \section{Limitations}
 
@@ -854,10 +1125,27 @@ or ambiguous text. Scaling RCK to Wikipedia-grade knowledge bases
 requires a better triple extractor, possibly itself an LLM run as a
 one-time ingestion pass.
 
-\paragraph{Capacity at scale.} We have tested up to $\sim$4,000
-facts at production-quality settings. Scaling to millions of facts
-should work via auto-sharding (\texttt{rck.shard\_sizing}), but
-this has not been benchmarked publicly.
+\paragraph{Capacity at scale.} The largest real-KB configuration
+benchmarked in this paper is 7{,}080 facts
+(\S\ref{sec:discovery}); calibration training sampled synthetic
+loads to 12{,}000 facts, and the per-shard recall cliff
+($\sim$80 facts/shard at $D=4096$) is measured. Scaling to millions
+of facts should work via auto-sharding
+(\texttt{rck.shard\_sizing}), but this has not been benchmarked
+publicly.
+
+\paragraph{Discovery completeness at scale.} BFS discovery hit-rate
+degrades from 97\% (716 facts) to 73\% (7{,}080 facts, 76
+relations) at the default beam width and depth
+(\S\ref{sec:discovery}). Wider beams recover coverage at linear
+cost; we have not yet characterized the frontier.
+
+\paragraph{Confidence semantics.} The calibrated product
+(\S\ref{sec:calibration}) assumes hop independence; correlated hop
+errors make it optimistic. The default geometric mean is a heuristic
+and length-insensitive. Calibration is fitted per substrate
+configuration ($D$, shard sizing)---changing configuration means
+refitting.
 
 \paragraph{Open-vocabulary relations.} RCK uses whatever relation
 names you give it. Two different relation names that mean the same
@@ -974,13 +1262,13 @@ without ceding control over their own data.
 
 \subsection{Research substrate}
 
-The implementation is small enough to fork ($\sim$7{,}000 lines, 714
-tests). Researchers interested in VSA-based reasoning,
-neuro-symbolic integration, or empirical study of chain-based
-induction can build directly on it. The filter stack and the
-geometric-mean propagation rule are documented as configuration,
-not hard-coded behavior, so alternative policies are easy to swap
-in.
+The implementation is small enough to fork ($\sim$18{,}700 lines of
+plain numpy Python, 743 tests, no GPU). Researchers interested in
+VSA-based reasoning, neuro-symbolic integration, calibration of
+vector-memory retrieval, or empirical study of chain-based induction
+can build directly on it. The filter stack, the propagation rules,
+and the calibrator are configuration, not hard-coded behavior, so
+alternative policies are easy to swap in.
 
 \section{Conclusion}
 
@@ -988,11 +1276,15 @@ We have described a working alternative to LLMs for structured
 reasoning tasks. RCK is not a competitor to GPT on open-domain text
 generation; it is something else. It demonstrates that a small,
 testable, CPU-only neuro-symbolic system can answer factual
-questions with explicit confidence, explain why it knows what it
+questions with calibrated confidence, explain why it knows what it
 knows, resolve contradictions between sources, learn new facts in
 $O(1)$ from a single example, and reason across long chains of
-inference---all on commodity hardware, with no GPU and no
-hallucination layer to manage.
+inference with honestly-reported uncertainty---all on commodity
+hardware, with no GPU and no generative layer to manage. Where we
+found our own numbers wanting---the retracted precision headline,
+the over-claimed 50-hop confidence horizon, a latency table whose
+source KBs had drifted---we corrected them in public, because a
+system whose pitch is auditability has to start with its own paper.
 
 The code is available at \url{https://github.com/NORTHTEKDevs/rck}
 under the MIT license. We welcome experimentation, criticism, and
@@ -1002,9 +1294,9 @@ collaboration.
 
 This work was performed independently. The author thanks the
 foundational contributions of Pentti Kanerva, Tony Plate, Pei Wang,
-and the broader vector-symbolic and neuro-symbolic communities,
-whose decades of work made this system possible to assemble in a
-year.
+Chris Eliasmith, and the broader vector-symbolic,
+truth-maintenance, and neuro-symbolic communities, whose decades of
+work made this system possible to assemble in a year.
 
 \bibliographystyle{plain}
 \bibliography{references}

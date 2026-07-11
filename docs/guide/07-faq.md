@@ -99,7 +99,7 @@ required.
 
 ## I found a bug. Where do I file it?
 
-`https://github.com/kristianb43r/rck/issues`. Failing pytest cases
+`https://github.com/NORTHTEKDevs/rck/issues`. Failing pytest cases
 are the best bug reports.
 
 ## I want to contribute. Where do I start?

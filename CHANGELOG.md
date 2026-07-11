@@ -1,5 +1,99 @@
 # Changelog
 
+## 15.2.0 — 2026-07-11
+
+Calibrated-confidence + honest-benchmarks release. Driven by a
+full adversarial audit of every empirical claim (each §5 number
+re-executed fresh) and a prior-art audit of every novelty claim.
+
+### Added
+- **Score calibration** (`rck/score_calibration.py`):
+  `ScoreCalibrator` fits an isotonic (pool-adjacent-violators)
+  mapping cosine → empirical P(correct), with Beta(1,1)-smoothed
+  block probabilities so it never claims certainty. Raw cosines are
+  badly miscalibrated as probabilities: held-out Brier 0.5683
+  (raw-cosine-as-probability) vs 0.0004 (calibrated) on the
+  commonsense KB.
+- **`calibrated_product` propagation rule**
+  (`PropagationConfig(rule="calibrated_product", calibrator=...)`):
+  multiplies calibrated per-hop probabilities, restoring real
+  multiplicative semantics to chain confidence — length-sensitive
+  (a clean 50-hop chain reports 0.979, decaying with every hop)
+  without the raw product's collapse or the geometric mean's
+  length-invariance.
+- **Live-relation index** (`RelationIndex` in `rck/knowledge_base.py`,
+  the optimization §5.4 of the v15.0 paper promised): a snapshot of
+  which relations have facts in which shards, built from the shards'
+  fact logs. BFS chain discovery skips HRR queries that could only
+  return crosstalk: 31%/51%/59%/67% of queries cut across the four
+  KB tiers, 1.5×/2.1×/2.2×/3.0× wall-clock speedups, identical
+  discovered chains. `kb.query(...)` gains an optional
+  `shard_subset` parameter; `discover_chains` gains
+  `relation_index` / `use_relation_index` (default on;
+  `use_relation_index=False` reproduces v15.1 search exactly).
+- **`scripts/confidence_calibration_study.py`**: fits and evaluates
+  the calibrator (train: 4,862 labeled retrievals across five bundle
+  loads; eval: held-out commonsense KB), writes
+  `data/confidence_calibration_study.json` including the fitted
+  calibrator (`ScoreCalibrator.from_dict`).
+- 24 new tests (11 relation-index, 13 calibration). 719 → 743.
+
+### Changed
+- **`scripts/chain_discovery_study.py`** rewritten: the paper's old
+  three-KB latency table (14.5/7.7/55.5 ms on 716/2,599/4,109
+  facts) was not reproducible — the mid-size KBs no longer exist in
+  the repo and fresh runs measured 24–139 ms with ~4× run-to-run
+  variance. The study now sweeps the four KB tiers actually shipped
+  (716 → 7,080 facts), reports per-probe medians of repeats plus
+  machine-independent HRR-query counts, and A/Bs the live-relation
+  index.
+- **Papers corrected and synced.** `paper.md` had never received the
+  v15.1 retraction content and still presented the retracted
+  four-gate/"~87%" study as current — it is now fully synced with
+  `paper.tex`. Both papers additionally fix: the abstract's "50+
+  hops at moderate-or-better" claim (measured: 30+ at
+  moderate-or-better, argmax-correct to 50; the old sentence
+  conflated a confidence threshold with retrieval correctness);
+  §5's cascade numbers (measured: +6 facts in rounds [2,2,2,0],
+  not "~11" with "round 2 out-producing round 1"; rule cascade
+  718 → 843 per the v14 demo, not 718 → 839); stale test/line
+  counts; and the §5.8 reproducibility table (now maps every
+  section to the script that actually regenerates it).
+- **Related work rewritten** with the closest prior art the papers
+  previously omitted: SPA/Spaun and WordNet-scale HRR (Eliasmith
+  et al.; Crawford et al.), Holographic Declarative Memory, truth
+  maintenance systems (Doyle; de Kleer) + AGM + MYCIN, AMIE/PRA/NELL
+  and type-constrained KG completion, the negative-knowledge
+  literature (Arnaout et al.; NegatER; Clark; Gelfond-Lifschitz),
+  confidence-combination prior art (PSL, MLN, subjective logic,
+  logarithmic pooling), federated HDC, HolE, NVSA, torchhd, and
+  Lenat & Marcus. 29 references added.
+- **"Hallucination-free" scoped** in a new §1.2: structurally free
+  of generative confabulation ≠ incapable of holding a false belief
+  (the v15.1 shark/blue retraction is cited as the in-house
+  counterexample), with the legal-AI audit study and the
+  "reduce-not-eliminate" survey cited as the definitional trap
+  being avoided.
+- **Packaging**: distribution renamed `rck` → `rck-kernel` (the
+  PyPI name `rck` belongs to an unrelated bioinformatics package
+  since 2017, so `pip install rck` never installed this project).
+  Import name stays `rck`. README install instructions now use the
+  git URL.
+- **`data/*.json` study outputs are now tracked** in git. They were
+  gitignored, which silently broke the paper's promise that readers
+  could inspect `data/chain_induction_failures.json` etc. — the
+  public repo shipped no study artifacts at all.
+
+### Migration
+- None required. Default propagation remains `geometric_mean`;
+  `calibrated_product` is opt-in. Discovery behavior is unchanged on
+  real chains; edges that existed only as cleanup noise are no
+  longer followed (pass `use_relation_index=False` for the exact
+  v15.1 search).
+
+### Tests
+719 → 743 passing.
+
 ## 15.1.0 — 2026-05-24
 
 Chain-induction honesty release. A failure-mode audit of the v15.0
@@ -34,7 +128,7 @@ framing and ships the corrected pipeline.
   diagnostic that captures every induction outcome by bucket and
   writes per-record JSON to `data/chain_induction_failures.json`.
   This is the reproduction harness for the new §5.1 numbers.
-- Three new tests:
+- New tests:
   `test_induce_rejects_non_lifting_chain_by_default`,
   `test_induce_allows_generic_implies_when_opted_in`,
   `test_induce_rejects_partof_has_chain`,
