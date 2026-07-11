@@ -27,7 +27,9 @@ env/
 # Project-local
 private/
 checkpoints/
-data/*.json
+# Study outputs (data/*.json) are TRACKED on purpose: the paper's
+# reproducibility section points readers at them as canonical
+# artifacts. Regenerate with the matching scripts/*.py.
 data/*.jsonl
 !data/commonsense_kb.jsonl
 !data/extended_kb.jsonl

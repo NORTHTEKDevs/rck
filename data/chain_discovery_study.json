@@ -1,0 +1,209 @@
+{
+  "n_probes_per_tier": 30,
+  "n_repeats": 3,
+  "timing_note": "per-probe median of repeats; absolute ms is machine-dependent, hrr_queries_total is not",
+  "tiers": [
+    {
+      "tier": "commonsense",
+      "kb_files": [
+        "commonsense_kb.jsonl"
+      ],
+      "n_facts": 716,
+      "n_relations": 21,
+      "n_shards": 16,
+      "n_probes": 30,
+      "indexed": {
+        "avg_ms": 12.040273329087844,
+        "p95_ms": 41.61509500845568,
+        "discovered": 29,
+        "discovery_rate": 0.9666666666666667,
+        "depth_distribution": {
+          "2": 26,
+          "3": 3
+        },
+        "top_relations": {
+          "partof": 18,
+          "usedfor": 8,
+          "madeof": 7,
+          "locatedin": 6,
+          "has": 5
+        },
+        "hrr_queries_total": 2196
+      },
+      "no_index": {
+        "avg_ms": 17.930633332192276,
+        "p95_ms": 50.699804998293985,
+        "discovered": 29,
+        "discovery_rate": 0.9666666666666667,
+        "depth_distribution": {
+          "2": 26,
+          "3": 3
+        },
+        "top_relations": {
+          "partof": 18,
+          "usedfor": 8,
+          "madeof": 7,
+          "locatedin": 6,
+          "has": 5
+        },
+        "hrr_queries_total": 3186
+      },
+      "speedup": 1.4892214522135503,
+      "hrr_query_cut": 0.3107344632768362
+    },
+    {
+      "tier": "+extended",
+      "kb_files": [
+        "commonsense_kb.jsonl",
+        "extended_kb.jsonl"
+      ],
+      "n_facts": 1495,
+      "n_relations": 33,
+      "n_shards": 32,
+      "n_probes": 30,
+      "indexed": {
+        "avg_ms": 14.22351333409703,
+        "p95_ms": 46.70865501393564,
+        "discovered": 27,
+        "discovery_rate": 0.9,
+        "depth_distribution": {
+          "2": 26,
+          "4": 1
+        },
+        "top_relations": {
+          "partof": 17,
+          "madeof": 8,
+          "color": 6,
+          "usedfor": 6,
+          "has": 4
+        },
+        "hrr_queries_total": 2329
+      },
+      "no_index": {
+        "avg_ms": 29.732359998160973,
+        "p95_ms": 97.4521750031272,
+        "discovered": 27,
+        "discovery_rate": 0.9,
+        "depth_distribution": {
+          "2": 26,
+          "4": 1
+        },
+        "top_relations": {
+          "partof": 17,
+          "madeof": 8,
+          "color": 6,
+          "usedfor": 6,
+          "has": 4
+        },
+        "hrr_queries_total": 4758
+      },
+      "speedup": 2.0903667961477335,
+      "hrr_query_cut": 0.510508617065994
+    },
+    {
+      "tier": "+ultra",
+      "kb_files": [
+        "commonsense_kb.jsonl",
+        "extended_kb.jsonl",
+        "ultra_kb.jsonl"
+      ],
+      "n_facts": 3666,
+      "n_relations": 49,
+      "n_shards": 64,
+      "n_probes": 30,
+      "indexed": {
+        "avg_ms": 157.15583333027703,
+        "p95_ms": 479.4842899980722,
+        "discovered": 27,
+        "discovery_rate": 0.9,
+        "depth_distribution": {
+          "2": 8,
+          "3": 2,
+          "4": 17
+        },
+        "top_relations": {
+          "hassubtype": 32,
+          "order": 12,
+          "size": 9,
+          "family": 8,
+          "synonym": 7
+        },
+        "hrr_queries_total": 20617
+      },
+      "no_index": {
+        "avg_ms": 349.3849466671236,
+        "p95_ms": 1130.5873349992908,
+        "discovered": 27,
+        "discovery_rate": 0.9,
+        "depth_distribution": {
+          "2": 8,
+          "3": 2,
+          "4": 17
+        },
+        "top_relations": {
+          "hassubtype": 32,
+          "order": 12,
+          "size": 9,
+          "family": 8,
+          "synonym": 7
+        },
+        "hrr_queries_total": 50655
+      },
+      "speedup": 2.2231751711873136,
+      "hrr_query_cut": 0.5929918073240549
+    },
+    {
+      "tier": "+massive",
+      "kb_files": [
+        "commonsense_kb.jsonl",
+        "extended_kb.jsonl",
+        "ultra_kb.jsonl",
+        "massive_kb.jsonl"
+      ],
+      "n_facts": 7080,
+      "n_relations": 76,
+      "n_shards": 128,
+      "n_probes": 30,
+      "indexed": {
+        "avg_ms": 389.0522833360592,
+        "p95_ms": 942.1596950036474,
+        "discovered": 22,
+        "discovery_rate": 0.7333333333333333,
+        "depth_distribution": {
+          "2": 15,
+          "3": 3,
+          "4": 4
+        },
+        "top_relations": {
+          "isa": 10,
+          "size": 7,
+          "synonym": 7,
+          "hassubtype": 6,
+          "has": 6
+        },
+        "hrr_queries_total": 45544
+      },
+      "no_index": {
+        "avg_ms": 1183.3719466657687,
+        "p95_ms": 2900.9162300106254,
+        "discovered": 22,
+        "discovery_rate": 0.7333333333333333,
+        "depth_distribution": {
+          "2": 15,
+          "3": 3,
+          "4": 4
+        },
+        "top_relations": {
+          "isa": 10,
+          "size": 7,
+          "synonym": 7,
+          "hassubtype": 6,
+          "has": 6
+        },
+        "hrr_queries_total": 135954
+      },
+      "speedup": 3.0416784513344823,
+      "hrr_query_cut": 0.6650043397031349
+    }
+  ]
+}

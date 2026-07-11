@@ -1,0 +1,265 @@
+{
+  "train_loads": [
+    500,
+    2000,
+    4000,
+    8000,
+    12000
+  ],
+  "n_train_samples": 4862,
+  "heldout_kb": "commonsense",
+  "n_heldout_samples": 705,
+  "brier_raw_cosine": 0.568294630171357,
+  "brier_calibrated": 0.00044920568624086426,
+  "reliability_heldout": [
+    {
+      "mean_score": 0.0431938036017015,
+      "empirical_accuracy": 0.0,
+      "calibrated_prob": 0.002352941176470588,
+      "count": 71
+    },
+    {
+      "mean_score": 0.05095795347866878,
+      "empirical_accuracy": 0.0,
+      "calibrated_prob": 0.002352941176470588,
+      "count": 71
+    },
+    {
+      "mean_score": 0.10298032087969108,
+      "empirical_accuracy": 0.8873239436619719,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 71
+    },
+    {
+      "mean_score": 0.12329623722274538,
+      "empirical_accuracy": 1.0,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 71
+    },
+    {
+      "mean_score": 0.13189378044974637,
+      "empirical_accuracy": 1.0,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 71
+    },
+    {
+      "mean_score": 0.13924205643790108,
+      "empirical_accuracy": 1.0,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 70
+    },
+    {
+      "mean_score": 0.1459929523723466,
+      "empirical_accuracy": 1.0,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 70
+    },
+    {
+      "mean_score": 0.15483876658337456,
+      "empirical_accuracy": 1.0,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 70
+    },
+    {
+      "mean_score": 0.16732360827071327,
+      "empirical_accuracy": 1.0,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 70
+    },
+    {
+      "mean_score": 0.2394848651119641,
+      "empirical_accuracy": 1.0,
+      "calibrated_prob": 0.9995672868887927,
+      "count": 70
+    }
+  ],
+  "depth_table": [
+    {
+      "rule": "geometric_mean",
+      "depth": 1,
+      "correct": true,
+      "confidence": 0.710722804069519,
+      "hedge": "strong"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 2,
+      "correct": true,
+      "confidence": 0.6755127983405258,
+      "hedge": "strong"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 3,
+      "correct": true,
+      "confidence": 0.640439544011983,
+      "hedge": "strong"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 5,
+      "correct": true,
+      "confidence": 0.6175346875244045,
+      "hedge": "strong"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 7,
+      "correct": true,
+      "confidence": 0.5733555220107407,
+      "hedge": "strong"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 10,
+      "correct": true,
+      "confidence": 0.49459178143350446,
+      "hedge": "strong"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 15,
+      "correct": true,
+      "confidence": 0.37773122334721354,
+      "hedge": "strong"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 20,
+      "correct": true,
+      "confidence": 0.29596727551000246,
+      "hedge": "moderate"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 30,
+      "correct": true,
+      "confidence": 0.17166598766607036,
+      "hedge": "moderate"
+    },
+    {
+      "rule": "geometric_mean",
+      "depth": 50,
+      "correct": true,
+      "confidence": 0.060798733059384207,
+      "hedge": "weak"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 1,
+      "correct": true,
+      "confidence": 0.9995672868887927,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 2,
+      "correct": true,
+      "confidence": 0.9991347610182221,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 3,
+      "correct": true,
+      "confidence": 0.9987024223072665,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 5,
+      "correct": true,
+      "confidence": 0.9978383060402902,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 7,
+      "correct": true,
+      "confidence": 0.9969749374403929,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 10,
+      "correct": true,
+      "confidence": 0.9956812850013559,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 15,
+      "correct": true,
+      "confidence": 0.9935289267817724,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 20,
+      "correct": true,
+      "confidence": 0.9913812213019512,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 30,
+      "correct": true,
+      "confidence": 0.9870997283521399,
+      "hedge": "strong"
+    },
+    {
+      "rule": "calibrated_product",
+      "depth": 50,
+      "correct": true,
+      "confidence": 0.9785921342405685,
+      "hedge": "strong"
+    }
+  ],
+  "calibrator": {
+    "thresholds": [
+      0.05727463588118553,
+      0.05776820331811905,
+      0.06057463586330414,
+      0.06112820282578468,
+      0.06206416338682175,
+      0.06222259998321533,
+      0.06462804228067398,
+      0.0653400868177414,
+      0.06780422478914261,
+      0.0711967870593071,
+      0.07131291180849075,
+      0.07240036875009537,
+      0.0740095004439354,
+      0.07502207159996033,
+      0.07624763995409012,
+      0.07662762701511383,
+      0.07918103784322739,
+      0.08510442823171616,
+      0.09292419999837875,
+      0.5790497064590454
+    ],
+    "probs": [
+      0.002352941176470588,
+      0.0392156862745098,
+      0.06448899319289271,
+      0.0967741935483871,
+      0.11403508771929821,
+      0.15789473684210525,
+      0.20658809789244573,
+      0.21333333333333335,
+      0.35135135135135137,
+      0.4703389830508475,
+      0.5,
+      0.5306122448979592,
+      0.6979166666666666,
+      0.8200169395821569,
+      0.8654040404040404,
+      0.8823529411764706,
+      0.9528301886792453,
+      0.9848484848484849,
+      0.9913419913419913,
+      0.9995672868887927
+    ],
+    "n_samples": 4862
+  }
+}

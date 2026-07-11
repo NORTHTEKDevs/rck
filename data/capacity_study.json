@@ -1,0 +1,325 @@
+{
+  "started": "2026-07-11 01:42:41",
+  "experiments": [
+    {
+      "name": "n_facts at D=4096 shards=64",
+      "results": [
+        {
+          "n_facts": 500,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "mean_top1_cos": 0.35090832474827766,
+          "median_top1_cos": 0.33857375383377075,
+          "p10_top1_cos": 0.278929740190506,
+          "fill_per_shard_max": 16,
+          "fill_per_shard_mean": 7.8125,
+          "elapsed_load_s": 0.061092376708984375,
+          "elapsed_query_s": 0.1222999095916748
+        },
+        {
+          "n_facts": 1000,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "mean_top1_cos": 0.2505879666209221,
+          "median_top1_cos": 0.24462006986141205,
+          "p10_top1_cos": 0.2105465829372406,
+          "fill_per_shard_max": 27,
+          "fill_per_shard_mean": 15.625,
+          "elapsed_load_s": 0.13142824172973633,
+          "elapsed_query_s": 0.30455970764160156
+        },
+        {
+          "n_facts": 2000,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 0.9995,
+          "recall_at_3": 0.9995,
+          "mean_top1_cos": 0.17801587135344743,
+          "median_top1_cos": 0.17714528739452362,
+          "p10_top1_cos": 0.14833828806877136,
+          "fill_per_shard_max": 47,
+          "fill_per_shard_mean": 31.25,
+          "elapsed_load_s": 0.24930095672607422,
+          "elapsed_query_s": 1.8115878105163574
+        },
+        {
+          "n_facts": 4000,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 0.9435,
+          "recall_at_3": 0.9435,
+          "mean_top1_cos": 0.12626340156327934,
+          "median_top1_cos": 0.12634935975074768,
+          "p10_top1_cos": 0.1048862561583519,
+          "fill_per_shard_max": 80,
+          "fill_per_shard_mean": 62.5,
+          "elapsed_load_s": 0.4924197196960449,
+          "elapsed_query_s": 7.598919868469238
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 0.248625,
+          "recall_at_3": 0.248625,
+          "mean_top1_cos": 0.08966779496334493,
+          "median_top1_cos": 0.08942098170518875,
+          "p10_top1_cos": 0.06967674940824509,
+          "fill_per_shard_max": 146,
+          "fill_per_shard_mean": 125.0,
+          "elapsed_load_s": 0.9588539600372314,
+          "elapsed_query_s": 29.822609901428223
+        },
+        {
+          "n_facts": 16000,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 0.0078125,
+          "recall_at_3": 0.0078125,
+          "mean_top1_cos": 0.0702606147362385,
+          "median_top1_cos": 0.06790780276060104,
+          "p10_top1_cos": 0.06093449518084526,
+          "fill_per_shard_max": 287,
+          "fill_per_shard_mean": 250.0,
+          "elapsed_load_s": 1.9075202941894531,
+          "elapsed_query_s": 118.75409078598022
+        }
+      ]
+    },
+    {
+      "name": "n_shards at D=4096 n_facts=8000",
+      "results": [
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 4,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "mean_top1_cos": 0.06192041603289545,
+          "median_top1_cos": 0.06126249209046364,
+          "p10_top1_cos": 0.05660167336463928,
+          "fill_per_shard_max": 2024,
+          "fill_per_shard_mean": 2000.0,
+          "elapsed_load_s": 1.022167444229126,
+          "elapsed_query_s": 31.008062839508057
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 8,
+          "recall_at_1": 0.0,
+          "recall_at_3": 0.0,
+          "mean_top1_cos": 0.062091630310751496,
+          "median_top1_cos": 0.06143317371606827,
+          "p10_top1_cos": 0.05680766701698303,
+          "fill_per_shard_max": 1023,
+          "fill_per_shard_mean": 1000.0,
+          "elapsed_load_s": 1.0021579265594482,
+          "elapsed_query_s": 30.75039315223694
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 16,
+          "recall_at_1": 0.00025,
+          "recall_at_3": 0.00025,
+          "mean_top1_cos": 0.06309015359310434,
+          "median_top1_cos": 0.06203921511769295,
+          "p10_top1_cos": 0.057049598544836044,
+          "fill_per_shard_max": 541,
+          "fill_per_shard_mean": 500.0,
+          "elapsed_load_s": 0.9583876132965088,
+          "elapsed_query_s": 30.354206562042236
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 32,
+          "recall_at_1": 0.00875,
+          "recall_at_3": 0.00875,
+          "mean_top1_cos": 0.06903751846635714,
+          "median_top1_cos": 0.06669315695762634,
+          "p10_top1_cos": 0.05875090882182121,
+          "fill_per_shard_max": 277,
+          "fill_per_shard_mean": 250.0,
+          "elapsed_load_s": 0.9906301498413086,
+          "elapsed_query_s": 30.325352430343628
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 0.248625,
+          "recall_at_3": 0.248625,
+          "mean_top1_cos": 0.08966779496334493,
+          "median_top1_cos": 0.08942098170518875,
+          "p10_top1_cos": 0.06967674940824509,
+          "fill_per_shard_max": 146,
+          "fill_per_shard_mean": 125.0,
+          "elapsed_load_s": 0.9960107803344727,
+          "elapsed_query_s": 30.44970178604126
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 128,
+          "recall_at_1": 0.933375,
+          "recall_at_3": 0.933375,
+          "mean_top1_cos": 0.126265456113033,
+          "median_top1_cos": 0.1260657161474228,
+          "p10_top1_cos": 0.10422578454017639,
+          "fill_per_shard_max": 80,
+          "fill_per_shard_mean": 62.5,
+          "elapsed_load_s": 1.033477544784546,
+          "elapsed_query_s": 30.316272735595703
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 256,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "mean_top1_cos": 0.17806390504352748,
+          "median_top1_cos": 0.17675931751728058,
+          "p10_top1_cos": 0.15101124346256256,
+          "fill_per_shard_max": 45,
+          "fill_per_shard_mean": 31.25,
+          "elapsed_load_s": 1.0250067710876465,
+          "elapsed_query_s": 31.660882711410522
+        },
+        {
+          "n_facts": 8000,
+          "dim": 4096,
+          "n_shards": 512,
+          "recall_at_1": 1.0,
+          "recall_at_3": 1.0,
+          "mean_top1_cos": 0.2509035394731909,
+          "median_top1_cos": 0.24761264026165009,
+          "p10_top1_cos": 0.20881104469299316,
+          "fill_per_shard_max": 27,
+          "fill_per_shard_mean": 15.625,
+          "elapsed_load_s": 1.0605709552764893,
+          "elapsed_query_s": 30.97414779663086
+        }
+      ]
+    },
+    {
+      "name": "D at n_facts=4000 shards=64",
+      "results": [
+        {
+          "n_facts": 4000,
+          "dim": 512,
+          "n_shards": 64,
+          "recall_at_1": 0.1865,
+          "recall_at_3": 0.28325,
+          "mean_top1_cos": 0.17122646094858646,
+          "median_top1_cos": 0.16809481382369995,
+          "p10_top1_cos": 0.15314628183841705,
+          "fill_per_shard_max": 80,
+          "fill_per_shard_mean": 62.5,
+          "elapsed_load_s": 0.2507138252258301,
+          "elapsed_query_s": 0.944880485534668
+        },
+        {
+          "n_facts": 4000,
+          "dim": 1024,
+          "n_shards": 64,
+          "recall_at_1": 0.58575,
+          "recall_at_3": 0.727,
+          "mean_top1_cos": 0.1354159752037376,
+          "median_top1_cos": 0.13028740882873535,
+          "p10_top1_cos": 0.11273697018623352,
+          "fill_per_shard_max": 80,
+          "fill_per_shard_mean": 62.5,
+          "elapsed_load_s": 0.2912936210632324,
+          "elapsed_query_s": 1.4237689971923828
+        },
+        {
+          "n_facts": 4000,
+          "dim": 2048,
+          "n_shards": 64,
+          "recall_at_1": 0.86875,
+          "recall_at_3": 0.86975,
+          "mean_top1_cos": 0.12654397809319198,
+          "median_top1_cos": 0.12626491487026215,
+          "p10_top1_cos": 0.09639961272478104,
+          "fill_per_shard_max": 80,
+          "fill_per_shard_mean": 62.5,
+          "elapsed_load_s": 0.3676164150238037,
+          "elapsed_query_s": 3.5667309761047363
+        },
+        {
+          "n_facts": 4000,
+          "dim": 4096,
+          "n_shards": 64,
+          "recall_at_1": 0.9435,
+          "recall_at_3": 0.9435,
+          "mean_top1_cos": 0.12626340156327934,
+          "median_top1_cos": 0.12634935975074768,
+          "p10_top1_cos": 0.1048862561583519,
+          "fill_per_shard_max": 80,
+          "fill_per_shard_mean": 62.5,
+          "elapsed_load_s": 0.5296275615692139,
+          "elapsed_query_s": 7.803636074066162
+        },
+        {
+          "n_facts": 4000,
+          "dim": 8192,
+          "n_shards": 64,
+          "recall_at_1": 0.98075,
+          "recall_at_3": 0.98075,
+          "mean_top1_cos": 0.1262093561887741,
+          "median_top1_cos": 0.12601745128631592,
+          "p10_top1_cos": 0.11013408750295639,
+          "fill_per_shard_max": 80,
+          "fill_per_shard_mean": 62.5,
+          "elapsed_load_s": 0.8076343536376953,
+          "elapsed_query_s": 16.29472780227661
+        }
+      ]
+    },
+    {
+      "name": "10k facts at D=4096 shards=128",
+      "results": [
+        {
+          "n_facts": 10000,
+          "dim": 4096,
+          "n_shards": 128,
+          "recall_at_1": 0.7769,
+          "recall_at_3": 0.7769,
+          "mean_top1_cos": 0.11288726047612727,
+          "median_top1_cos": 0.1128692626953125,
+          "p10_top1_cos": 0.09127435833215714,
+          "fill_per_shard_max": 101,
+          "fill_per_shard_mean": 78.125,
+          "elapsed_load_s": 1.2855637073516846,
+          "elapsed_query_s": 46.8318247795105
+        }
+      ]
+    },
+    {
+      "name": "20k facts at D=4096 shards=256",
+      "results": [
+        {
+          "n_facts": 20000,
+          "dim": 4096,
+          "n_shards": 256,
+          "recall_at_1": 0.78595,
+          "recall_at_3": 0.78595,
+          "mean_top1_cos": 0.11298256879784167,
+          "median_top1_cos": 0.11277571320533752,
+          "p10_top1_cos": 0.09229138493537903,
+          "fill_per_shard_max": 104,
+          "fill_per_shard_mean": 78.125,
+          "elapsed_load_s": 2.6007041931152344,
+          "elapsed_query_s": 182.04563450813293
+        }
+      ]
+    }
+  ],
+  "elapsed_s": 682.1926481723785
+}

@@ -1,0 +1,13 @@
+{
+  "n_probes": 40,
+  "hits_cold": 39,
+  "hits_warm": 40,
+  "time_cold_s": 0.465476499957731,
+  "time_warm_s": 0.43992300001264084,
+  "speedup": 1.0580863013399069,
+  "warm_skill_stats": {
+    "n": 41,
+    "total_uses": 142,
+    "high_conf": 12
+  }
+}

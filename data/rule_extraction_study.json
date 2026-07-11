@@ -1,0 +1,207 @@
+{
+  "kb_facts": 722,
+  "n_skills": 54,
+  "n_rules": 23,
+  "rules": [
+    {
+      "body": [
+        "locatedin",
+        "continent"
+      ],
+      "head": "continent",
+      "support": 28,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 locatedin X1) and (X1 continent X2) => (X0 continent X2)"
+    },
+    {
+      "body": [
+        "capitalof",
+        "continent"
+      ],
+      "head": "implies",
+      "support": 26,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 capitalof X1) and (X1 continent X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "hassubtype",
+        "has"
+      ],
+      "head": "implies",
+      "support": 13,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 hassubtype X1) and (X1 has X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "equals",
+        "value"
+      ],
+      "head": "implies",
+      "support": 7,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 equals X1) and (X1 value X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "hassubtype",
+        "size"
+      ],
+      "head": "implies",
+      "support": 3,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 hassubtype X1) and (X1 size X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "color",
+        "category"
+      ],
+      "head": "implies",
+      "support": 3,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 color X1) and (X1 category X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "category",
+        "size"
+      ],
+      "head": "size",
+      "support": 3,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 category X1) and (X1 size X2) => (X0 size X2)"
+    },
+    {
+      "body": [
+        "partof",
+        "locatedin"
+      ],
+      "head": "locatedin",
+      "support": 3,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 partof X1) and (X1 locatedin X2) => (X0 locatedin X2)"
+    },
+    {
+      "body": [
+        "madeof",
+        "contains"
+      ],
+      "head": "implies",
+      "support": 3,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 madeof X1) and (X1 contains X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "usedfor",
+        "causes"
+      ],
+      "head": "implies",
+      "support": 3,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 usedfor X1) and (X1 causes X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "country",
+        "capital"
+      ],
+      "head": "implies",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 country X1) and (X1 capital X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "partof",
+        "size"
+      ],
+      "head": "size",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 partof X1) and (X1 size X2) => (X0 size X2)"
+    },
+    {
+      "body": [
+        "partof",
+        "madeof"
+      ],
+      "head": "madeof",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 partof X1) and (X1 madeof X2) => (X0 madeof X2)"
+    },
+    {
+      "body": [
+        "locatedin",
+        "size"
+      ],
+      "head": "size",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 locatedin X1) and (X1 size X2) => (X0 size X2)"
+    },
+    {
+      "body": [
+        "usedfor",
+        "causedby"
+      ],
+      "head": "implies",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 usedfor X1) and (X1 causedby X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "is",
+        "causes"
+      ],
+      "head": "implies",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 is X1) and (X1 causes X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "country",
+        "contains"
+      ],
+      "head": "implies",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 country X1) and (X1 contains X2) => (X0 implies X2)"
+    },
+    {
+      "body": [
+        "category",
+        "hassubtype"
+      ],
+      "head": "hassubtype",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 category X1) and (X1 hassubtype X2) => (X0 hassubtype X2)"
+    },
+    {
+      "body": [
+        "locatedin",
+        "color"
+      ],
+      "head": "color",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 locatedin X1) and (X1 color X2) => (X0 color X2)"
+    },
+    {
+      "body": [
+        "capital",
+        "continent"
+      ],
+      "head": "implies",
+      "support": 2,
+      "confidence": 1.0,
+      "verbal": "forall X0, X1, X2. (X0 capital X1) and (X1 continent X2) => (X0 implies X2)"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "n_probes": 80,
+  "n_induced": 76,
+  "n_verified": 6,
+  "n_rejected": 70,
+  "facts_before": 716,
+  "facts_after": 722,
+  "growth": 6,
+  "relations_seen": [
+    "continent",
+    "madeof",
+    "usedfor"
+  ],
+  "elapsed_s": 0.7350362000142923
+}

@@ -1,0 +1,50 @@
+{
+  "initial_facts": 716,
+  "final_facts": 722,
+  "growth": 6,
+  "saturated": true,
+  "elapsed_s": 3.03432380000595,
+  "rounds": [
+    {
+      "round": 1,
+      "probes_tried": 80,
+      "chains_discovered": 69,
+      "facts_induced": 68,
+      "facts_verified": 2,
+      "facts_after": 718
+    },
+    {
+      "round": 2,
+      "probes_tried": 80,
+      "chains_discovered": 74,
+      "facts_induced": 73,
+      "facts_verified": 2,
+      "facts_after": 720
+    },
+    {
+      "round": 3,
+      "probes_tried": 80,
+      "chains_discovered": 73,
+      "facts_induced": 71,
+      "facts_verified": 2,
+      "facts_after": 722
+    },
+    {
+      "round": 4,
+      "probes_tried": 6,
+      "chains_discovered": 5,
+      "facts_induced": 5,
+      "facts_verified": 0,
+      "facts_after": 722
+    }
+  ],
+  "top_patterns": [
+    {
+      "signature": [
+        "locatedin",
+        "continent"
+      ],
+      "count": 6
+    }
+  ]
+}

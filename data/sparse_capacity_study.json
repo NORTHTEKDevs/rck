@@ -1,0 +1,83 @@
+{
+  "configurations": [
+    {
+      "dim": 4096,
+      "k": 80
+    },
+    {
+      "dim": 4096,
+      "k": 160
+    },
+    {
+      "dim": 8192,
+      "k": 160
+    },
+    {
+      "dim": 8192,
+      "k": 320
+    },
+    {
+      "dim": 16384,
+      "k": 320
+    }
+  ],
+  "cliffs_at_90pct_recall": {
+    "D4096_k80": 0,
+    "D4096_k160": 10,
+    "D8192_k160": 10,
+    "D8192_k320": 20,
+    "D16384_k320": 20
+  },
+  "details": [
+    {
+      "dim": 4096,
+      "k": 80,
+      "n_facts": 10,
+      "recall_at_1": 0.6,
+      "correct": 6,
+      "elapsed_s": 0.004674800002248958,
+      "memory_bytes": 16384,
+      "codebook_atoms": 24
+    },
+    {
+      "dim": 4096,
+      "k": 160,
+      "n_facts": 10,
+      "recall_at_1": 1.0,
+      "correct": 10,
+      "elapsed_s": 0.0056087999837473035,
+      "memory_bytes": 16384,
+      "codebook_atoms": 24
+    },
+    {
+      "dim": 8192,
+      "k": 160,
+      "n_facts": 10,
+      "recall_at_1": 0.9,
+      "correct": 9,
+      "elapsed_s": 0.0054419999942183495,
+      "memory_bytes": 32768,
+      "codebook_atoms": 24
+    },
+    {
+      "dim": 8192,
+      "k": 320,
+      "n_facts": 20,
+      "recall_at_1": 0.95,
+      "correct": 19,
+      "elapsed_s": 0.02841430000262335,
+      "memory_bytes": 32768,
+      "codebook_atoms": 44
+    },
+    {
+      "dim": 16384,
+      "k": 320,
+      "n_facts": 20,
+      "recall_at_1": 0.95,
+      "correct": 19,
+      "elapsed_s": 0.027581000002101064,
+      "memory_bytes": 65536,
+      "codebook_atoms": 44
+    }
+  ]
+}

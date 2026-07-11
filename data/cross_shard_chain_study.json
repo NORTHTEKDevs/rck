@@ -1,0 +1,50 @@
+[
+  {
+    "n_shards": 16,
+    "n_probes": 60,
+    "successes": 59,
+    "avg_distinct_shards_per_chain": 1.9152542372881356,
+    "fraction_endpoints_differ": 0.864406779661017,
+    "distribution": {
+      "2": 48,
+      "1": 8,
+      "3": 3
+    }
+  },
+  {
+    "n_shards": 64,
+    "n_probes": 60,
+    "successes": 60,
+    "avg_distinct_shards_per_chain": 2.0,
+    "fraction_endpoints_differ": 0.95,
+    "distribution": {
+      "2": 54,
+      "1": 3,
+      "3": 3
+    }
+  },
+  {
+    "n_shards": 128,
+    "n_probes": 60,
+    "successes": 60,
+    "avg_distinct_shards_per_chain": 2.0166666666666666,
+    "fraction_endpoints_differ": 0.9666666666666667,
+    "distribution": {
+      "2": 55,
+      "1": 2,
+      "3": 3
+    }
+  },
+  {
+    "n_shards": 256,
+    "n_probes": 60,
+    "successes": 60,
+    "avg_distinct_shards_per_chain": 2.0166666666666666,
+    "fraction_endpoints_differ": 0.9833333333333333,
+    "distribution": {
+      "2": 57,
+      "1": 1,
+      "3": 2
+    }
+  }
+]

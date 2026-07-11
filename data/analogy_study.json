@@ -1,0 +1,65 @@
+{
+  "n_probes": 115,
+  "relation_correct": 106,
+  "answer_correct": 108,
+  "rel_accuracy": 0.9217391304347826,
+  "answer_accuracy": 0.9391304347826087,
+  "sample_failures": [
+    {
+      "a": "dog",
+      "b": "tail",
+      "c": "cat",
+      "expected": "fur",
+      "got": "tail",
+      "relation": "has"
+    },
+    {
+      "a": "dog",
+      "b": "legs",
+      "c": "cat",
+      "expected": "fur",
+      "got": "claws",
+      "relation": "has"
+    },
+    {
+      "a": "dog",
+      "b": "legs",
+      "c": "cat",
+      "expected": "tail",
+      "got": "claws",
+      "relation": "has"
+    },
+    {
+      "a": "dog",
+      "b": "ears",
+      "c": "cat",
+      "expected": "fur",
+      "got": "claws",
+      "relation": "has"
+    },
+    {
+      "a": "dog",
+      "b": "ears",
+      "c": "cat",
+      "expected": "tail",
+      "got": "claws",
+      "relation": "has"
+    },
+    {
+      "a": "dog",
+      "b": "ears",
+      "c": "cat",
+      "expected": "whiskers",
+      "got": "claws",
+      "relation": "has"
+    },
+    {
+      "a": "cat",
+      "b": "tail",
+      "c": "bird",
+      "expected": "feathers",
+      "got": null,
+      "relation": "has"
+    }
+  ]
+}
