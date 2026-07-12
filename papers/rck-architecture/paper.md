@@ -22,7 +22,7 @@ We report empirical findings from the implementation:
 - A confidence-weighted analogy solver improves accuracy from 88.7% to 93.9% on a 115-probe commonsense benchmark, while surfacing calibrated probabilities for each candidate.
 - Sparse-binary HRR, while attractive on per-atom memory grounds, has 8–16× lower per-shard capacity than dense bipolar HRR and is **not** a drop-in substrate replacement.
 
-We release the full implementation (~18,800 lines of Python, 757 tests) under the MIT license at <https://github.com/NORTHTEKDevs/rck>. Our aim is not to argue that RCK replaces LLMs but to show that a coherent alternative architecture — one that is auditable, editable, and structurally honest about its own uncertainty — is achievable and useful today, on commodity hardware, with no GPU.
+We release the full implementation (~18,800 lines of Python, 757 tests) under the Apache 2.0 license at <https://github.com/NORTHTEKDevs/rck>. Our aim is not to argue that RCK replaces LLMs but to show that a coherent alternative architecture — one that is auditable, editable, and structurally honest about its own uncertainty — is achievable and useful today, on commodity hardware, with no GPU.
 
 ---
 
@@ -336,7 +336,7 @@ All numbers in §5 are reproducible from the public repository, and the canonica
 | §5.8 cross-shard distribution | `scripts/cross_shard_chain_study.py` | `data/cross_shard_chain_study.json` |
 | §5.9 cascade induction | `scripts/cascade_induction_study.py`; rule extraction via `scripts/rule_extraction_study.py`; rule cascade via `examples/v14_full_stack_demo.py` | `data/cascade_induction_study.json`, `data/rule_extraction_study.json` |
 
-All scripts run from the repository root with no external services and no GPU. Environment: Python 3.11+ (numbers in this revision measured on CPython 3.14), single CPU thread, default agent settings (D=4096, auto-sharded). Random seeds are fixed (`seed=0` throughout), so accuracy-type numbers reproduce exactly; latency-type numbers vary by machine. The test suite (`pytest -q`) is **757/757** passing on the same environment. The v15.3.0 tag on GitHub marks the exact source state of this revision.
+All scripts run from the repository root with no external services and no GPU. Environment: Python 3.11+ (numbers in this revision measured on CPython 3.14), single CPU thread, default agent settings (D=4096, auto-sharded). Random seeds are fixed (`seed=0` throughout), so accuracy-type numbers reproduce exactly; latency-type numbers vary by machine. The test suite (`pytest -q`) is **757/757** passing on the same environment. The v15.3.1 tag on GitHub marks the exact source state of this revision.
 
 ---
 
@@ -451,7 +451,7 @@ The implementation is small enough to fork (~18,800 lines of plain numpy Python,
 
 We've described a working alternative to LLMs for structured reasoning tasks. RCK is not a competitor to GPT on open-domain text generation; it's something else. It demonstrates that a small, testable, CPU-only neuro-symbolic system can answer factual questions with calibrated confidence, explain why it knows what it knows, resolve contradictions between sources, learn new facts in O(1) from a single example, and reason across long chains of inference with honestly-reported uncertainty — all on commodity hardware, with no GPU and no generative layer to manage. Where we found our own numbers wanting — the retracted precision headline, the over-claimed 50-hop confidence horizon, a latency table whose source KBs had drifted — we corrected them in public, because a system whose pitch is auditability has to start with its own paper.
 
-The code is available at <https://github.com/NORTHTEKDevs/rck> under the MIT license. We welcome experimentation, criticism, and collaboration.
+The code is available at <https://github.com/NORTHTEKDevs/rck> under the Apache 2.0 license. We welcome experimentation, criticism, and collaboration.
 
 ---
 
@@ -509,7 +509,7 @@ This work was performed independently. The author thanks the foundational contri
                   Hyperdimensional Computing},
   year         = {2026},
   howpublished = {Preprint, available at \url{https://github.com/NORTHTEKDevs/rck}},
-  version      = {15.3.0},
+  version      = {15.3.1},
   url          = {https://github.com/NORTHTEKDevs/rck},
 }
 ```

@@ -19,7 +19,7 @@ kept importable for continuity; they are not part of the v15 thesis.
 See the paper in papers/rck-architecture/.)
 """
 
-__version__ = "15.3.0"
+__version__ = "15.3.1"
 
 from rck.codebook import Codebook
 from rck.vsa import bind, bundle, permute, unbind, cosine, binarize

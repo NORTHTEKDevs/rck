@@ -94,8 +94,9 @@ to text via the small polisher).
 
 ## I want to use this commercially. Can I?
 
-Yes — MIT license. No restrictions. Credit appreciated but not
-required.
+Yes — Apache 2.0 license, which includes an express patent grant.
+Keep the `LICENSE` and `NOTICE` files with any redistribution;
+beyond that, no restrictions.
 
 ## I found a bug. Where do I file it?
 

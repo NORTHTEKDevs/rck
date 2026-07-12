@@ -6,7 +6,7 @@
 > 100,000 real-world facts in 535 MB: sub-millisecond queries,
 > 100.0% recall@1, one CPU thread.
 
-[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-757%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.3.0-blue)](CHANGELOG.md)
+[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-757%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.3.1-blue)](CHANGELOG.md)
 
 ---
 
@@ -307,9 +307,9 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.3.0** — current. 757 passing tests. API stable.
+* **v15.3.1** — current. 757 passing tests. API stable.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
-* MIT licensed.
+* Apache 2.0 licensed.
 
 ---
 
@@ -323,7 +323,7 @@ If you use RCK in research, please cite (or use GitHub's
   author  = {Baer, Kristian},
   title   = {RCK: Resonant Cognitive Kernel},
   year    = {2026},
-  version = {15.3.0},
+  version = {15.3.1},
   url     = {https://github.com/NORTHTEKDevs/rck}
 }
 ```

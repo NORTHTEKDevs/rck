@@ -14,9 +14,9 @@ authors:
   - family-names: Baer
     given-names: Kristian
     email: kristianb43r@gmail.com
-version: 15.3.0
+version: 15.3.1
 date-released: 2026-07-11
-license: MIT
+license: Apache-2.0
 repository-code: "https://github.com/NORTHTEKDevs/rck"
 url: "https://github.com/NORTHTEKDevs/rck"
 keywords:

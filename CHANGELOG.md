@@ -1,5 +1,14 @@
 # Changelog
 
+## 15.3.1 — 2026-07-11
+
+### Changed
+- **License: MIT → Apache 2.0** (sole copyright holder relicense).
+  Every reference updated (LICENSE, NOTICE added, pyproject
+  classifiers, README, papers, CITATION.cff, .zenodo.json, FAQ).
+  Apache 2.0 adds an express patent grant; redistributions must
+  retain LICENSE and NOTICE.
+
 ## 15.3.0 — 2026-07-11
 
 Scale release: 100,000 real-world facts on a laptop, single CPU
