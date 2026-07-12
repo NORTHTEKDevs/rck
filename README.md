@@ -307,7 +307,7 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.2.0** — current. 757 passing tests. API stable.
+* **v15.3.0** — current. 757 passing tests. API stable.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
 * MIT licensed.
 

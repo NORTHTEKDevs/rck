@@ -470,7 +470,7 @@ form. For most uses, the structured output is what callers want.
 \section{Key design decisions}
 \label{sec:filter-stack}
 
-We describe four design decisions that came out of empirical work
+We describe the design decisions that came out of empirical work
 and changed the system materially.
 
 \subsection{The six-gate filter stack on chain induction}
@@ -912,7 +912,7 @@ and the speedup both grow with relation count (31\% $\to$ 66\%,
 1.4$\times$ $\to$ 2.8$\times$), confirming relation-count scaling
 dominates---and the 100{,}000-fact ConceptNet KB of
 \S\ref{sec:scale}, with only 19 relations, discovers at a median of
-31\,ms, faster than the 76-relation 7{,}080-fact tier here.
+30\,ms, faster than the 76-relation 7{,}080-fact tier here.
 \emph{Absolute latency is machine- and load-dependent:} wall-clock
 on this benchmark varies up to $\sim$4$\times$ run-to-run under OS
 scheduling noise, which is why the study reports per-probe medians
