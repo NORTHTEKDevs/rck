@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use RCK in research, please cite it as below."
+title: "RCK: Resonant Cognitive Kernel"
+abstract: >-
+  A symbolic, non-generative reasoning system: facts live as discrete
+  (subject, relation, object) triples in a sharded HRR/VSA
+  hyperdimensional vector memory; reasoning is an explicit,
+  inspectable pipeline with derivation-graph provenance, calibrated
+  confidence, gated fact induction, belief revision, negative facts,
+  and federated merge. 100,000 real-world facts on a single CPU
+  thread with sub-millisecond queries.
+type: software
+authors:
+  - family-names: Baer
+    given-names: Kristian
+    email: kristianb43r@gmail.com
+version: 15.3.0
+date-released: 2026-07-11
+license: MIT
+repository-code: "https://github.com/NORTHTEKDevs/rck"
+url: "https://github.com/NORTHTEKDevs/rck"
+keywords:
+  - hyperdimensional-computing
+  - vector-symbolic-architectures
+  - holographic-reduced-representations
+  - neuro-symbolic
+  - knowledge-base
+  - reasoning
+  - explainable-ai

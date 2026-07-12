@@ -49,6 +49,10 @@ It's small (126 modules, ~18.8k lines of plain numpy Python). It's
 testable (**757 passing tests**). It's research-grade but
 production-shaped.
 
+<p align="center">
+  <img src="docs/assets/architecture.svg" alt="RCK architecture and measured numbers" width="880">
+</p>
+
 ---
 
 ## Install
@@ -311,7 +315,8 @@ scripts/               # benchmark + ingestion scripts
 
 ## Citation
 
-If you use RCK in research, please cite:
+If you use RCK in research, please cite (or use GitHub's
+"Cite this repository" button, backed by `CITATION.cff`):
 
 ```bibtex
 @software{rck2026,

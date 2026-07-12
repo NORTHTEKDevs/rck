@@ -1,0 +1,38 @@
+name: paper
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "papers/rck-architecture/**"
+      - ".github/workflows/paper.yml"
+  workflow_dispatch:
+  release:
+    types: [created, published]
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile paper.tex (pdflatex + bibtex)
+        uses: xu-cheng/latex-action@v3
+        with:
+          working_directory: papers/rck-architecture
+          root_file: paper.tex
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rck-paper-pdf
+          path: papers/rck-architecture/paper.pdf
+          if-no-files-found: error
+
+      - name: Attach PDF to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            papers/rck-architecture/paper.pdf --clobber

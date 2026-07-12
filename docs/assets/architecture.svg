@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="470" viewBox="0 0 880 470" role="img" aria-label="RCK architecture: agent API over knowledge management over reasoning over the sharded HRR substrate">
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .layer-title { font-size: 15px; font-weight: 600; fill: #e6edf3; }
+    .layer-sub { font-size: 12.5px; fill: #9aa4b2; }
+    .box-label { font-size: 12.5px; fill: #c9d1d9; }
+    .accent { fill: #58a6ff; }
+    .metric { font-size: 12.5px; fill: #9aa4b2; }
+    .metric-strong { font-size: 13px; font-weight: 600; fill: #58a6ff; }
+  </style>
+
+  <rect x="0" y="0" width="880" height="470" rx="12" fill="#0d1117"/>
+  <rect x="0.5" y="0.5" width="879" height="469" rx="12" fill="none" stroke="#30363d"/>
+
+  <!-- Layer 4: agent API -->
+  <rect x="28" y="26" width="600" height="72" rx="8" fill="#1c2431"/>
+  <text x="48" y="56" class="layer-title">ConsciousAgent <tspan class="layer-sub">— one object, ~50 operations</tspan></text>
+  <text x="48" y="80" class="layer-sub">tell · ask <tspan class="accent">(KNOWN / AMBIGUOUS / IDK)</tspan> · discover · induce · explain_why · deny · merge_from</text>
+
+  <!-- Layer 3: knowledge management -->
+  <rect x="28" y="112" width="600" height="72" rx="8" fill="#171e2a"/>
+  <text x="48" y="142" class="layer-title">Knowledge management</text>
+  <text x="48" y="166" class="layer-sub">provenance graph · derivation-traced explain-why · contradiction detection · belief revision · NOT_R negative facts</text>
+
+  <!-- Layer 2: reasoning -->
+  <rect x="28" y="198" width="600" height="72" rx="8" fill="#141a24"/>
+  <text x="48" y="228" class="layer-title">Reasoning</text>
+  <text x="48" y="252" class="layer-sub">chain walking · BFS discovery (live-relation index) · six-gate induction · rules · analogy · calibrated confidence</text>
+
+  <!-- Layer 1: substrate -->
+  <rect x="28" y="284" width="600" height="156" rx="8" fill="#10151d"/>
+  <text x="48" y="314" class="layer-title">HRR / VSA substrate</text>
+  <text x="48" y="338" class="layer-sub">facts = bound (S, R, O) triples, bundled per shard · blake2b(S, R) routing · shard-local cleanup</text>
+
+  <rect x="48" y="356" width="168" height="60" rx="6" fill="#1c2431"/>
+  <text x="62" y="381" class="box-label">Codebook</text>
+  <text x="62" y="400" class="layer-sub">name-seeded atoms</text>
+
+  <rect x="232" y="356" width="200" height="60" rx="6" fill="#1c2431"/>
+  <text x="246" y="381" class="box-label">RelationalMemory × N</text>
+  <text x="246" y="400" class="layer-sub">bundle + symbolic fact log</text>
+
+  <rect x="448" y="356" width="160" height="60" rx="6" fill="#1c2431"/>
+  <text x="462" y="381" class="box-label">RelationIndex</text>
+  <text x="462" y="400" class="layer-sub">live relations / shard</text>
+
+  <!-- Right rail: measured numbers -->
+  <rect x="652" y="26" width="200" height="414" rx="8" fill="#10151d"/>
+  <text x="672" y="58" class="layer-title">Measured</text>
+  <text x="672" y="84" class="layer-sub">ConceptNet English,</text>
+  <text x="672" y="102" class="layer-sub">single CPU thread</text>
+
+  <text x="672" y="140" class="metric-strong">100,000 facts</text>
+  <text x="672" y="160" class="metric">81,086 entities</text>
+
+  <text x="672" y="196" class="metric-strong">0.33 ms</text>
+  <text x="672" y="216" class="metric">median query</text>
+
+  <text x="672" y="252" class="metric-strong">100.0%</text>
+  <text x="672" y="272" class="metric">recall@1</text>
+
+  <text x="672" y="308" class="metric-strong">535 MB</text>
+  <text x="672" y="328" class="metric">resident memory</text>
+
+  <text x="672" y="364" class="metric-strong">6.6 s</text>
+  <text x="672" y="384" class="metric">full ingest</text>
+
+  <text x="672" y="420" class="layer-sub">scripts/scale_study.py</text>
+</svg>

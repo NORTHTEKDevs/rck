@@ -1,0 +1,21 @@
+{
+  "title": "RCK: Resonant Cognitive Kernel",
+  "description": "A symbolic, non-generative reasoning system: facts live as discrete (subject, relation, object) triples in a sharded HRR/VSA hyperdimensional vector memory; reasoning is an explicit, inspectable pipeline with derivation-graph provenance, calibrated confidence, gated fact induction, belief revision, negative facts, and federated merge. 100,000 real-world facts on a single CPU thread with sub-millisecond queries. Every empirical claim in the accompanying paper is reproducible from a script in scripts/ and a committed artifact in data/.",
+  "creators": [
+    {
+      "name": "Baer, Kristian"
+    }
+  ],
+  "license": "MIT",
+  "upload_type": "software",
+  "access_right": "open",
+  "keywords": [
+    "hyperdimensional computing",
+    "vector symbolic architectures",
+    "holographic reduced representations",
+    "neuro-symbolic",
+    "knowledge base",
+    "reasoning",
+    "explainable AI"
+  ]
+}
