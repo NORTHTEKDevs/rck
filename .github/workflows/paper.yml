@@ -10,6 +10,9 @@ on:
   release:
     types: [created, published]
 
+permissions:
+  contents: write  # release-asset upload on release-triggered runs
+
 jobs:
   build-pdf:
     runs-on: ubuntu-latest
