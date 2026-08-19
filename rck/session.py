@@ -58,7 +58,13 @@ def save_session(agent: ConsciousAgent, path: str | Path) -> dict:
         "saved_at": time.time(),
         "hyper": {
             "dim": agent.dim,
-            "n_shards": agent.n_shards,
+            # Read the LIVE shard counts, not agent.n_shards / a derived
+            # belief count -- ConsciousAgent.n_shards is set once in
+            # __post_init__ and never updated when reshard() mutates
+            # agent.knowledge.n_shards (or agent.beliefs.n_shards) in
+            # place, so it goes stale the moment either KB auto-reshards.
+            "n_shards": agent.knowledge.n_shards,
+            "belief_n_shards": agent.beliefs.n_shards,
             "seed": agent.seed,
         },
         "knowledge_symbols": [_sym_to_json(s) for s in sym_list],
@@ -94,6 +100,16 @@ def load_session(path: str | Path) -> ConsciousAgent:
         seed=int(hyper["seed"]),
         install_self=False,
     )
+
+    # The belief KB can reshard independently of the knowledge KB, so its
+    # shard count is NOT reliably `hyper["n_shards"] // 2` (the default
+    # ConsciousAgent.__post_init__ derivation) -- it may have grown past
+    # that on its own. Resize to the persisted count before loading data.
+    # `reshard()` on a still-empty KB just rebuilds the shard array (no
+    # facts to lose) and is a no-op when the count already matches.
+    belief_n_shards = int(hyper.get("belief_n_shards", agent.beliefs.n_shards))
+    if belief_n_shards != agent.beliefs.n_shards:
+        agent.beliefs.reshard(belief_n_shards)
 
     # Knowledge.
     arr = np.load(path / "knowledge.npz")
