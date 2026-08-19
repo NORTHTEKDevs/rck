@@ -36,6 +36,17 @@ from rck.shard_sizing import TARGET_MAX_FILL_BY_DIM, recommend_shards as _recomm
 
 _logger = logging.getLogger(__name__)
 
+# Hard ceiling on auto-growth, matching shard_sizing.recommend_shards'
+# own max_shards clamp. Guarantees the reshard loop terminates.
+_MAX_SHARDS = 4096
+
+# How far auto-growth may overshoot recommend_shards(). The recommendation
+# assumes a 1.25x load-skew safety factor that real multi-valued data
+# exceeds; 8x is what 5,000 ConceptNet facts need to put every shard under
+# the cliff (256 recommended -> 2048 actual, 100.0% recall@1). Bounding the
+# overshoot stops the KB from chasing an unsplittable key collision forever.
+_GROWTH_OVERSHOOT = 8
+
 
 def _shard_index(subject: str, relation: str, n_shards: int) -> int:
     """Stable hash-based routing key."""
@@ -138,19 +149,52 @@ class ShardedKnowledgeBase:
         """Store a fact in the shard determined by (S, R).
 
         May trigger a blocking O(N) reshard (see `reshard()`) when the
-        written-to shard crosses `target_fill` and growing `n_shards`
-        toward `recommend_shards()` would actually help. A shard pinned
-        by a single hot (S, R) key never triggers a reshard past that
-        recommendation -- more shards cannot split a single key.
+        written-to shard crosses `target_fill` and resharding could
+        actually relieve it (see `_maybe_reshard`).
         """
         s, r = str(fact.get("S", "")), str(fact.get("R", ""))
         idx = _shard_index(s, r, self.n_shards)
         self._shards[idx].store(self.codebook, fact)
         self._fact_count += 1
         if self.auto_reshard and self._shards[idx].size() > self.target_fill:
-            target = _recommend_shards(self._fact_count, dim=self.dim).n_shards
-            if self.n_shards < target:
-                self.reshard(target)
+            self._maybe_reshard(idx)
+
+    def _maybe_reshard(self, idx: int) -> None:
+        """Grow the shard count when shard `idx` can actually be relieved.
+
+        `_shard_index` routes on (S, R) alone, so every fact sharing one key
+        is pinned to the same shard at every `n_shards`. If a single key
+        already exceeds `target_fill`, resharding cannot split it, and
+        retrying would double `n_shards` on every later write forever.
+        Growth is therefore gated on the shard being *splittable*, and hard
+        capped at `_MAX_SHARDS`, so the loop always terminates.
+
+        `recommend_shards` bakes in only a 1.25x safety factor, which real
+        skewed data (multi-valued relations) exceeds -- stopping there left
+        11/256 shards over the cliff on 5,000 ConceptNet facts. So growth
+        overshoots the recommendation, but by a bounded factor.
+
+        KNOWN LIMITATION: two distinct (S, R) keys that each hold close to
+        `target_fill` facts AND collide under `blake2b(S||R) % n` cannot be
+        separated by resharding at all. Chasing such a pair costs a full
+        O(N) re-bundle per doubling and never converges, so growth stops at
+        `_GROWTH_OVERSHOOT` x the recommendation and leaves the shard
+        overloaded. `shard_balance()` still reports it, so it stays visible
+        rather than silent.
+        """
+        recommended = _recommend_shards(self._fact_count, dim=self.dim).n_shards
+        ceiling = min(_MAX_SHARDS, _GROWTH_OVERSHOOT * recommended)
+        if self.n_shards >= ceiling:
+            return
+        counts: dict[tuple[str, str], int] = {}
+        for f in self._shards[idx].facts():
+            key = (str(f.get("S", "")), str(f.get("R", "")))
+            counts[key] = counts.get(key, 0) + 1
+        if counts and max(counts.values()) > self.target_fill:
+            # Pinned by a single hot key: a hard capacity ceiling, not a
+            # sizing problem. More shards cannot split one key.
+            return
+        self.reshard(min(max(self.n_shards * 2, recommended), ceiling))
 
     def store_many(self, facts: Iterable[dict[str, Hashable]]) -> int:
         count = 0

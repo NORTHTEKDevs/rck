@@ -1,5 +1,7 @@
 import pytest
-from rck.knowledge_base import ShardedKnowledgeBase, _shard_index
+from rck.knowledge_base import (
+    _GROWTH_OVERSHOOT, _MAX_SHARDS, ShardedKnowledgeBase, _shard_index,
+)
 from rck.shard_sizing import recommend_shards
 
 
@@ -8,6 +10,47 @@ def _kb_with(n_facts, n_shards=8):
     for i in range(n_facts):
         kb.store({"S": f"s{i}", "R": "isa", "O": f"o{i}"})
     return kb
+
+
+def test_skewed_load_growth_is_bounded_and_overshoot_is_capped():
+    """Skewed load must overshoot recommend_shards() but stay bounded.
+
+    recommend_shards() assumes a 1.25x load-skew safety factor that real
+    multi-valued data exceeds, so stopping at the recommendation leaves
+    shards over the cliff (measured: 11/256 on 5,000 ConceptNet facts).
+    But chasing every last overloaded shard does not converge either: two
+    distinct (S, R) keys that each hold ~target_fill facts and collide
+    under blake2b cannot be separated at any n_shards, and chasing that
+    pair drove 2,400 facts to 4,096 shards (recommendation: 64) at one
+    full O(N) re-bundle per doubling.
+
+    So the contract is a BOUNDED overshoot: grow past the recommendation,
+    stop at _GROWTH_OVERSHOOT x it, and leave any residual collision
+    visible via shard_balance() rather than silent.
+    """
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=8, seed=0)
+    # 40 subjects x 60 objects: each (S, R) key holds 60 facts (under the
+    # 80 cliff, individually splittable) but they collide at low counts.
+    for s in range(40):
+        for o in range(60):
+            kb.store({"S": f"subj{s}", "R": "has", "O": f"obj{s}_{o}"})
+
+    assert kb.size() == 2400
+    recommended = recommend_shards(kb.size(), dim=4096).n_shards
+    assert kb.n_shards <= _GROWTH_OVERSHOOT * recommended, (
+        f"growth ran away: n_shards={kb.n_shards} vs "
+        f"{_GROWTH_OVERSHOOT}x recommendation ({recommended})"
+    )
+    assert kb.n_shards <= _MAX_SHARDS
+    # Any shard left over the cliff must be an unsplittable key collision,
+    # never mere under-provisioning.
+    for sh in kb._shards:
+        if sh.size() > kb.target_fill:
+            keys = {(str(f["S"]), str(f["R"])) for f in sh.facts()}
+            assert len(keys) < sh.size() / 2, (
+                f"shard over cliff with {len(keys)} well-spread keys is "
+                f"under-provisioning, not a collision"
+            )
 
 
 def test_reshard_preserves_every_fact_and_routes_correctly():
