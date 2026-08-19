@@ -1,6 +1,6 @@
 # Production Core - Design
 
-> Status: approved design, not yet implemented.
+> Status: item 1 implemented and verified; items 2-4 designed, not yet built.
 > Target: v16.0. Scope: the work that every downstream deployment shape needs.
 
 ## Problem
@@ -50,26 +50,62 @@ Allocate a new shard array, re-route every logged fact by
 `blake2b(S || R) % n_new`, re-bundle, rebuild the relation index, invalidate the
 chain cache (already versioned and write-invalidated).
 
-**Auto-trigger.** `tell()` checks fill against `target_fill` (80) and reshards
-synchronously on the write that crosses it. Growth is by powers of two, so a KB
-reaching N facts reshards O(log N) times at O(N) each - amortized O(log N) per
-fact, the standard dynamic-array bargain. Correctness-first: a latency spike on
-one write is strictly better than silent recall loss on every subsequent read.
+**Auto-trigger.** `store()` checks fill against a per-`dim` `target_fill` and
+reshards synchronously on the write that crosses it, but only when resharding can
+actually relieve that shard. Correctness-first: a latency spike on one write beats
+silent recall loss on every subsequent read.
 
-**Invariants that must survive a reshard**, each with its own test: asserted
-facts, inverse-symmetrized facts, negative facts (`deny`), provenance edges,
-skills, query memory, and the fitted calibrator. Provenance/skills/query-memory
-are keyed independently of shard index and should pass through untouched - the
-tests exist to prove that, not to assume it.
+**Growth policy - the part that took three attempts.** Two naive policies both
+fail, and the failures are worth recording because neither is obvious:
 
-**Open question for implementation.** Whether the fact log holds pre- or
-post-symmetrization triples (the paper reports 5,991 raw → 7,080 stored). If pre,
-symmetrization must be re-applied during re-bundle. Resolve by reading
-`knowledge_base.py` before writing code.
+1. *Double on every overloaded write.* `_shard_index` routes on `(S, R)` alone, so
+   every fact sharing one key is pinned to the same shard **at every `n_shards`**.
+   A key past the cliff can never be split, so each subsequent write re-triggers a
+   doubling: 90 facts of `(alice, authored, paper_i)` reached **8192 shards**
+   (recommendation: 8), one full O(N) re-bundle each. A 200-write loop attempts
+   ~2^120 shards and hangs the machine. Doubling is the dynamic-array bargain, and
+   it does not apply here, because array elements are re-routable and `(S, R)`
+   keys are not.
+2. *Stop at `recommend_shards()`.* Bounded, but its 1.25x load-skew safety factor
+   is too small for real multi-valued data: 5,000 ConceptNet facts left **11/256
+   shards over the cliff** (99.8% recall) - the same silent-degradation class this
+   item exists to remove.
 
-**Acceptance.** Construct at `expected_facts=200`, insert 5,000 facts, score the
-400-probe valid-set protocol above: **≥99% recall@1, no manual intervention**.
-This is the exact probe that produced the 24.0% row.
+The shipped policy: grow only when the overloaded shard holds no single `(S, R)`
+key above `target_fill` (a hot key is a hard ceiling, not a sizing problem), and
+overshoot `recommend_shards()` by a bounded `_GROWTH_OVERSHOOT` (8x), hard-capped
+at `_MAX_SHARDS`.
+
+**Known limitation.** Two distinct `(S, R)` keys that each hold close to
+`target_fill` facts *and* collide under `blake2b(S||R) % n` cannot be separated at
+any reachable `n_shards`. Chasing such a pair does not converge - it drove 2,400
+facts to 4,096 shards before the overshoot bound was added. Growth therefore stops
+and leaves the shard overloaded; `shard_balance()` still reports it, so the
+condition is visible rather than silent. This is a substrate property, not a bug.
+
+**Invariants that survive a reshard**, each with a test: asserted facts,
+inverse-symmetrized facts, negative facts (`deny`), provenance edges, skills, and
+query memory. `ConsciousAgent.n_shards` does *not* track `knowledge.n_shards`
+after a reshard, so `session.py` persists the live per-KB counts instead - without
+that, any session that had auto-resharded failed to reload with `IndexError`.
+
+**Resolved open question.** `RelationalMemory._facts` holds post-symmetrization
+facts as stored, so re-bundling must *not* re-symmetrize (it would double the
+inverse edges).
+
+### Status: DONE - measured, not asserted
+
+| | v15.3.1 | shipped |
+|---|---:|---:|
+| recall@1 (200-provisioned, 5,000 facts) | 24.0% | **100.0%** |
+| Overloaded shards | 8/8 | **0** |
+| Max shard fill | 1346 | 78 |
+| 200 hot-key writes | hangs the machine | `n_shards=8`, bounded |
+| `target_fill` at `dim=2048` | 80 (real cliff is 60) | 60 |
+| Session round-trip after reshard | `IndexError` | exact round-trip |
+
+Suite: **769 passed**. Acceptance is the exact 400-probe valid-set protocol that
+produced the 24.0% row, run with no manual `reshard()` call.
 
 ---
 
@@ -118,8 +154,10 @@ corruption, verified over 20 randomized kill points.
 
 ## 4. Replay format
 
-The commercial thesis, and the only item here that is a product rather than
-hygiene. Nothing on the market sells *this decision is re-executable in 2029*.
+A durable, versioned record of a single answer that can be re-executed later and
+checked for bit-identical output. This is what makes RCK's determinism usable
+rather than merely true: an answer given today stays defensible years from now,
+against the exact substrate state that produced it.
 
 ```python
 DecisionRecord = {
@@ -152,10 +190,26 @@ WAL that replay consumes. Subtraction lands last so the frozen surface includes
 
 ## Risks
 
-- **Reshard invalidates shard-index-keyed state.** Mitigated by the invariant test
-  matrix; the audit for such state is the first implementation task.
+- ~~**Reshard invalidates shard-index-keyed state.**~~ Resolved. Provenance,
+  skills, and query memory are keyed independently and passed through untouched;
+  `RelationIndex` rebuilds per call. The one real case was
+  `ConsciousAgent.n_shards` going stale, which broke session reload - fixed by
+  persisting live per-KB counts.
 - **Float non-associativity** makes re-ingest replay unsound. Mitigated by design:
   snapshot-hash replay only.
 - **Freezing the API too early.** Mitigated by sequencing subtraction last.
 - **`expected_facts` remains in the constructor** for backward compatibility, but
-  becomes a hint rather than a contract once auto-reshard lands.
+  is now a hint rather than a contract.
+
+## Definition of done (corrected)
+
+An earlier draft of this design required "zero overloaded shards after unattended
+growth." That is **not achievable in general** and the criterion was wrong: a
+colliding pair of near-cliff `(S, R)` keys cannot be separated at any reachable
+`n_shards` (see item 1's known limitation). The achievable contract is:
+
+- No shard is over `target_fill` **because of under-provisioning** - only ever
+  because of a hot key or an unsplittable collision.
+- Growth is bounded by `_GROWTH_OVERSHOOT` x `recommend_shards()`, capped at
+  `_MAX_SHARDS`, so the reshard loop always terminates.
+- Any residual overloaded shard is reported by `shard_balance()`, never silent.
