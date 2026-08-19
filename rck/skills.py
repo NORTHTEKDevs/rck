@@ -127,20 +127,21 @@ class SkillLibrary:
         """Persist the library to a JSONL file. One skill per line."""
         import json
         from pathlib import Path
+        from rck.atomic import atomic_write_text
         path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = []
         n = 0
-        with open(path, "w", encoding="utf-8") as f:
-            for sig, skill in self.skills.items():
-                rec = {
-                    "name": skill.name,
-                    "pattern": [list(p) for p in skill.pattern],
-                    "success_count": skill.success_count,
-                    "failure_count": skill.failure_count,
-                    "last_used": skill.last_used,
-                }
-                f.write(json.dumps(rec) + "\n")
-                n += 1
+        for sig, skill in self.skills.items():
+            rec = {
+                "name": skill.name,
+                "pattern": [list(p) for p in skill.pattern],
+                "success_count": skill.success_count,
+                "failure_count": skill.failure_count,
+                "last_used": skill.last_used,
+            }
+            lines.append(json.dumps(rec))
+            n += 1
+        atomic_write_text(path, "".join(line + "\n" for line in lines))
         return n
 
     def load(self, path, *, replace: bool = False) -> int:

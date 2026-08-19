@@ -10,12 +10,14 @@ Format: a directory containing one .npz per shard + a meta JSON.
 """
 from __future__ import annotations
 
+import io
 import json
 import time
 from pathlib import Path
 
 import numpy as np
 
+from rck.atomic import atomic_write_bytes, atomic_write_text
 from rck.conscious_agent import ConsciousAgent
 
 
@@ -35,22 +37,26 @@ def save_session(agent: ConsciousAgent, path: str | Path) -> dict:
     shard_mems = np.stack([s._memory for s in agent.knowledge._shards], axis=0)
     shard_facts = [s._facts for s in agent.knowledge._shards]
 
+    knowledge_buf = io.BytesIO()
     np.savez_compressed(
-        path / "knowledge.npz",
+        knowledge_buf,
         codebook_matrix=cb_matrix,
         shard_mems=shard_mems,
     )
+    atomic_write_bytes(path / "knowledge.npz", knowledge_buf.getvalue())
 
     # Belief KB (smaller -- same structure).
     bb_syms = list(agent.beliefs.codebook._atoms.keys())
     bb_matrix = (np.stack([agent.beliefs.codebook._atoms[s] for s in bb_syms], axis=0)
                  if bb_syms else np.empty((0, agent.beliefs.dim), dtype=np.int8))
     bb_mems = np.stack([s._memory for s in agent.beliefs._shards], axis=0)
+    beliefs_buf = io.BytesIO()
     np.savez_compressed(
-        path / "beliefs.npz",
+        beliefs_buf,
         codebook_matrix=bb_matrix,
         shard_mems=bb_mems,
     )
+    atomic_write_bytes(path / "beliefs.npz", beliefs_buf.getvalue())
 
     meta = {
         "schema": SCHEMA_VERSION,
@@ -81,7 +87,7 @@ def save_session(agent: ConsciousAgent, path: str | Path) -> dict:
             rel: dict(b) for rel, b in agent.calibration.by_relation.items()
         },
     }
-    (path / "meta.json").write_text(json.dumps(meta, default=str, indent=2))
+    atomic_write_text(path / "meta.json", json.dumps(meta, default=str, indent=2))
     return {"path": str(path), "knowledge_facts": agent.knowledge.size(),
             "belief_facts": agent.beliefs.size(),
             "dialogue_turns": len(agent.dialogue.history)}
@@ -111,30 +117,32 @@ def load_session(path: str | Path) -> ConsciousAgent:
     if belief_n_shards != agent.beliefs.n_shards:
         agent.beliefs.reshard(belief_n_shards)
 
-    # Knowledge.
-    arr = np.load(path / "knowledge.npz")
-    syms = [_sym_from_json(s) for s in meta["knowledge_symbols"]]
-    cb_matrix = arr["codebook_matrix"]
-    for i, sym in enumerate(syms):
-        agent.knowledge.codebook._atoms[sym] = cb_matrix[i].astype(np.int8)
-    agent.knowledge.codebook._cache_dirty = True
-    shard_mems = arr["shard_mems"]
-    for i, shard in enumerate(agent.knowledge._shards):
-        shard._memory = shard_mems[i].astype(np.float32)
+    # Knowledge. Close the NpzFile explicitly (not just let it be GC'd) --
+    # on Windows an open zip-file handle makes a later os.replace of this
+    # same path raise PermissionError [WinError 5].
+    with np.load(path / "knowledge.npz") as arr:
+        syms = [_sym_from_json(s) for s in meta["knowledge_symbols"]]
+        cb_matrix = arr["codebook_matrix"]
+        for i, sym in enumerate(syms):
+            agent.knowledge.codebook._atoms[sym] = cb_matrix[i].astype(np.int8)
+        agent.knowledge.codebook._cache_dirty = True
+        shard_mems = arr["shard_mems"]
+        for i, shard in enumerate(agent.knowledge._shards):
+            shard._memory = shard_mems[i].astype(np.float32)
     for i, facts in enumerate(meta["knowledge_facts"]):
         agent.knowledge._shards[i]._facts = list(facts)
     agent.knowledge._fact_count = sum(len(f) for f in meta["knowledge_facts"])
 
     # Beliefs.
-    arr_b = np.load(path / "beliefs.npz")
-    bb_syms = [_sym_from_json(s) for s in meta["belief_symbols"]]
-    bb_matrix = arr_b["codebook_matrix"]
-    for i, sym in enumerate(bb_syms):
-        agent.beliefs.codebook._atoms[sym] = bb_matrix[i].astype(np.int8)
-    agent.beliefs.codebook._cache_dirty = True
-    bb_mems = arr_b["shard_mems"]
-    for i, shard in enumerate(agent.beliefs._shards):
-        shard._memory = bb_mems[i].astype(np.float32)
+    with np.load(path / "beliefs.npz") as arr_b:
+        bb_syms = [_sym_from_json(s) for s in meta["belief_symbols"]]
+        bb_matrix = arr_b["codebook_matrix"]
+        for i, sym in enumerate(bb_syms):
+            agent.beliefs.codebook._atoms[sym] = bb_matrix[i].astype(np.int8)
+        agent.beliefs.codebook._cache_dirty = True
+        bb_mems = arr_b["shard_mems"]
+        for i, shard in enumerate(agent.beliefs._shards):
+            shard._memory = bb_mems[i].astype(np.float32)
     for i, facts in enumerate(meta["belief_facts"]):
         agent.beliefs._shards[i]._facts = list(facts)
     agent.beliefs._fact_count = sum(len(f) for f in meta["belief_facts"])

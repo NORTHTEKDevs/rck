@@ -10,20 +10,28 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import pickle
 import sys
 from pathlib import Path
 
+from rck import persist
 from rck.agent import RCKAgent
 from rck.train import recall_score, stream_text, train_on_text
 
 
 def _save(agent: RCKAgent, path: str | Path) -> None:
-    Path(path).write_bytes(pickle.dumps(agent))
+    # v1.5+: rck.persist's explicit, versioned format -- not pickle.
+    # pickle.loads on a caller-supplied path is an arbitrary-code-execution
+    # sink; this closes that hole for the CLI's save/load round trip.
+    persist.save(agent, path)
 
 
 def _load(path: str | Path) -> RCKAgent:
-    return pickle.loads(Path(path).read_bytes())
+    return persist.load(path)
+
+
+def _model_exists(path: str | Path) -> bool:
+    # rck.persist.save writes <path>.json + <path>.npz, not <path> itself.
+    return Path(path).with_suffix('.json').exists()
 
 
 def _new_agent(args: argparse.Namespace) -> RCKAgent:
@@ -47,7 +55,7 @@ def _add_model_args(p: argparse.ArgumentParser) -> None:
 
 
 def cmd_train(args: argparse.Namespace) -> int:
-    if args.load and Path(args.load).exists():
+    if args.load and _model_exists(args.load):
         agent = _load(args.load)
         print(f"[rck] loaded agent from {args.load}")
     else:
@@ -68,7 +76,7 @@ def cmd_train(args: argparse.Namespace) -> int:
 
 
 def cmd_chat(args: argparse.Namespace) -> int:
-    if args.load and Path(args.load).exists():
+    if args.load and _model_exists(args.load):
         agent = _load(args.load)
         print(f"[rck] loaded {args.load}")
     else:
@@ -116,7 +124,7 @@ def cmd_chat(args: argparse.Namespace) -> int:
 
 
 def cmd_eval(args: argparse.Namespace) -> int:
-    if args.load and Path(args.load).exists():
+    if args.load and _model_exists(args.load):
         agent = _load(args.load)
     else:
         agent = _new_agent(args)
