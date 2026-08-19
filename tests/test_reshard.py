@@ -1,5 +1,6 @@
 import pytest
 from rck.knowledge_base import ShardedKnowledgeBase, _shard_index
+from rck.shard_sizing import recommend_shards
 
 
 def _kb_with(n_facts, n_shards=8):
@@ -138,3 +139,101 @@ def test_relation_index_is_correct_after_reshard():
     assert idx.n_shards == 64, "stale relation index after reshard"
     for shard_id in idx.shards_with("isa"):
         assert any(f["R"] == "isa" for f in kb._shards[shard_id].facts())
+
+
+def test_hot_key_does_not_storm():
+    """A single (S, R) key pins every fact to one shard no matter how many
+    shards exist -- resharding can never split it. Before the fix,
+    reshard()'s default was max(n_shards * 2, recommend_shards(...)), and
+    the n_shards*2 term always won once the hot shard crossed target_fill,
+    so n_shards doubled on every subsequent write, unbounded.
+
+    Bounded to 90 facts, NOT the ~120 originally suggested in the ticket:
+    an explicit safety directive for this task states that on the unfixed
+    code this loop is an exponential resource storm that has already hung
+    the machine once, and to never exceed ~90 hot-key writes until Bug 1
+    is fixed. 90 facts already reproduces the storm decisively (confirmed:
+    n_shards reaches 8192 while recommend_shards(90) says 8), so it fully
+    exercises the failure without the runaway risk that ~120 would carry
+    on the unfixed code (each fact past the trigger point doubles again).
+    """
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=8, seed=0)
+    for i in range(90):
+        kb.store({"S": "alice", "R": "authored", "O": f"paper{i}"})
+
+    limit = recommend_shards(kb.size(), dim=4096).n_shards
+    assert kb.n_shards <= limit, (
+        f"n_shards={kb.n_shards} blew past recommend_shards()={limit} "
+        "-- hot-key reshard storm"
+    )
+    assert kb.size() == 90
+
+    stored = {tuple(sorted(f.items())) for sh in kb._shards for f in sh.facts()}
+    assert len(stored) == 90, "hot-key facts lost across reshard(s)"
+
+    res = kb.query({"S": "alice", "R": "authored"}, "O", top_k=1)
+    assert res, "hot key unretrievable after storm-capped reshard"
+
+
+def test_session_round_trip_survives_reshard():
+    """Bug 3 regression: ConsciousAgent.n_shards is set once in
+    __post_init__ and never updated when reshard() mutates
+    agent.knowledge.n_shards (or agent.beliefs.n_shards) in place. Before
+    the fix, session.py serialized the stale agent.n_shards into
+    meta['hyper']['n_shards'] while shard_mems/knowledge_facts were built
+    from the real, larger agent.knowledge._shards -- load_session then
+    rebuilt with the stale (smaller) shard count and indexed into it with
+    the larger saved list.
+
+    Confirmed via a live repro before this fix: 1000 distinct-subject
+    facts (NOT a hot key -- a legitimate reshard) pushed
+    knowledge.n_shards from 8 to 32 while agent.n_shards stayed 8;
+    load_session raised `IndexError: list index out of range` at
+    `agent.knowledge._shards[i]._facts = list(facts)`.
+
+    Beliefs have the same exposure: ConsciousAgent derives the belief
+    shard count as `n_shards // 2` at construction time, which does not
+    track independent belief-KB reshards either.
+    """
+    import tempfile
+    from rck import session as _session
+
+    agent = ConsciousAgent(n_shards=8, dim=4096)
+    for i in range(1000):
+        agent.tell(f"subject{i}", "isa", f"category{i % 37}")
+    for i in range(300):
+        agent.tell_belief("bob", f"believer_subject{i}", "isa",
+                           f"believer_cat{i % 20}")
+
+    assert agent.n_shards != agent.knowledge.n_shards, (
+        "test setup must actually desync agent.n_shards from "
+        "knowledge.n_shards, or this test proves nothing"
+    )
+
+    d = tempfile.mkdtemp()
+    _session.save_session(agent, d)
+    loaded = _session.load_session(d)
+
+    assert loaded.knowledge.n_shards == agent.knowledge.n_shards
+    assert loaded.beliefs.n_shards == agent.beliefs.n_shards
+    assert loaded.knowledge.size() == agent.knowledge.size()
+    assert loaded.beliefs.size() == agent.beliefs.size()
+
+    # Facts must be usable after reload, not just present.
+    res = loaded.knowledge.query({"S": "subject5", "R": "isa"}, "O", top_k=1)
+    assert res, "reloaded KB cannot answer a query after a reshard round-trip"
+    bres = loaded.what_does_x_think("bob", "believer_subject5", "isa")
+    assert bres["answer"] is not None, \
+        "reloaded belief KB cannot answer a query after a reshard round-trip"
+
+
+def test_target_fill_resolves_per_dim():
+    """target_fill must come from the per-dim cliff table
+    (shard_sizing.TARGET_MAX_FILL_BY_DIM), not a flat dataclass default --
+    a flat 80 at dim=2048 (real cliff 60) lets auto-reshard silently miss
+    the window it exists to guard."""
+    kb = ShardedKnowledgeBase(dim=2048, n_shards=8, seed=0)
+    assert kb.target_fill == 60
+
+    kb_override = ShardedKnowledgeBase(dim=2048, n_shards=8, seed=0, target_fill=99)
+    assert kb_override.target_fill == 99
