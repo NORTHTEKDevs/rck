@@ -39,3 +39,44 @@ def test_reshard_is_a_noop_when_target_equals_current():
     kb.reshard(16)
     assert kb.n_shards == 16
     assert kb.codebook is codebook_before, "reshard must not rebuild the codebook"
+
+
+import json, random
+from collections import defaultdict
+from pathlib import Path
+from rck.conscious_agent import ConsciousAgent
+
+DATA = Path(__file__).parent.parent / "data" / "conceptnet_scale_100k.jsonl"
+
+
+def _load(n):
+    facts = []
+    with open(DATA, encoding="utf-8") as f:
+        for i, line in enumerate(f):
+            if i >= n:
+                break
+            d = json.loads(line)
+            facts.append((d["s"], d["r"], d["o"]))
+    return facts
+
+
+@pytest.mark.skipif(not DATA.exists(), reason="ConceptNet subset not present")
+def test_underprovisioned_agent_recovers_recall_after_reshard():
+    """Regression for the measured v15.3.1 blocker: a 200-provisioned agent
+    holding 5,000 facts scored 24.0% recall@1 with no warning."""
+    facts = _load(5000)
+    valid = defaultdict(set)
+    for s, r, o in facts:
+        valid[(s, r)].add(o)
+    sample = random.Random(1).sample(facts, 400)
+
+    agent = ConsciousAgent(expected_facts=200)
+    for s, r, o in facts:
+        agent.tell(s, r, o)
+
+    agent.knowledge.reshard()   # explicit for now; Task 3 makes this automatic
+
+    hits = sum(1 for s, r, o in sample
+               if agent.ask_with_idk({"S": s, "R": r}, "O").top_symbol in valid[(s, r)])
+    recall = hits / len(sample)
+    assert recall >= 0.99, f"recall {recall:.1%} after reshard, expected >=99%"
