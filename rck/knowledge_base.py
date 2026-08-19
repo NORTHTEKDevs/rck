@@ -26,12 +26,15 @@ would break.
 from __future__ import annotations
 
 import hashlib
+import logging
 from dataclasses import dataclass, field
 from typing import Hashable, Iterable
 
 from rck.codebook import Codebook
 from rck.relational import RelationalMemory
-from rck.shard_sizing import recommend_shards as _recommend_shards
+from rck.shard_sizing import TARGET_MAX_FILL_BY_DIM, recommend_shards as _recommend_shards
+
+_logger = logging.getLogger(__name__)
 
 
 def _shard_index(subject: str, relation: str, n_shards: int) -> int:
@@ -47,8 +50,10 @@ class RelationIndex:
 
     Built from the shards' symbolic fact logs, so it is correct under
     every mutation path (store, forget, shard-level federated merge,
-    session load) at the moment it is built. It does NOT track later
-    writes -- rebuild after mutating the KB. Chain discovery builds a
+    session load, reshard) at the moment it is built. It does NOT track
+    later writes -- rebuild after mutating the KB. Note `store()` may
+    trigger a reshard implicitly (see `ShardedKnowledgeBase.store`), which
+    also invalidates any previously built index. Chain discovery builds a
     fresh one per call by default, which costs one O(total_facts) scan
     (the same scan discovery already needed to enumerate relations) and
     in exchange skips every HRR query against a (subject, relation)
@@ -106,13 +111,16 @@ class ShardedKnowledgeBase:
     n_shards: int = 64
     seed: int = 0
     auto_reshard: bool = True
-    target_fill: int = 80   # measured capacity cliff at D=4096 (paper 5.4)
+    target_fill: int | None = None   # None -> per-dim cliff from shard_sizing
 
     codebook: Codebook = field(default=None, init=False)
     _shards: list[RelationalMemory] = field(default_factory=list, init=False)
     _fact_count: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
+        if self.target_fill is None:
+            self.target_fill = TARGET_MAX_FILL_BY_DIM.get(
+                self.dim, max(20, self.dim // 50))
         self.codebook = Codebook(dim=self.dim, seed=self.seed)
         # All shards share the same role embedding because they share `seed`
         # and the role-HVs are derived from name-hash, not insertion order.
@@ -127,13 +135,22 @@ class ShardedKnowledgeBase:
     # ---- core ops ----------------------------------------------------------
 
     def store(self, fact: dict[str, Hashable]) -> None:
-        """Store a fact in the shard determined by (S, R)."""
+        """Store a fact in the shard determined by (S, R).
+
+        May trigger a blocking O(N) reshard (see `reshard()`) when the
+        written-to shard crosses `target_fill` and growing `n_shards`
+        toward `recommend_shards()` would actually help. A shard pinned
+        by a single hot (S, R) key never triggers a reshard past that
+        recommendation -- more shards cannot split a single key.
+        """
         s, r = str(fact.get("S", "")), str(fact.get("R", ""))
         idx = _shard_index(s, r, self.n_shards)
         self._shards[idx].store(self.codebook, fact)
         self._fact_count += 1
         if self.auto_reshard and self._shards[idx].size() > self.target_fill:
-            self.reshard()
+            target = _recommend_shards(self._fact_count, dim=self.dim).n_shards
+            if self.n_shards < target:
+                self.reshard(target)
 
     def store_many(self, facts: Iterable[dict[str, Hashable]]) -> int:
         count = 0
@@ -150,8 +167,7 @@ class ShardedKnowledgeBase:
         is reused -- resharding changes routing, never symbol encoding.
         """
         if n_shards is None:
-            n_shards = max(self.n_shards * 2,
-                           _recommend_shards(self._fact_count, dim=self.dim).n_shards)
+            n_shards = _recommend_shards(self._fact_count, dim=self.dim).n_shards
         if n_shards == self.n_shards:
             return {"n_shards": self.n_shards, "facts": self._fact_count,
                     "resharded": False}
@@ -168,8 +184,12 @@ class ShardedKnowledgeBase:
             new_shards[idx].store(self.codebook, f)
 
         self._shards = new_shards
+        old_n_shards = self.n_shards
         self.n_shards = n_shards
-        return {"n_shards": n_shards, "facts": len(facts), "resharded": True}
+        stats = {"n_shards": n_shards, "facts": len(facts), "resharded": True}
+        _logger.debug("reshard: n_shards %d -> %d, facts=%d",
+                       old_n_shards, n_shards, len(facts))
+        return stats
 
     def relation_index(self) -> RelationIndex:
         """Fresh snapshot of live relations per shard (see RelationIndex)."""
