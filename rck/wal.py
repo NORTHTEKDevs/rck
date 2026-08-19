@@ -13,8 +13,15 @@ unparseable lines -- 12% of committed writes silently vanished, because
 Windows `"a"` mode does not give POSIX `O_APPEND`'s atomic seek-and-write
 across independent handles. The torn-line check in `replay()` cannot
 detect this class of loss. `WriteAheadLog` therefore takes an exclusive
-lock on a sibling `.lock` file at open time and raises `WALLockedError`
-if another writer already holds it, instead of silently losing writes.
+lock on a sibling `.lock` file and raises `WALLockedError` if another
+writer already holds it, instead of silently losing writes.
+
+The lock is acquired lazily, on the first `append()`/`truncate()` --
+not at construction. A read-only `replay()` never needs the lock, so a
+second process (or a checkpoint routine inspecting the log right after
+truncating it) can freely open the same path without contending with a
+still-open writer. Only an actual write attempt while another writer
+holds the lock raises `WALLockedError`.
 """
 from __future__ import annotations
 
@@ -37,16 +44,15 @@ class WriteAheadLog:
         self._lock_path = Path(str(self.path) + ".lock")
         self._lock_file = open(self._lock_path, "a+b")
         self._locked = False
-        try:
-            self._acquire_lock()
-        except BaseException:
-            self._lock_file.close()
-            raise
         self._fh = open(self.path, "a", encoding="utf-8")
 
     # ---- locking -----------------------------------------------------------
 
-    def _acquire_lock(self) -> None:
+    def _ensure_write_lock(self) -> None:
+        """Acquire the exclusive writer lock on first use. No-op if this
+        instance already holds it."""
+        if self._locked:
+            return
         try:
             if sys.platform == "win32":
                 import msvcrt
@@ -81,6 +87,7 @@ class WriteAheadLog:
 
     def append(self, op: str, fact: dict) -> None:
         """Append one (op, fact) entry, durably."""
+        self._ensure_write_lock()
         line = json.dumps({"op": op, "fact": fact})
         self._fh.write(line + "\n")
         self._fh.flush()
@@ -117,6 +124,7 @@ class WriteAheadLog:
     def truncate(self) -> None:
         """Clear the log after its contents are durably captured elsewhere
         (e.g. a checkpoint snapshot)."""
+        self._ensure_write_lock()
         from rck.atomic import atomic_write_text
         # Close our own append handle first -- on Windows, os.replace()
         # (inside atomic_write_text) raises PermissionError if this same

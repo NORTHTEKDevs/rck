@@ -87,21 +87,30 @@ def test_order_preserved_across_reopen(tmp_path):
 
 
 def test_second_concurrent_writer_raises(tmp_path):
+    # The lock is acquired lazily, on the first write -- so merely opening
+    # a second WriteAheadLog (e.g. for a read-only replay) must NOT
+    # contend with a live writer (see the Task 5 checkpoint test, which
+    # depends on exactly this). Only a second WRITE attempt must raise.
     p = tmp_path / "wal.jsonl"
     wal1 = WriteAheadLog(p)
+    wal1.append("store", {"S": "dog", "R": "isa", "O": "mammal"})
+    wal2 = WriteAheadLog(p)  # opening alone must not raise
     try:
         with pytest.raises(WALLockedError):
-            WriteAheadLog(p)
+            wal2.append("store", {"S": "cat", "R": "isa", "O": "mammal"})
     finally:
         wal1.close()
+        wal2.close()
 
 
 def test_context_manager_releases_lock(tmp_path):
     p = tmp_path / "wal.jsonl"
     with WriteAheadLog(p) as wal:
         wal.append("store", {"S": "dog", "R": "isa", "O": "mammal"})
-    # Lock released on exit -- a new writer must succeed.
+    # Lock released on exit -- a new writer must succeed at actually
+    # writing, not just at opening.
     wal2 = WriteAheadLog(p)
+    wal2.append("store", {"S": "cat", "R": "isa", "O": "mammal"})
     wal2.close()
 
 
