@@ -85,10 +85,21 @@ def merge_agents(target: "ConsciousAgent",
 
     # ---- knowledge base ------------------------------------------------
     # Per-shard bundle addition. Assumes same shard count and dim.
+    # `RelationalMemory.merge` bypasses `ShardedKnowledgeBase.store()`
+    # entirely (it sums the shard's `_memory` tensor directly), so the
+    # store()-level WAL hook never sees these facts. Bundle-summing a
+    # shard IS mathematically equivalent to storing each of its facts
+    # individually (bundling is just repeated vector addition), so we
+    # log one explicit "store" WAL event per merged fact -- this is the
+    # "log an explicit merge event" option from the durability plan's
+    # Task 4, not the "document as not crash-safe" fallback.
     if (target.knowledge.n_shards == source.knowledge.n_shards
             and target.knowledge.dim == source.knowledge.dim):
         for i, src_shard in enumerate(source.knowledge._shards):
             target.knowledge._shards[i].merge(src_shard)
+            if target.knowledge.wal is not None:
+                for f in src_shard.facts():
+                    target.knowledge.wal.append("store", dict(f))
         report.kb_facts_merged = source.knowledge.size()
         target.knowledge._fact_count += source.knowledge.size()
 

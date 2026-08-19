@@ -106,6 +106,7 @@ from rck.theory_of_mind import (
 )
 from rck.think_aloud import narrate, narrate_no_match
 from rck.tokenizer import sentences, tokenize
+from rck.wal import WriteAheadLog
 
 
 @dataclass
@@ -119,6 +120,12 @@ class ConsciousAgent:
     # If set, overrides `n_shards` using the capacity-cliff recommendation
     # from `rck.shard_sizing` for the given expected fact count.
     expected_facts: int | None = None
+    # If set, enables the write-ahead log on both KBs. `knowledge` gets
+    # `wal_path` itself; `beliefs` gets a sibling "<stem>.beliefs<suffix>"
+    # path -- separate logs because they are separate KBs (Trap 4: a
+    # single shared log can't tell which KB a replayed entry belongs to).
+    # Default None: no WAL, no new files, no behaviour change.
+    wal_path: str | Path | None = None
 
     knowledge: ShardedKnowledgeBase = field(default=None, init=False)
     beliefs: ShardedKnowledgeBase = field(default=None, init=False)
@@ -138,8 +145,18 @@ class ConsciousAgent:
         if self.expected_facts is not None:
             rec = recommend_shards(self.expected_facts, dim=self.dim)
             self.n_shards = rec.n_shards
-        self.knowledge = ShardedKnowledgeBase(dim=self.dim, n_shards=self.n_shards, seed=self.seed)
+        knowledge_wal = None
+        beliefs_wal = None
+        if self.wal_path is not None:
+            wal_path = Path(self.wal_path)
+            knowledge_wal = WriteAheadLog(wal_path)
+            beliefs_path = wal_path.with_name(
+                wal_path.stem + ".beliefs" + wal_path.suffix)
+            beliefs_wal = WriteAheadLog(beliefs_path)
+        self.knowledge = ShardedKnowledgeBase(dim=self.dim, n_shards=self.n_shards,
+                                               seed=self.seed, wal=knowledge_wal)
         self.beliefs = make_belief_kb(dim=self.dim, n_shards=self.n_shards // 2 or 8, seed=self.seed + 1)
+        self.beliefs.wal = beliefs_wal
         self.lm = RCKAgent(
             vocab_size=8192, hv_dim=self.dim, n_columns=2, reservoir_dim=128,
             n_clauses=16, fep_rank=64, bigram_order=2, seed=self.seed + 2,
@@ -1095,6 +1112,31 @@ class ConsciousAgent:
             "query_memory": self.load_query_memory(d / "query_memory.jsonl",
                                                     replace=replace),
         }
+
+    def recover(self) -> dict:
+        """Replay each KB's write-ahead log on top of current in-memory
+        state. Call on a freshly constructed agent (same `wal_path`) after
+        a crash, before any snapshot was taken -- or after loading a
+        snapshot, to replay whatever was told since that checkpoint.
+
+        Uses `_log=False` so replayed facts are NOT re-appended to the
+        WAL (that would duplicate every entry and double-bundle it on
+        the next recovery). Returns a per-KB count of entries replayed.
+        """
+        replayed = {"knowledge": 0, "beliefs": 0}
+        for name, kb in (("knowledge", self.knowledge), ("beliefs", self.beliefs)):
+            if kb is None or kb.wal is None:
+                continue
+            for entry in kb.wal.replay():
+                op, fact = entry["op"], entry["fact"]
+                if op == "store":
+                    kb.store(fact, _log=False)
+                elif op == "forget":
+                    kb.forget(fact, _log=False)
+                else:
+                    raise ValueError(f"unknown WAL op {op!r}")
+                replayed[name] += 1
+        return replayed
 
     def save_provenance(self, path: str | Path) -> int:
         """Persist the ProvenanceStore to JSONL."""

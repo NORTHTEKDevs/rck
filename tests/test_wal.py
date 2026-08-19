@@ -1,10 +1,12 @@
-"""Tests for rck.wal -- the write-ahead log (Task 3)."""
+"""Tests for rck.wal -- the write-ahead log (Task 3) and the KB-level
+WAL hook + recover() (Task 4)."""
 from __future__ import annotations
 
 import json
 
 import pytest
 
+from rck.conscious_agent import ConsciousAgent
 from rck.wal import WALLockedError, WriteAheadLog
 
 
@@ -101,3 +103,90 @@ def test_context_manager_releases_lock(tmp_path):
     # Lock released on exit -- a new writer must succeed.
     wal2 = WriteAheadLog(p)
     wal2.close()
+
+
+# ---- Task 4: KB-level hook + recover() -------------------------------------
+
+def test_wal_is_opt_in_and_absent_by_default(tmp_path):
+    a = ConsciousAgent(dim=256, n_shards=4, seed=0, install_self=False)
+    a.tell("dog", "isa", "mammal")
+    assert a.knowledge.wal is None
+    assert a.beliefs.wal is None
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_recover_replays_facts_told_with_no_snapshot(tmp_path):
+    wal_path = tmp_path / "knowledge.wal.jsonl"
+    a = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                        wal_path=wal_path)
+    a.tell("dog", "isa", "mammal")
+    a.tell("cat", "isa", "mammal")
+    a.knowledge.wal.close()
+    a.beliefs.wal.close()
+
+    # Simulate a crash: a fresh agent, same wal_path, no snapshot at all.
+    b = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                        wal_path=wal_path)
+    report = b.recover()
+    assert report["knowledge"] >= 2
+    assert b.knowledge.answer({"S": "dog", "R": "isa"}, "O")[0] == "mammal"
+    b.knowledge.wal.close()
+    b.beliefs.wal.close()
+
+
+def test_recover_replays_bulk_ingest_facts(tmp_path):
+    from rck.bulk_ingest import bulk_load_triples
+    wal_path = tmp_path / "knowledge.wal.jsonl"
+    a = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                        wal_path=wal_path)
+    bulk_load_triples(a.knowledge, [("paris", "capitalof", "france")],
+                       symmetrize=False)
+    a.knowledge.wal.close()
+    a.beliefs.wal.close()
+
+    b = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                        wal_path=wal_path)
+    b.recover()
+    assert b.knowledge.answer({"S": "paris", "R": "capitalof"}, "O")[0] == "france"
+    b.knowledge.wal.close()
+    b.beliefs.wal.close()
+
+
+def test_recover_replays_induce_facts(tmp_path):
+    wal_path = tmp_path / "knowledge.wal.jsonl"
+    a = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                        wal_path=wal_path)
+    a.tell("leaf", "partof", "tree")
+    a.tell("tree", "locatedin", "forest")
+    induced = a.induce("leaf", "forest")
+    assert induced is not None and induced.verified
+    a.knowledge.wal.close()
+    a.beliefs.wal.close()
+
+    b = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                        wal_path=wal_path)
+    b.recover()
+    ans = b.knowledge.query({"S": "leaf", "R": "locatedin"}, "O", top_k=1)
+    assert ans and str(ans[0][0]) == "forest"
+    b.knowledge.wal.close()
+    b.beliefs.wal.close()
+
+
+def test_recover_replays_merge_from_facts(tmp_path):
+    wal_path = tmp_path / "knowledge.wal.jsonl"
+    target = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                             wal_path=wal_path)
+    source = ConsciousAgent(dim=512, n_shards=4, seed=1, install_self=False)
+    source.tell("whale", "isa", "mammal")
+    target.merge_from(source)
+    assert target.knowledge.answer({"S": "whale", "R": "isa"}, "O")[0] == "mammal"
+    target.knowledge.wal.close()
+    target.beliefs.wal.close()
+
+    # Crash target, recover a fresh one from the WAL alone.
+    recovered = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                                wal_path=wal_path)
+    recovered.recover()
+    assert recovered.knowledge.answer({"S": "whale", "R": "isa"}, "O")[0] == "mammal"
+    recovered.knowledge.wal.close()
+    recovered.beliefs.wal.close()

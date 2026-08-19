@@ -33,6 +33,7 @@ from typing import Hashable, Iterable
 from rck.codebook import Codebook
 from rck.relational import RelationalMemory
 from rck.shard_sizing import TARGET_MAX_FILL_BY_DIM, recommend_shards as _recommend_shards
+from rck.wal import WriteAheadLog
 
 _logger = logging.getLogger(__name__)
 
@@ -123,6 +124,12 @@ class ShardedKnowledgeBase:
     seed: int = 0
     auto_reshard: bool = True
     target_fill: int | None = None   # None -> per-dim cliff from shard_sizing
+    # Optional write-ahead log. Hooked at store()/forget() -- the level
+    # EVERY mutation path funnels through (tell, deny, induce, merge_from,
+    # maintain's cascades, bulk_ingest's direct kb.store calls) -- not at
+    # ConsciousAgent.tell(), which only some of those paths call.
+    # Default None: no WAL, no new files, no behaviour change.
+    wal: WriteAheadLog | None = None
 
     codebook: Codebook = field(default=None, init=False)
     _shards: list[RelationalMemory] = field(default_factory=list, init=False)
@@ -145,17 +152,23 @@ class ShardedKnowledgeBase:
 
     # ---- core ops ----------------------------------------------------------
 
-    def store(self, fact: dict[str, Hashable]) -> None:
+    def store(self, fact: dict[str, Hashable], *, _log: bool = True) -> None:
         """Store a fact in the shard determined by (S, R).
 
         May trigger a blocking O(N) reshard (see `reshard()`) when the
         written-to shard crosses `target_fill` and resharding could
         actually relieve it (see `_maybe_reshard`).
+
+        `_log=False` is for internal use by `recover()`: it applies a
+        fact that came FROM the WAL, so re-appending it would duplicate
+        the entry (and double-bundle it on the next recovery).
         """
         s, r = str(fact.get("S", "")), str(fact.get("R", ""))
         idx = _shard_index(s, r, self.n_shards)
         self._shards[idx].store(self.codebook, fact)
         self._fact_count += 1
+        if self.wal is not None and _log:
+            self.wal.append("store", dict(fact))
         if self.auto_reshard and self._shards[idx].size() > self.target_fill:
             self._maybe_reshard(idx)
 
@@ -348,11 +361,13 @@ class ShardedKnowledgeBase:
         results = self.query(known, unknown_role, top_k=1)
         return (results[0] if results else (None, 0.0))
 
-    def forget(self, fact: dict[str, Hashable]) -> None:
+    def forget(self, fact: dict[str, Hashable], *, _log: bool = True) -> None:
         s, r = str(fact.get("S", "")), str(fact.get("R", ""))
         idx = _shard_index(s, r, self.n_shards)
         self._shards[idx].forget(self.codebook, fact)
         self._fact_count = max(0, self._fact_count - 1)
+        if self.wal is not None and _log:
+            self.wal.append("forget", dict(fact))
 
     # ---- introspection -----------------------------------------------------
 
