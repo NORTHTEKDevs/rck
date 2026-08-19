@@ -80,3 +80,22 @@ def test_underprovisioned_agent_recovers_recall_after_reshard():
                if agent.ask_with_idk({"S": s, "R": r}, "O").top_symbol in valid[(s, r)])
     recall = hits / len(sample)
     assert recall >= 0.99, f"recall {recall:.1%} after reshard, expected >=99%"
+
+
+def test_growth_past_provisioning_auto_reshards():
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=8, seed=0)
+    for i in range(2000):
+        kb.store({"S": f"s{i}", "R": "isa", "O": f"o{i}"})
+
+    assert kb.n_shards > 8, "KB never resharded while growing 250x past capacity"
+    assert max(kb.shard_sizes()) <= kb.target_fill, \
+        f"a shard is still over the cliff: {max(kb.shard_sizes())} > {kb.target_fill}"
+    assert kb.size() == 2000
+
+
+def test_auto_reshard_can_be_disabled():
+    kb = ShardedKnowledgeBase(dim=4096, n_shards=8, seed=0)
+    kb.auto_reshard = False
+    for i in range(1000):
+        kb.store({"S": f"s{i}", "R": "isa", "O": f"o{i}"})
+    assert kb.n_shards == 8

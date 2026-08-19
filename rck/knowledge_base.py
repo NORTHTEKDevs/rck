@@ -105,6 +105,8 @@ class ShardedKnowledgeBase:
     dim: int = 4096
     n_shards: int = 64
     seed: int = 0
+    auto_reshard: bool = True
+    target_fill: int = 80   # measured capacity cliff at D=4096 (paper 5.4)
 
     codebook: Codebook = field(default=None, init=False)
     _shards: list[RelationalMemory] = field(default_factory=list, init=False)
@@ -130,6 +132,8 @@ class ShardedKnowledgeBase:
         idx = _shard_index(s, r, self.n_shards)
         self._shards[idx].store(self.codebook, fact)
         self._fact_count += 1
+        if self.auto_reshard and self._shards[idx].size() > self.target_fill:
+            self.reshard()
 
     def store_many(self, facts: Iterable[dict[str, Hashable]]) -> int:
         count = 0
