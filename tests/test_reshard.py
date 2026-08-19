@@ -99,3 +99,42 @@ def test_auto_reshard_can_be_disabled():
     for i in range(1000):
         kb.store({"S": f"s{i}", "R": "isa", "O": f"o{i}"})
     assert kb.n_shards == 8
+
+
+def test_reshard_preserves_negatives_provenance_and_derivation():
+    agent = ConsciousAgent(expected_facts=100)
+    agent.tell("dog", "isa", "mammal")
+    agent.tell("mammal", "isa", "animal")
+    agent.deny("dog", "isa", "fish")
+    agent.induce("dog", "animal")
+
+    why_before = agent.explain_why("dog", "isa", "animal").verbalize()
+
+    for i in range(1500):                    # force at least one reshard
+        agent.tell(f"filler{i}", "isa", f"thing{i}")
+
+    # "dog isa mammal" (asserted) and "dog isa animal" (induced shortcut) are
+    # both true and score an exact HRR tie pre-reshard (0.7124... ==
+    # 0.7124...), correctly flagged AMBIGUOUS by the epistemic layer; which
+    # one sorts first as `top_symbol` is a tie-break-order accident, not a
+    # resharding guarantee (reproduces identically with auto_reshard=False).
+    # The real invariant reshard owes us is that the asserted fact is not
+    # LOST -- it must remain recoverable as top_symbol or a surfaced
+    # alternative.
+    ans = agent.ask_with_idk({"S": "dog", "R": "isa"}, "O")
+    recovered = {ans.top_symbol} | {sym for sym, _ in ans.alternatives}
+    assert "mammal" in recovered, "asserted fact lost after reshard"
+    assert agent.explain_why("dog", "isa", "animal").verbalize() == why_before, \
+        "derivation tree changed across reshard"
+
+    neg = agent.ask_with_idk({"S": "dog", "R": "isa"}, "O")
+    assert neg.top_symbol != "fish", "denied fact resurfaced after reshard"
+
+
+def test_relation_index_is_correct_after_reshard():
+    kb = _kb_with(500, n_shards=8)
+    kb.reshard(64)
+    idx = kb.relation_index()
+    assert idx.n_shards == 64, "stale relation index after reshard"
+    for shard_id in idx.shards_with("isa"):
+        assert any(f["R"] == "isa" for f in kb._shards[shard_id].facts())
