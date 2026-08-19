@@ -58,9 +58,20 @@ def save_session(agent: ConsciousAgent, path: str | Path) -> dict:
     )
     atomic_write_bytes(path / "beliefs.npz", beliefs_buf.getvalue())
 
+    # Provenance / skills / query memory. WITHOUT these, explain_why()
+    # returns a degenerate "source=unknown (leaf)" node after any reload --
+    # the derivation history is the product's core claim, so a session that
+    # drops it is not a complete session. Measured before this was added:
+    # 5 provenance records in, 0 out.
+    aux = agent.save_state(path)
+
+    # Lazy import: rck/__init__ pulls in this module's dependencies, so a
+    # top-level `from rck import __version__` risks a circular import.
+    from rck import __version__ as _rck_version
+
     meta = {
         "schema": SCHEMA_VERSION,
-        "rck_version": "1.5.0",
+        "rck_version": _rck_version,
         "saved_at": time.time(),
         "hyper": {
             "dim": agent.dim,
@@ -90,7 +101,10 @@ def save_session(agent: ConsciousAgent, path: str | Path) -> dict:
     atomic_write_text(path / "meta.json", json.dumps(meta, default=str, indent=2))
     return {"path": str(path), "knowledge_facts": agent.knowledge.size(),
             "belief_facts": agent.beliefs.size(),
-            "dialogue_turns": len(agent.dialogue.history)}
+            "dialogue_turns": len(agent.dialogue.history),
+            "provenance": aux.get("provenance", 0),
+            "skills": aux.get("skills", 0),
+            "query_memory": aux.get("query_memory", 0)}
 
 
 def load_session(path: str | Path) -> ConsciousAgent:
@@ -158,6 +172,14 @@ def load_session(path: str | Path) -> ConsciousAgent:
     # Calibration.
     for rel, bucket in meta.get("calibration", {}).items():
         agent.calibration.by_relation[rel].update(bucket)
+
+    # Provenance / skills / query memory. Without these, explain_why()
+    # collapses to "source=unknown (leaf)" -- the derivation history is the
+    # product's core claim. Sessions written before this was added simply
+    # lack the files; load_state tolerates that, so old sessions still load
+    # (with the same empty provenance they have always had).
+    if (path / "provenance.jsonl").exists():
+        agent.load_state(path, replace=True)
 
     return agent
 
