@@ -31,6 +31,7 @@ from typing import Hashable, Iterable
 
 from rck.codebook import Codebook
 from rck.relational import RelationalMemory
+from rck.shard_sizing import recommend_shards as _recommend_shards
 
 
 def _shard_index(subject: str, relation: str, n_shards: int) -> int:
@@ -136,6 +137,35 @@ class ShardedKnowledgeBase:
             self.store(f)
             count += 1
         return count
+
+    def reshard(self, n_shards: int | None = None) -> dict:
+        """Re-bundle every stored fact into a new shard array.
+
+        Facts are retained per shard (`RelationalMemory._facts`), so this is a
+        pure re-route: nothing is re-derived and nothing is lost. The codebook
+        is reused -- resharding changes routing, never symbol encoding.
+        """
+        if n_shards is None:
+            n_shards = max(self.n_shards * 2,
+                           _recommend_shards(self._fact_count, dim=self.dim).n_shards)
+        if n_shards == self.n_shards:
+            return {"n_shards": self.n_shards, "facts": self._fact_count,
+                    "resharded": False}
+
+        facts = [f for shard in self._shards for f in shard.facts()]
+        new_shards = [
+            RelationalMemory(dim=self.dim, seed=self.seed,
+                             role_names=("S", "R", "O", "B"))
+            for _ in range(n_shards)
+        ]
+        for f in facts:
+            idx = _shard_index(str(f.get("S", "")), str(f.get("R", "")), n_shards)
+            # Direct write: self.store() would re-increment _fact_count.
+            new_shards[idx].store(self.codebook, f)
+
+        self._shards = new_shards
+        self.n_shards = n_shards
+        return {"n_shards": n_shards, "facts": len(facts), "resharded": True}
 
     def relation_index(self) -> RelationIndex:
         """Fresh snapshot of live relations per shard (see RelationIndex)."""
