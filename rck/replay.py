@@ -18,6 +18,7 @@ moved, and saying so is the honest answer, not a bug.
 """
 from __future__ import annotations
 
+import enum
 import json
 import time
 from dataclasses import dataclass, field
@@ -136,4 +137,72 @@ def record_decision(agent, query: dict, unknown_role: str) -> DecisionRecord:
         derivation=derivation,
         seed=agent.seed,
         created_at=time.time(),
+    )
+
+
+class ReplayStatus(enum.Enum):
+    VERIFIED = "verified"
+    DIVERGED = "diverged"
+    STATE_MISMATCH = "state_mismatch"
+
+
+@dataclass
+class ReplayResult:
+    """Outcome of replaying a DecisionRecord against a snapshot.
+
+    Never raised -- a replay tool that throws on mismatch is unusable
+    for auditing a corpus of records. `details` carries whatever is
+    relevant to `status` (hashes on STATE_MISMATCH, both answers/
+    derivations on DIVERGED, the reproduced answer on VERIFIED)."""
+
+    status: ReplayStatus
+    details: dict = field(default_factory=dict)
+
+
+def replay(record: DecisionRecord, snapshot_dir: str | Path) -> ReplayResult:
+    """Load the snapshot at `snapshot_dir`, and either report that the
+    substrate has moved (STATE_MISMATCH, query never run) or re-run
+    the query and compare the answer + derivation exactly (VERIFIED /
+    DIVERGED).
+
+    Never re-ingests facts -- see the module docstring: a record
+    without its snapshot is not replayable, and replay always targets
+    a stored snapshot, never a live agent."""
+    from rck.session import load_session
+
+    agent = load_session(snapshot_dir)
+    current_hash = state_hash(agent)
+    if current_hash != record.state_hash:
+        return ReplayResult(
+            status=ReplayStatus.STATE_MISMATCH,
+            details={
+                "recorded_state_hash": record.state_hash,
+                "snapshot_state_hash": current_hash,
+            },
+        )
+
+    ans = agent.ask_with_idk(dict(record.query), record.unknown_role)
+    derivation = None
+    if ans.top_symbol is not None:
+        s, r, o = _triple_from(record.query, record.unknown_role, ans.top_symbol)
+        derivation = _node_to_dict(agent.explain_why(s, r, o))
+    replayed_answer = {
+        "top_symbol": ans.top_symbol,
+        "top_score": ans.top_score,
+        "state": ans.state.value,
+        "alternatives": [[sym, score] for sym, score in ans.alternatives],
+    }
+
+    if replayed_answer == record.answer and derivation == record.derivation:
+        return ReplayResult(status=ReplayStatus.VERIFIED,
+                             details={"answer": replayed_answer,
+                                      "derivation": derivation})
+    return ReplayResult(
+        status=ReplayStatus.DIVERGED,
+        details={
+            "recorded_answer": record.answer,
+            "replayed_answer": replayed_answer,
+            "recorded_derivation": record.derivation,
+            "replayed_derivation": derivation,
+        },
     )
