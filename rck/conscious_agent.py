@@ -1113,6 +1113,27 @@ class ConsciousAgent:
                                                     replace=replace),
         }
 
+    def checkpoint(self, dir_path: str | Path) -> dict:
+        """Durable checkpoint: a real KB-inclusive snapshot, WAL truncated
+        only after that snapshot is confirmed written.
+
+        [R2 -- the critical fix] `save_state()` writes only skills /
+        provenance / query_memory JSONL and explicitly does NOT persist
+        the HRR knowledge base (see its docstring). `save_state()` +
+        `wal.truncate()` would therefore erase the only other durable
+        record of every fact, with a normal-looking return dict and no
+        exception. `checkpoint()` uses `rck.session.save_session` --
+        the one persister that writes the KB -- and truncates the WAL(s)
+        only after `save_session` returns successfully.
+        """
+        from rck.session import save_session
+        result = save_session(self, dir_path)
+        if self.knowledge is not None and self.knowledge.wal is not None:
+            self.knowledge.wal.truncate()
+        if self.beliefs is not None and self.beliefs.wal is not None:
+            self.beliefs.wal.truncate()
+        return result
+
     def recover(self) -> dict:
         """Replay each KB's write-ahead log on top of current in-memory
         state. Call on a freshly constructed agent (same `wal_path`) after

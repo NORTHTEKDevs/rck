@@ -7,6 +7,7 @@ import json
 import pytest
 
 from rck.conscious_agent import ConsciousAgent
+from rck.session import load_session
 from rck.wal import WALLockedError, WriteAheadLog
 
 
@@ -199,3 +200,44 @@ def test_recover_replays_merge_from_facts(tmp_path):
     assert recovered.knowledge.answer({"S": "whale", "R": "isa"}, "O")[0] == "mammal"
     recovered.knowledge.wal.close()
     recovered.beliefs.wal.close()
+
+
+# ---- Task 5: checkpoint() -- the critical fix -------------------------------
+
+def test_checkpoint_then_restart_preserves_facts_with_an_empty_wal(tmp_path):
+    # This is the literal required test from the durability plan: Revision
+    # 1's checkpoint() = save_state() + wal.truncate() would have silently
+    # destroyed the KB, because save_state() does not persist the HRR KB.
+    # This test calls checkpoint() (which Revision 1's own tests never
+    # did) and would fail loudly if that regression reappeared.
+    a = ConsciousAgent(expected_facts=100, wal_path=tmp_path / "wal.jsonl")
+    a.tell("dog", "isa", "mammal")
+    a.checkpoint(tmp_path / "snap")
+    assert list(WriteAheadLog(tmp_path / "wal.jsonl").replay()) == []   # truncated
+    b = load_session(tmp_path / "snap")
+    assert b.ask_with_idk({"S": "dog", "R": "isa"}, "O").top_symbol == "mammal"
+    a.knowledge.wal.close()
+    a.beliefs.wal.close()
+
+
+def test_facts_told_after_checkpoint_recovered_from_wal_tail(tmp_path):
+    wal_path = tmp_path / "wal.jsonl"
+    a = ConsciousAgent(dim=512, n_shards=4, seed=0, install_self=False,
+                        wal_path=wal_path)
+    a.tell("dog", "isa", "mammal")
+    a.checkpoint(tmp_path / "snap")
+    a.tell("cat", "isa", "mammal")  # told AFTER the checkpoint -- WAL-only
+    a.knowledge.wal.close()
+    a.beliefs.wal.close()
+
+    b = load_session(tmp_path / "snap")
+    b.knowledge.wal = WriteAheadLog(wal_path)
+    beliefs_wal_path = wal_path.with_name(
+        wal_path.stem + ".beliefs" + wal_path.suffix)
+    b.beliefs.wal = WriteAheadLog(beliefs_wal_path)
+    report = b.recover()
+    assert report["knowledge"] >= 1
+    assert b.ask_with_idk({"S": "dog", "R": "isa"}, "O").top_symbol == "mammal"
+    assert b.ask_with_idk({"S": "cat", "R": "isa"}, "O").top_symbol == "mammal"
+    b.knowledge.wal.close()
+    b.beliefs.wal.close()
