@@ -111,7 +111,22 @@ from rck.wal import WriteAheadLog
 
 @dataclass
 class ConsciousAgent:
-    """Top-level RCK agent with sharded KB + self-model + introspection."""
+    """Top-level RCK agent with sharded KB + self-model + introspection.
+
+    Public API (see `PUBLIC_API`): `tell`, `deny`, `ask_with_idk`,
+    `explain_why`, `discover`, `induce`, `correct`, `detect_conflicts`,
+    `resolve_conflicts`, `merge_from`, `maintain`, `status_report`,
+    `checkpoint`, `recover`. Everything else on this class is internal
+    and may change without a deprecation cycle.
+    """
+
+    #: The stable, supported API. Everything else on this class is
+    #: internal: it may change without a deprecation cycle.
+    PUBLIC_API = (
+        "tell", "deny", "ask_with_idk", "explain_why", "discover",
+        "induce", "correct", "detect_conflicts", "resolve_conflicts",
+        "merge_from", "maintain", "status_report", "checkpoint", "recover",
+    )
 
     dim: int = 4096
     n_shards: int = 64

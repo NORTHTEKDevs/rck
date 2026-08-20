@@ -7,6 +7,7 @@ import warnings
 import pytest
 
 import rck
+from rck.conscious_agent import ConsciousAgent
 
 FROZEN = {
     "ConsciousAgent", "ShardedKnowledgeBase",
@@ -40,3 +41,14 @@ def test_direct_module_import_is_unaffected_and_silent():
 def test_unknown_attribute_still_raises_attribute_error():
     with pytest.raises(AttributeError):
         _ = rck.definitely_not_a_real_name
+
+
+def test_public_api_methods_all_exist_and_are_callable():
+    for name in ConsciousAgent.PUBLIC_API:
+        assert callable(getattr(ConsciousAgent, name)), name
+
+
+def test_public_api_is_documented_in_the_class_docstring():
+    doc = ConsciousAgent.__doc__ or ""
+    for name in ConsciousAgent.PUBLIC_API:
+        assert name in doc, f"{name} is in PUBLIC_API but undocumented"
