@@ -49,17 +49,16 @@ def cooccurrence(kb: ShardedKnowledgeBase,
     """Walk the KB and produce a relation-pair co-occurrence map."""
     # Subject -> set of relations.
     subj_to_rels: dict[str, set[str]] = defaultdict(set)
-    for shard in kb._shards:
-        for fact in shard.facts():
-            r = str(fact.get("R", "")).lower()
-            if ignore_negative and r.startswith("not_"):
-                continue
-            if r == "isa":
-                # isa is everywhere; not informative for co-occurrence.
-                continue
-            s = str(fact.get("S", "")).lower()
-            if s:
-                subj_to_rels[s].add(r)
+    for fact in kb.all_facts():
+        r = str(fact.get("R", "")).lower()
+        if ignore_negative and r.startswith("not_"):
+            continue
+        if r == "isa":
+            # isa is everywhere; not informative for co-occurrence.
+            continue
+        s = str(fact.get("S", "")).lower()
+        if s:
+            subj_to_rels[s].add(r)
 
     rel_set: defaultdict[str, set[str]] = defaultdict(set)
     for s, rels in subj_to_rels.items():
