@@ -58,17 +58,16 @@ def find_abstractions(kb: ShardedKnowledgeBase,
     # 1. Collect all (S, R, O) facts grouped by (R, O).
     by_ro: dict[tuple[str, str], set[str]] = defaultdict(set)
     isa_parents: dict[str, set[str]] = defaultdict(set)
-    for shard in kb._shards:
-        for fact in shard.facts():
-            s = str(fact.get("S", "")).lower()
-            r = str(fact.get("R", "")).lower()
-            o = str(fact.get("O", "")).lower()
-            if r.startswith("not_"):
-                continue
-            if r == "isa":
-                isa_parents[s].add(o)
-            else:
-                by_ro[(r, o)].add(s)
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")).lower()
+        r = str(fact.get("R", "")).lower()
+        o = str(fact.get("O", "")).lower()
+        if r.startswith("not_"):
+            continue
+        if r == "isa":
+            isa_parents[s].add(o)
+        else:
+            by_ro[(r, o)].add(s)
 
     abstractions: list[Abstraction] = []
     # 2. For each (R, O), group subjects by their isa parents.
