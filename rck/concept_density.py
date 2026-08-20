@@ -52,13 +52,12 @@ def density_map(kb: ShardedKnowledgeBase,
     facts (default 1: only the isa fact, nothing else known).
     """
     counts: Counter = Counter()
-    for shard in kb._shards:
-        for fact in shard.facts():
-            s = str(fact.get("S", "")).lower()
-            r = str(fact.get("R", "")).lower()
-            if r.startswith("not_"):
-                continue
-            counts[s] += 1
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")).lower()
+        r = str(fact.get("R", "")).lower()
+        if r.startswith("not_"):
+            continue
+        counts[s] += 1
 
     histogram: dict[int, int] = {}
     for cnt in counts.values():
