@@ -73,10 +73,9 @@ def _relations_for_subjects(
     """
     relation_to_subjects: dict[str, set[str]] = defaultdict(set)
     for s in subjects:
-        for shard in kb._shards:
-            for fact in shard._facts:
-                if str(fact.get("S", "")) == s:
-                    relation_to_subjects[str(fact.get("R", ""))].add(s)
+        for fact in kb.all_facts():
+            if str(fact.get("S", "")) == s:
+                relation_to_subjects[str(fact.get("R", ""))].add(s)
     return dict(relation_to_subjects)
 
 
