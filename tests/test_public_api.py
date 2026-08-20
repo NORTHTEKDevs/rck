@@ -76,3 +76,28 @@ def test_readme_quickstart_only_calls_frozen_agent_methods():
     assert not non_frozen, (
         f"README quickstart calls non-frozen agent methods: {non_frozen}"
     )
+
+
+@pytest.mark.parametrize("guide", ["01-quickstart.md", "03-reasoning.md"])
+def test_user_guides_only_call_frozen_agent_methods(guide):
+    """The guides are the other place the documented surface can drift.
+
+    Checking only the README missed that 01-quickstart.md and
+    03-reasoning.md both teach `agent.reason(...)`, which an earlier draft
+    of the frozen list omitted. Teaching a method the package calls
+    internal is the drift this whole task exists to prevent.
+    """
+    path = Path(__file__).resolve().parents[1] / "docs" / "guide" / guide
+    if not path.exists():
+        pytest.skip(f"{guide} not found where expected")
+    blocks = re.findall(r"```python\n(.*?)```", path.read_text(encoding="utf-8"),
+                        re.DOTALL)
+    if not blocks:
+        pytest.skip(f"no python fenced blocks in {guide}")
+    calls = set()
+    for block in blocks:
+        calls.update(re.findall(r"\bagent\.(\w+)\(", block))
+    non_frozen = calls - set(ConsciousAgent.PUBLIC_API)
+    assert not non_frozen, (
+        f"{guide} teaches non-frozen agent methods: {sorted(non_frozen)}"
+    )

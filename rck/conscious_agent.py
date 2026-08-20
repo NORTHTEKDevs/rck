@@ -113,19 +113,52 @@ from rck.wal import WriteAheadLog
 class ConsciousAgent:
     """Top-level RCK agent with sharded KB + self-model + introspection.
 
-    Public API (see `PUBLIC_API`): `tell`, `deny`, `ask_with_idk`,
-    `explain_why`, `discover`, `induce`, `correct`, `detect_conflicts`,
-    `resolve_conflicts`, `merge_from`, `maintain`, `status_report`,
-    `checkpoint`, `recover`. Everything else on this class is internal
-    and may change without a deprecation cycle.
+    Public API (see `PUBLIC_API`), grouped by what it is for:
+
+    * knowledge      -- `tell`, `deny`, `correct`
+    * answering      -- `ask_with_idk`, `explain_why`
+    * multi-hop      -- `discover`, `reason`, `induce`
+    * rules          -- `extract_rules`, `instantiate_rules`,
+                        `cascade_instantiate_rules`, `compose_rules`
+    * analogy        -- `analogy`
+    * causal         -- `downstream_effects`, `root_causes`
+    * reconciliation -- `detect_conflicts`, `resolve_conflicts`
+    * multi-agent    -- `merge_from`
+    * operations     -- `maintain`, `status_report`, `checkpoint`, `recover`
+
+    Everything else on this class is internal and may change without a
+    deprecation cycle.
     """
 
     #: The stable, supported API. Everything else on this class is
     #: internal: it may change without a deprecation cycle.
+    #:
+    #: The rule: this surface is exactly what the README advertises and the
+    #: guides teach. Two drafts got it wrong by guessing instead. The first
+    #: froze `discover` but not `reason` -- they are the two halves of
+    #: multi-hop (`discover` finds a chain when you do not know the relation
+    #: path, `reason` walks one when you do), so the quickstart and the
+    #: full-stack demo were left calling an unfrozen method. The second
+    #: still omitted the rule, analogy, and causal calls that
+    #: docs/guide/03-reasoning.md teaches and the README sells. A frozen
+    #: surface that excludes advertised headline features is a fiction, so
+    #: tests/test_public_api.py now checks the guides, not just the README.
     PUBLIC_API = (
-        "tell", "deny", "ask_with_idk", "explain_why", "discover",
-        "induce", "correct", "detect_conflicts", "resolve_conflicts",
-        "merge_from", "maintain", "status_report", "checkpoint", "recover",
+        # knowledge
+        "tell", "deny", "correct",
+        # answering
+        "ask_with_idk", "explain_why",
+        # multi-hop
+        "discover", "reason", "induce",
+        # rules
+        "extract_rules", "instantiate_rules", "cascade_instantiate_rules",
+        "compose_rules",
+        # analogy + causal
+        "analogy", "downstream_effects", "root_causes",
+        # reconciliation + multi-agent
+        "detect_conflicts", "resolve_conflicts", "merge_from",
+        # operations
+        "maintain", "status_report", "checkpoint", "recover",
     )
 
     dim: int = 4096
