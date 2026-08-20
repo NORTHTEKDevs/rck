@@ -134,6 +134,21 @@ Commit.
 - Whether `codebook` was needed on the dict path at all.
 - Whether the isotonic `ScoreCalibrator` (only reachable via `PropagationConfig(rule="calibrated_product")`, never wired into `maintain()` by default) turned out to matter.
 
-## Rejected finding - do not act on it
+## Correction: a finding I wrongly rejected
 
-The review claimed `curiosity.detect_global_gaps`'s `break` sits at the same indent as its `for fact` loop and therefore exits the outer loop correctly, making it a different mechanism from the other two. **Checked against source and rejected:** `for shard` is at indent 4, `for fact` at 8, `break` at 12. The break is inside the fact loop and exits only that loop, exactly like `research.py` and `subject_summary.py`. All three share one mechanism.
+Revision 2 of this plan claimed the review was wrong about `curiosity.detect_global_gaps`, asserting its `break` is mis-nested like the other two. **That rejection was itself wrong, and the review was right.** The unfiltered source:
+
+```
+detect_global_gaps                 _related_entities
+ 4 |  for shard in kb._shards:      4 |  for shard in kb._shards:
+ 8 |    for fact in shard._facts:   8 |    for fact in shard._facts:
+12 |      entities.add(...)        12 |      if ...O == topic:
+ 8 |    if len(entities) >= cap:   12 |      if len(incoming) >= cap:
+12 |      break                    16 |        break
+```
+
+In `detect_global_gaps` the `if` at indent 8 is a **sibling** of `for fact`, both inside `for shard`, so the `break` exits the outer shard loop - a per-shard early-exit *check*. In `_related_entities` (and `subject_summary`) the `if` sits at indent 12, **inside** the fact loop, so the break exits only that loop and the cap applies per shard. Two different mechanisms.
+
+The error came from an indent heuristic that took the first `break` without checking which block owned it. `tests/test_backend_interface.py` lines 95-113, written in Phase 1, already described all three correctly - use that language, not this plan's earlier blanket sentence.
+
+The practical consequence for Phase 2 is unchanged: all three still diverge between backends, and divergence class 1 still holds empirically for all three. Only the stated *reason* for `detect_global_gaps` was wrong.

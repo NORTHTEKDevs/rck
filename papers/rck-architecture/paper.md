@@ -395,7 +395,32 @@ The regime designed to favour the substrate is where it performs worst. RCK infe
 
 A fair reading of the implementation: `solve_analogy` queries the KB for `(a, ?, b)` and has no fallback when that edge is absent, so it is arguably not *designed* for held-out generalisation. We accept that - and it is precisely the finding. "Analogy as native vector algebra" implies a generalisation capability the implementation does not have; what it actually provides is lossy retrieval of a stored edge.
 
-**Conclusion.** Across five axes now measured against non-VSA baselines - ingest, memory, query latency, chain discovery, analogy, and federated merge - the HRR substrate does not win on any of them, and on two it is beaten by roughly twenty lines of dictionary code. The contribution of this work is the layer *above* the substrate: the provenance graph, calibrated confidence, IDK as a first-class state, the six-gate induction filter, negative facts, contradiction resolution, and replayable decision records. None of those require holographic reduced representations. A faithful reimplementation on an exact index would, on present evidence, be smaller, faster, and equally auditable. We think that is worth stating plainly in the paper that proposed the substrate.
+**Conclusion.** Across five axes now measured against non-VSA baselines - ingest, memory, query latency, chain discovery, analogy, and federated merge - the HRR substrate does not win on any of them, and on two it is beaten by roughly twenty lines of dictionary code. The contribution of this work is the layer *above* the substrate: the provenance graph, calibrated confidence, IDK as a first-class state, the six-gate induction filter, negative facts, contradiction resolution, and replayable decision records. None of those require holographic reduced representations.
+
+**We then built the alternative rather than asserting it.** `rck.dict_knowledge_base.DictKnowledgeBase` is a second backend over an exact index, selected with `ConsciousAgent(backend="dict")`; HRR remains the default. The same reasoning layer runs on both, and a 34-test parity suite (`tests/test_backend_parity.py`) drives both through `tell`/`deny`/`ask_with_idk`, `explain_why` trees, `discover`/`reason`/`induce`, conflict detection and resolution, rule extraction and instantiation, `maintain()`, and `checkpoint`/`load_session`, asserting identical results - with at least one assertion anchored to an independent symbolic oracle rather than to cross-backend agreement, since two backends can agree while both are wrong.
+
+Same reasoning layer, two substrates, identical protocol (`scripts/baseline_study.py`):
+
+| Facts | Substrate | Ingest | RSS | recall@1 | Query median |
+|---:|---|---:|---:|---:|---:|
+| 10,000 | HRR | 2.206 s | 165.4 MB | 1.0000 | 0.302 ms |
+| 10,000 | **exact index** | **0.171 s** | **43.1 MB** | 1.0000 | **0.175 ms** |
+| 30,000 | HRR | 5.377 s | 365.7 MB | 1.0000 | 0.300 ms |
+| 30,000 | **exact index** | **0.244 s** | **79.4 MB** | 1.0000 | **0.163 ms** |
+| 100,000 | HRR | 11.252 s | 765.5 MB | 1.0000 | 0.538 ms |
+| 100,000 | **exact index** | **1.079 s** | **274.2 MB** | 1.0000 | **0.168 ms** |
+
+Ten times faster to ingest, roughly a third of the memory, and query latency that stays flat (0.163-0.175 ms) where HRR's grows with scale - at identical recall.
+
+**Three places the backends legitimately differ**, each pinned by an explicit test rather than smoothed over:
+
+1. *Shard-partition-dependent functions.* Three modules cap results with an early exit evaluated per shard, so a single-shard backend applies the cap globally. Measured: `subject_summary` returns 77 facts on HRR against 50 on the exact index.
+2. *Density-dependent epistemic state.* HRR crosstalk under load can push a true stored answer below the IDK threshold - measured at 0.0466 for the correct answer against 0.0496 for an unrelated entity - where the exact index correctly returns KNOWN. The divergence is HRR being wrong, not the index.
+3. *Induction Gate 1 is substrate-relative.* `cascade_induct` uses the geometric-mean propagation rule, so on a backend where every hop scores 1.0 the 0.20 confidence floor can never reject, and the exact index commits inductions HRR refuses. Measured on a 3-fact KB: 8 verified inductions against HRR's 6. Ordinary cleanup noise is sufficient - this does not require a KB near the capacity cliff.
+
+The third is the sharpest remaining result. Gate 1 was presented in section 4.1 as a semantic filter; it is partly a *noise* filter, and it rejects fewer candidates when retrieval is exact. Whether HRR's extra rejections are correct or merely conservative is not something our current benchmarks can answer, and we flag it as open rather than claim it either way.
+
+A faithful reimplementation on an exact index is smaller, faster, and equally auditable - and now exists, tested, in this repository. We think that is worth stating plainly in the paper that proposed the substrate.
 
 ### 5.11 First external-style benchmark: kinship chains
 
