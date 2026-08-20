@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 from rck.conscious_agent import ConsciousAgent
 from rck.knowledge_base import ShardedKnowledgeBase
 from rck.replay import DecisionRecord, ReplayResult, ReplayStatus, record_decision, replay
@@ -237,3 +239,59 @@ def test_record_survives_a_real_file_roundtrip(tmp_path):
         "score must survive the file roundtrip EXACTLY -- bit-identity is the claim"
     assert restored.answer["top_symbol"] == rec.answer["top_symbol"]
     assert restored.rck_version == rec.rck_version
+
+
+def test_record_pins_the_numpy_version(tmp_path):
+    """float32 bundle sums are the substrate; a numpy change could move
+    the low bits of a score. Pinning rck_version alone left that
+    unrecorded, so a divergent replay would have had no explanation."""
+    import numpy as np
+    from rck.conscious_agent import ConsciousAgent
+    from rck.replay import DecisionRecord, record_decision
+
+    agent = ConsciousAgent(expected_facts=100)
+    agent.tell("dog", "isa", "mammal")
+    rec = record_decision(agent, {"S": "dog", "R": "isa"}, "O")
+    assert rec.numpy_version == np.__version__
+
+    p = tmp_path / "r.json"
+    rec.save(p)
+    assert DecisionRecord.load(p).numpy_version == np.__version__
+
+
+def test_replay_warns_when_numpy_differs(tmp_path):
+    import warnings as _w
+    from rck.conscious_agent import ConsciousAgent
+    from rck.replay import record_decision, replay
+    from rck.session import save_session
+
+    agent = ConsciousAgent(expected_facts=100)
+    agent.tell("dog", "isa", "mammal")
+    rec = record_decision(agent, {"S": "dog", "R": "isa"}, "O")
+    save_session(agent, tmp_path / "snap")
+
+    rec.numpy_version = "0.0.0-not-a-real-version"
+    with pytest.warns(RuntimeWarning, match="numpy"):
+        res = replay(rec, tmp_path / "snap")
+    # The warning is diagnostic only -- it must not change the verdict.
+    assert res.status.value == "verified"
+
+
+def test_old_records_without_numpy_version_load_and_do_not_warn(tmp_path):
+    import warnings as _w
+    from rck.conscious_agent import ConsciousAgent
+    from rck.replay import DecisionRecord, record_decision, replay
+    from rck.session import save_session
+
+    agent = ConsciousAgent(expected_facts=100)
+    agent.tell("dog", "isa", "mammal")
+    rec = record_decision(agent, {"S": "dog", "R": "isa"}, "O")
+    save_session(agent, tmp_path / "snap")
+
+    legacy = rec.to_dict()
+    del legacy["numpy_version"]
+    restored = DecisionRecord.from_dict(legacy)
+    assert restored.numpy_version == "unknown"
+    with _w.catch_warnings():
+        _w.simplefilter("error")          # must NOT warn for legacy records
+        assert replay(restored, tmp_path / "snap").status.value == "verified"

@@ -21,8 +21,11 @@ from __future__ import annotations
 import enum
 import json
 import time
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
+
+import numpy as np
 
 from rck.atomic import atomic_write_json
 from rck.explain_why import ExplanationNode
@@ -45,10 +48,18 @@ class DecisionRecord:
     derivation: dict | None   # serialized ExplanationNode tree, or None
     seed: int
     created_at: float = field(default_factory=time.time)
+    # The substrate is float32 bundling, so accumulation order and any
+    # change in numpy's reduction behaviour can move the low bits of a
+    # score. Pinning rck_version alone would leave that unrecorded, so a
+    # replay under a different numpy could diverge with no explanation.
+    # Recorded for diagnosis; replay warns on mismatch rather than failing,
+    # because a differing numpy usually still reproduces exactly.
+    numpy_version: str = field(default_factory=lambda: np.__version__)
 
     def to_dict(self) -> dict:
         return {
             "rck_version": self.rck_version,
+            "numpy_version": self.numpy_version,
             "state_hash": self.state_hash,
             "query": dict(self.query),
             "unknown_role": self.unknown_role,
@@ -69,6 +80,8 @@ class DecisionRecord:
             derivation=data.get("derivation"),
             seed=int(data["seed"]),
             created_at=float(data["created_at"]),
+            # Records written before numpy_version was added simply lack it.
+            numpy_version=str(data.get("numpy_version", "unknown")),
         )
 
     def save(self, path: str | Path) -> None:
@@ -169,6 +182,17 @@ def replay(record: DecisionRecord, snapshot_dir: str | Path) -> ReplayResult:
     without its snapshot is not replayable, and replay always targets
     a stored snapshot, never a live agent."""
     from rck.session import load_session
+
+    # Scores are float32 bundle sums, so a different numpy could in
+    # principle reduce differently. Warn rather than fail: a mismatch is a
+    # diagnostic lead if the result later DIVERGEs, not a defect on its own.
+    if (record.numpy_version not in ("unknown", np.__version__)):
+        warnings.warn(
+            f"record was written under numpy {record.numpy_version}, "
+            f"replaying under {np.__version__}; float32 accumulation is "
+            f"not guaranteed identical across numpy versions",
+            RuntimeWarning, stacklevel=2,
+        )
 
     agent = load_session(snapshot_dir)
     current_hash = state_hash(agent)
