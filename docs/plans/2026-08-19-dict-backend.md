@@ -1,10 +1,15 @@
 # Phase 2: DictKnowledgeBase and the parity suite
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+>
+> **Revision 2.** Adversarially reviewed before implementation; three Critical
+> findings folded in, marked **[R2]**. One review finding was checked against
+> the source and **rejected** - see "Rejected finding" at the end. Do not
+> re-litigate either set.
 
-**Goal:** Run RCK's reasoning layer on an exact index, and prove with a parity suite that it behaves identically. That converts "the substrate does not earn its place" from a measured argument into a demonstrated fact.
+**Goal:** Run RCK's reasoning layer on an exact index, and prove with a parity suite that it behaves identically where it should - and document precisely where it should not. That converts "the substrate does not earn its place" from a measured argument into a demonstrated fact.
 
-**Architecture:** A second knowledge base implementing the surface the reasoning layer already uses (Phase 1 established what that surface is). `ConsciousAgent(backend="hrr"|"dict")` selects it. HRR stays the default and stays the research artifact; nothing is deleted.
+**Architecture:** A second knowledge base implementing the surface Phase 1 established. `ConsciousAgent(backend="hrr"|"dict")`. HRR stays the default and stays the research artifact; nothing is deleted.
 
 **Tech Stack:** Python 3.11+ stdlib. No new dependencies. No numpy in the dict path.
 
@@ -12,22 +17,34 @@
 
 ## Verified state
 
-- Phase 1 shipped: `all_facts()` exists, 16 reasoning modules were migrated off `kb._shards`, and `tests/test_backend_interface.py` enforces that with a `"._shards"` check. Suite is **847 passed**.
-- **Five modules legitimately still touch `_shards`** and are in `ALLOWED_EXCEPTIONS`:
-  - `federated_merge.py` - sums two shards' `_memory` HRR tensors directly.
-  - `dreaming.py::compress_duplicates` - writes `shard._facts` directly.
-  - `curiosity.py::detect_global_gaps`, `research.py::_related_entities`, `subject_summary.py` - each has a `break` nested inside the per-fact loop with no matching outer break, so the cap applies **per shard** and results depend on shard count.
-- The surface the layer actually uses, from Phase 1's measurement: `store`, `forget`, `query`, `query_union`, `answer`, `size`, `shard_sizes`, `all_facts`, `relation_index`, `reshard`, and the fields `dim`, `n_shards`, `seed`, `wal`, `codebook`, `_fact_count`.
+- Phase 1 shipped: `all_facts()` exists, 16 reasoning modules migrated off `kb._shards`, `tests/test_backend_interface.py` enforces it via a `"._shards"` check. Suite **847 passed**.
+- Five modules legitimately still touch `_shards` (`ALLOWED_EXCEPTIONS`): `federated_merge.py`, `dreaming.py::compress_duplicates`, and `curiosity.py::detect_global_gaps` / `research.py::_related_entities` / `subject_summary.py::summarize_subject`.
+- Surface in use: `store`, `forget`, `query`, `query_union`, `answer`, `size`, `shard_sizes`, `all_facts`, `relation_index`, `reshard`, plus fields `dim`, `n_shards`, `seed`, `wal`, `codebook`, `_fact_count`.
+- `InductionPolicy.min_confidence = 0.20`; `IDKPolicy.idk_threshold = 0.08`. Both matter below.
 
 ---
 
-## The design decision this plan turns on
+## The three things this plan must get right
 
-`DictKnowledgeBase` must expose **`_shards` as a single pseudo-shard** with `.facts()` and `._facts`, so the five exception modules keep working unchanged.
+### [R2] A. Parity is NOT "identical everywhere". Three divergence classes are expected.
 
-That has a consequence which must be **documented and tested, not hidden**: with one shard, the mis-nested `break` in `curiosity` / `research` / `subject_summary` applies globally instead of per shard. Those three functions will therefore legitimately return *different* results on the two backends. That is a pre-existing latent bug in those modules (Phase 1 found it), surfaced by the backend swap - **not** a parity failure to paper over.
+Asserting blanket equality will produce failures that are correct behaviour, and an implementer will then "fix" them by weakening tests. Name them up front:
 
-**So: the parity suite asserts equality everywhere EXCEPT those three functions, which get an explicit documented-divergence test instead.** Do not force them equal. Do not "fix" the break nesting in this plan - that is a behaviour change and belongs in its own commit.
+1. **Shard-partition-dependent functions.** The three exception modules above each cap results with a `break` nested inside the per-fact loop, with no matching break on the outer shard loop - verified in source: `curiosity.detect_global_gaps` has `for shard` at indent 4, `for fact` at 8, `break` at 12. So the cap applies **per shard**. A one-shard dict backend applies it globally. Different results, by design. Pin with an explicit divergence test.
+2. **[R2] Density-dependent epistemic state.** HRR crosstalk under load can push a *true, stored* answer below `idk_threshold` or into a near-tie with noise, flipping `ask_with_idk` to IDK/AMBIGUOUS for a query with one unambiguous answer. Measured on a deliberately overloaded single shard: the stored answer scored 0.0466 and ranked *below* an unrelated entity at 0.0496. The dict backend correctly returns KNOWN. **Do not assert IDK-state equality on KBs dense enough to cross the capacity cliff.** Either keep parity KBs under the cliff and say so, or carve the divergence out explicitly.
+3. **[R2] Induction Gate 1 is substrate-relative, not identical-by-construction.** `cascade_induct` calls `walk_chain(...)` with no `config=`, so it always uses the default `geometric_mean` rule. On the dict backend every hop is exactly 1.0, so chain confidence is `1.0 * chain_decay**(n-1)` (0.95^5 ~ 0.77 at depth 6) - **always above `min_confidence=0.20`, so Gate 1 can never reject.** On HRR, real crosstalk legitimately pushes some true chains below the floor. The dict backend will therefore commit inductions HRR rejects. That is a genuine behavioural difference and must be **tested at realistic shard load**, not assumed away. Task 3 owns this.
+
+### [R2] B. `federated_merge` will crash on the dict backend unless this plan says otherwise.
+
+`federated_merge.py` does `target.knowledge._shards[i].merge(src_shard)`, which sums `RelationalMemory._memory` numpy tensors. A dict pseudo-shard has no `_memory` and no `merge()`. Today that is an `AttributeError` the moment either side is a dict-backend agent, and `merge_from` appears nowhere in the original Task 3 list, so it would have shipped untested.
+
+**Decision:** give the pseudo-shard a `merge(other)` that dedup-unions `_facts` (the exact-index equivalent of a bundle sum), and **raise a clear `TypeError` on mixed-backend merges** - summing an HRR tensor into a dict index is meaningless. Task 3 must test both paths.
+
+### C. The pseudo-shard, and the index invariant
+
+`DictKnowledgeBase` exposes `_shards` as a single pseudo-shard with `.facts()`, `._facts`, and `.merge()`, so the exception modules keep working.
+
+**[R2] Index invariant.** `dreaming.compress_duplicates` reassigns `shard._facts = keep` directly, bypassing `store`/`forget`. If `query()` reads a separately-maintained index, it will keep returning removed duplicates at score 1.0 after a dedup. **Either derive the query index fresh from `_facts` on every call, or rebuild it whenever `_facts` is reassigned.** State which in the docstring. Task 3 must **re-query a deduped fact**, not merely count facts.
 
 ---
 
@@ -35,95 +52,65 @@ That has a consequence which must be **documented and tested, not hidden**: with
 
 **Files:** Create `rck/dict_knowledge_base.py`; test `tests/test_dict_backend.py`.
 
-Implement the full surface above with an exact index. Sketch:
+Implement the surface with an exact index.
 
-```python
-@dataclass
-class DictKnowledgeBase:
-    dim: int = 4096          # accepted and reported, unused
-    n_shards: int = 1        # always 1; reshard() is a no-op
-    seed: int = 0
-    wal: WriteAheadLog | None = None
+- `query` returns `[(symbol, score), ...]`; exact matches score **1.0**, misses return `[]`. Handle every slot pattern `ShardedKnowledgeBase.query` supports - `(S,R)->O`, `(S,O)->R`, `(R,O)->S`, and fan-out with a missing slot. Match its **contract**, not its implementation.
+- **[R2] Multi-valued tie-break must be explicit and deterministic: insertion order**, matching `all_facts()`. `chain_walker.walk_chain` and `answer()` take `results[0]` with no ambiguity handling, so a multi-valued intermediate hop can silently walk a different chain on each backend. Document this as a known non-parity point.
+- `answer(known, unknown_role)` -> `(symbol|None, score)`.
+- `all_facts()`, `size()`, `shard_sizes()` -> `[n]`, `relation_index()` over the pseudo-shard.
+- `reshard(n=None)` is a no-op returning `{"resharded": False, ...}`. **[R2]** `session.load_session` calls `agent.beliefs.reshard(...)` - confirm the no-op return shape does not break it.
+- `wal` support on `store`/`forget` exactly as the HRR path, so durability works on both.
+- `codebook`: provide a stand-in **only if something actually needs it**. If nothing does, do not invent one - report that.
 
-    def store(self, fact, *, _log=True): ...
-    def query(self, known, unknown_role, top_k=3, shard_subset=None, cleanup="local"): ...
-```
-
-Requirements:
-
-- `query` returns `[(symbol, score), ...]` like the HRR path. **Exact matches score 1.0**; a miss returns `[]`. The IDK layer thresholds on score, so exact hits must clear its threshold and misses must produce no candidates.
-- `query` must handle every slot pattern the HRR version does: `(S,R)->O`, `(S,O)->R`, `(R,O)->S`, and fan-out when a slot is missing. Read `ShardedKnowledgeBase.query` and match its **contract**, not its implementation.
-- `answer(known, unknown_role)` returns `(symbol|None, score)`.
-- `all_facts()`, `size()`, `shard_sizes()` -> `[len(facts)]`, `relation_index()` -> a `RelationIndex` over the single pseudo-shard.
-- `reshard(n=None)` is a documented no-op returning `{"resharded": False, ...}`.
-- `wal` support: `store`/`forget` append when a WAL is attached and `_log` is true, exactly like the HRR path, so durability works on both backends.
-- `codebook`: expose a minimal stand-in only if something needs it; **if nothing does, do not invent one** - report that instead.
-
-**Tests:** store/query round-trip on every slot pattern; multi-valued `(S,R)` returns all objects; a miss returns `[]`; `forget` removes; `size` counts; `all_facts` matches insertion order; WAL append fires.
+**Tests:** every slot pattern; multi-valued returns all objects in insertion order; miss returns `[]`; `forget` removes; `size`; `all_facts` order; WAL append fires; `merge` dedup-unions; mixed-backend merge raises `TypeError`.
 
 Commit.
 
-### Task 2: backend selection on `ConsciousAgent`
+### Task 2: backend selection
 
 **Files:** `rck/conscious_agent.py`; `tests/test_dict_backend.py`.
 
-Add `backend: str = "hrr"`. In `__post_init__`, build `knowledge` and `beliefs` from the chosen backend. Default unchanged, so the 847 existing tests must stay green untouched.
-
-`shard_balance()` on the dict backend should report something honest and non-crashing (one shard, no cliff, no reshard suggestion).
+Add `backend: str = "hrr"`; build `knowledge` and `beliefs` from it in `__post_init__`. Default unchanged - the 847 existing tests must stay green untouched. `shard_balance()` on dict must report honestly and not crash (one shard, no cliff, no suggestion).
 
 Commit.
 
-### Task 3: the parity suite - the actual deliverable
+### Task 3: the parity suite - the deliverable
 
 **Files:** `tests/test_backend_parity.py`.
 
-Drive **both** backends through the same operations on the same facts and assert identical results. Cover, at minimum:
+Parametrize over `backend` and assert equality for: `tell`/`deny`/`ask_with_idk`, `explain_why` trees, `discover`, `reason`, `induce`, `detect_conflicts`, `resolve_conflicts`, `extract_rules`, `instantiate_rules`, `maintain()`, `checkpoint`/`load_session`, and multi-hop chains at depth 2..6.
 
-- `tell` / `deny` / `ask_with_idk` including the IDK state on unknown queries
-- `explain_why` derivation trees (identical structure, sources, and leaves)
-- `discover`, `reason`, `induce`
-- `detect_conflicts`, `resolve_conflicts`
-- `extract_rules`, `instantiate_rules`
-- `maintain()` end to end
-- `checkpoint` / `load_session` round-trip on the dict backend
-- multi-hop chains at depth 2..6 on the CLUTRR-style generator from `scripts/clutrr_style_study.py`
+**[R2] Required additions:**
+- **Anchor to ground truth, not just to each other.** Cross-backend equality can pass while both are wrong. Use `scripts/clutrr_style_study.py`'s `symbolic_infer` / `example.end` as an independent oracle and assert **each backend against it**.
+- **Induction-gate parity at realistic load** (near/over the HRR cliff), per divergence class 3. Expect and document that dict commits more.
+- **Re-query a deduped fact after `maintain()`**, per the index invariant.
+- **A chain walk through a genuinely multi-valued intermediate hop**, to see whether the backends diverge.
+- **`merge_from` on dict, and mixed-backend raising.**
+- Keep parity KBs **under the HRR capacity cliff** for IDK-state equality assertions, or carve out the divergence explicitly.
 
-Parametrize over `backend` wherever possible so one test body covers both.
-
-Then the documented-divergence test:
-
-```python
-@pytest.mark.parametrize("fn", ["detect_global_gaps", "_related_entities",
-                                "summarize_subject"])
-def test_shard_dependent_functions_diverge_by_design(fn):
-    """These three cap their results with a `break` nested inside the
-    per-fact loop and no matching outer break, so the cap applies per
-    shard. With one pseudo-shard the dict backend applies it globally.
-    The divergence is a pre-existing latent bug surfaced by the backend
-    swap, not a parity failure -- this test pins it so it is visible."""
-```
+Then the divergence test, using the **accurate per-function language already in `tests/test_backend_interface.py` lines 95-113** rather than one blanket sentence.
 
 Commit.
 
-### Task 4: persistence and hashing across backends
+### Task 4: persistence and hashing
 
 **Files:** `rck/session.py`, `rck/snapshot_hash.py`; tests.
 
-`session.py` holds the only two genuinely HRR-specific lines in the codebase (`np.stack([s._memory ...])`). Branch on backend: persist the fact list for dict, arrays for HRR. `load_session` must restore the right backend, recorded in `meta.json`.
+**[R2] There are FOUR `_memory` call sites in `session.py`, not two:** lines 37 and 145 (knowledge save/load) and 52 and 159 (beliefs save/load). Task 2 puts both KBs on the backend switch, so branching only the knowledge path crashes `checkpoint()` on a dict-backend agent. Handle all four.
 
-`snapshot_hash.state_hash` hashes `_memory` bytes; for the dict backend hash the canonical fact list plus hyper instead. **Decision record:** the two backends will produce different hashes for the same logical facts. That is correct - a `DecisionRecord` pins a substrate state, and the substrates differ. Assert it explicitly rather than leaving it implied.
+**[R2] Thread the backend through explicitly:** `save_session`'s `meta` has no `"backend"` key today, and `load_session`'s `ConsciousAgent(...)` call has no `backend=`. Add both, and set it **before** any backend-dependent branching in `load_session` runs.
 
-Tests: dict-backend session round-trip preserves facts *and* provenance (regression for the `2b3dfac` bug); `state_hash` is stable per backend; replay `VERIFIED` on the dict backend.
+`snapshot_hash.state_hash`: hash the canonical fact list plus hyper for dict. **The two backends will hash differently for the same logical facts. That is correct** - a `DecisionRecord` pins a substrate state and the substrates differ. Assert it explicitly.
+
+Tests: dict session round-trip preserves facts **and provenance** (regression for `2b3dfac`); `state_hash` stable per backend; replay `VERIFIED` on dict.
 
 Commit.
 
 ### Task 5: measure what the substrate cost
 
-**Files:** `scripts/baseline_study.py` (extend), `data/baseline_study.json`.
+**Files:** `scripts/baseline_study.py`, `data/baseline_study.json`.
 
-Add the dict backend as a third row alongside `dict` and `rck`. Now the comparison is not "RCK vs a toy index" but **"the same reasoning layer on two substrates"**, which is the honest framing and the one the paper needs.
-
-Report ingest, RSS, recall@1, query median at the 10k/30k/100k tiers.
+Add the dict backend as a third row. The comparison becomes **the same reasoning layer on two substrates**, which is the framing the paper needs. Report ingest, RSS, recall@1, query median at 10k/30k/100k.
 
 Commit.
 
@@ -132,14 +119,21 @@ Commit.
 ## Definition of done
 
 - [ ] `python -m pytest -q` green (baseline **847 passed**); default behaviour unchanged
-- [ ] Every parity test passes on both backends
-- [ ] The three shard-dependent divergences are pinned by an explicit test, not hidden
-- [ ] Dict-backend session round-trip preserves facts and provenance
-- [ ] `baseline_study.py` reports the same reasoning layer on both substrates
-- [ ] Nothing deleted; `backend="hrr"` remains the default
+- [ ] Parity holds everywhere except the three named divergence classes
+- [ ] Each divergence is pinned by an explicit test, not hidden
+- [ ] At least one parity assertion is anchored to an independent oracle
+- [ ] Dict session round-trip preserves facts and provenance
+- [ ] `merge_from` works on dict; mixed-backend raises
+- [ ] `baseline_study.py` reports the same layer on both substrates
+- [ ] Nothing deleted; `backend="hrr"` stays default
 
 ## Report explicitly
 
-- Any method on the surface that could not be implemented exactly, and why.
-- Any parity test that required a tolerance rather than exact equality - each one is a real semantic difference and needs naming.
-- Whether `codebook` was needed at all on the dict path.
+- Any surface method not implementable exactly, and why.
+- Any parity test needing a tolerance rather than exact equality - each is a real semantic difference and must be named.
+- Whether `codebook` was needed on the dict path at all.
+- Whether the isotonic `ScoreCalibrator` (only reachable via `PropagationConfig(rule="calibrated_product")`, never wired into `maintain()` by default) turned out to matter.
+
+## Rejected finding - do not act on it
+
+The review claimed `curiosity.detect_global_gaps`'s `break` sits at the same indent as its `for fact` loop and therefore exits the outer loop correctly, making it a different mechanism from the other two. **Checked against source and rejected:** `for shard` is at indent 4, `for fact` at 8, `break` at 12. The break is inside the fact loop and exits only that loop, exactly like `research.py` and `subject_summary.py`. All three share one mechanism.
