@@ -1,0 +1,26 @@
+{
+  "kb_triples": 486,
+  "results": [
+    {
+      "system": "majority-relation (floor)",
+      "relation_accuracy": 0.06,
+      "answer_accuracy": 0.04,
+      "ms_per_probe": 0.0,
+      "n_probes": 100
+    },
+    {
+      "system": "type-based symbolic",
+      "relation_accuracy": 0.65,
+      "answer_accuracy": 0.63,
+      "ms_per_probe": 0.1749,
+      "n_probes": 100
+    },
+    {
+      "system": "rck (HRR vector algebra)",
+      "relation_accuracy": 0.0,
+      "answer_accuracy": 0.14,
+      "ms_per_probe": 59.811,
+      "n_probes": 100
+    }
+  ]
+}
