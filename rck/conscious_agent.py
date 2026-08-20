@@ -124,7 +124,10 @@ class ConsciousAgent:
     * causal         -- `downstream_effects`, `root_causes`
     * reconciliation -- `detect_conflicts`, `resolve_conflicts`
     * multi-agent    -- `merge_from`
-    * operations     -- `maintain`, `status_report`, `checkpoint`, `recover`
+    * what-if        -- `counterfactual`, `what_if_user_says`,
+                        `what_changes`, `delta_replay`
+    * operations     -- `maintain`, `status_report`, `checkpoint`,
+                        `recover`, `shard_balance`
 
     Everything else on this class is internal and may change without a
     deprecation cycle.
@@ -159,6 +162,19 @@ class ConsciousAgent:
         "detect_conflicts", "resolve_conflicts", "merge_from",
         # operations
         "maintain", "status_report", "checkpoint", "recover",
+        # `shard_balance` is operationally load-bearing, not an analytics
+        # nicety: it is the only way to see a shard pinned over the
+        # capacity cliff by a single hot (S, R) key, which resharding
+        # cannot fix. The README cites it in that caveat.
+        "shard_balance",
+        # what-if: advertised in the README's capability list, so frozen
+        # by the same rule. The analytics helpers (find_gaps,
+        # similar_entities, concept_density, relation_cooccurrence,
+        # rank_subjects) are NOT frozen -- they are read-only convenience
+        # tooling, and the README labels them as unsupported rather than
+        # pretending otherwise.
+        "counterfactual", "what_if_user_says", "what_changes",
+        "delta_replay",
     )
 
     dim: int = 4096
