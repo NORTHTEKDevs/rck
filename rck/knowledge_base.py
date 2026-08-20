@@ -375,6 +375,15 @@ class ShardedKnowledgeBase:
         """Total facts stored across all shards."""
         return self._fact_count
 
+    def all_facts(self) -> list[dict[str, Hashable]]:
+        """Every stored fact, in shard order then insertion order.
+
+        The substrate-agnostic way to enumerate the KB. Reasoning modules
+        must use this rather than reaching into `_shards`, so the layer
+        can run on a non-HRR backend.
+        """
+        return [f for shard in self._shards for f in shard.facts()]
+
     def shard_sizes(self) -> list[int]:
         return [s.size() for s in self._shards]
 
