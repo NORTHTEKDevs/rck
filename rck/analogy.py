@@ -76,11 +76,10 @@ class AnalogyResult:
 def _enumerate_relations(kb: ShardedKnowledgeBase) -> list[str]:
     """Collect every R that has been stored in the KB."""
     out: set[str] = set()
-    for shard in kb._shards:
-        for fact in shard.facts():
-            r = fact.get("R")
-            if r is not None:
-                out.add(str(r))
+    for fact in kb.all_facts():
+        r = fact.get("R")
+        if r is not None:
+            out.add(str(r))
     return sorted(out)
 
 
