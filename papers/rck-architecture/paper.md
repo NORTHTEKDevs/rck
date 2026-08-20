@@ -348,6 +348,8 @@ On a 115-probe analogy benchmark drawn from the commonsense KB, the confidence-w
 
 The 88.7% baseline quoted in the abstract is the earlier argmax-only solver (102/115 on the same probes, as reported in the v15.0 study); the shipped script benchmarks the current solver only, so the baseline is a historical reference point, not a number this revision re-measures. Most remaining failures come from multi-valued relations (e.g., a dog has fur, legs, tail, whiskers - a 5-way ambiguous analogy is essentially a guess) and aren't true errors.
 
+**These numbers are worse than a twenty-line symbolic solver.** Section 5.10 measures a non-VSA baseline on the same construction: exact indices plus a loop score 100.0% relation inference and 97.0% exact answers against RCK's 89.0% and 95.0%, at roughly 2,800x lower latency. The right reading of this section is therefore *"vector-algebra analogy works"*, not *"vector-algebra analogy is a reason to use a vector substrate"*.
+
 ### 5.8 Cross-shard distribution
 
 Chains across the commonsense KB visit approximately 2 distinct shards on average, and 95-98% of two-hop chains have endpoints on different shards at realistic shard counts (n_shards ≥ 64). This confirms that the sharded design genuinely distributes reasoning load.
@@ -356,13 +358,43 @@ Chains across the commonsense KB visit approximately 2 distinct shards on averag
 
 Iterating chain induction to a fixed point on the commonsense KB produces **6 new verified facts in 4 rounds** (2 + 2 + 2 + 0, saturating at round 4; dominant pattern `locatedin → continent`), growing the KB 716 → 722. An earlier draft of this section reported "~11 facts, with round 2 out-producing round 1"; the committed study data supports neither detail, so we report the reproducible numbers. Rule-based cascading is dramatically more productive because rules are reusable: in the full-stack demo, extracting rules from the skill library and applying them forward grows the same KB 718 → 843 (+125) (`examples/v14_full_stack_demo.py`). A dedicated extraction study against the post-cascade 722-fact KB yields 21 rules at min-support 2, min-confidence 0.5 (`scripts/rule_extraction_study.py` → `data/rule_extraction_study.json`; two noise-supported rules from the v15.2 run no longer form under shard-local cleanup).
 
-### 5.10 Reproducibility
+### 5.10 Does the substrate earn its place?
+
+Section 5.0 showed the substrate is dominated on storage, retrieval and chain discovery. It named two properties as the remaining candidates that could still justify it: **federated merge without entity alignment** (section 8.4) and **analogy as native vector algebra** (section 5.7). Neither had ever been compared against a non-VSA alternative. This section does that. Reproduction: `python scripts/substrate_justification_study.py` -> `data/substrate_justification_study.json`.
+
+The baselines are deliberately plain - a few dict indices and about twenty lines of set logic - because the question is not whether something can beat RCK, but whether the vector substrate buys anything a trivial symbolic implementation does not already have.
+
+**Analogy** (`a:b::c:?`, 100 probes, construction identical to `scripts/analogy_study.py`, 486-triple commonsense KB):
+
+| Solver | Relation inference | Exact answer | Valid-set answer | Per probe |
+|---|---:|---:|---:|---:|
+| symbolic (dict + set logic) | **1.0000** | **0.9700** | **1.0000** | **0.001 ms** |
+| RCK (HRR vector algebra) | 0.8900 | 0.9500 | 0.9600 | 2.788 ms |
+
+The symbolic solver wins every accuracy column and is roughly 2,800x faster.
+
+**Federated merge** (486 triples split between two parties, 200 probes):
+
+| Scenario | dict merge | RCK bundle-sum |
+|---|---:|---:|
+| Shared identifiers - post-merge recall | **1.0000** (0.11 ms) | 0.9700 (5.10 ms) |
+| Divergent identifiers - post-merge recall | **1.0000** | 0.9750 |
+| Divergent identifiers - cross-name resolution | 0.0000 | 0.0100 |
+
+The third row is the one that matters. Merging is trivially easy when both parties already use the same identifiers, and that is the only case the first two rows exercise - a dict does it exactly and faster. When identifiers diverge, neither system resolves them, and RCK's 1.0% is bundle crosstalk rather than alignment: a false positive, which is strictly worse than an honest zero.
+
+**The caveat that cuts the other way.** The analogy protocol - inherited from our own earlier study - constructs every probe so that `(a, R, b)` is *already stored*. Exact indexing is therefore sufficient **by design**, and the benchmark structurally favours it. A protocol where the relation must be *generalised* from similar-but-not-identical pairs, rather than looked up, is exactly where vector algebra should have an advantage - and no such benchmark exists here. So this result does not prove VSA analogy is worthless; it proves our benchmark never tested the thing that would justify it. Building that harder protocol is the open work, and until it exists the honest position is that we have no measured reason to prefer the substrate.
+
+**Conclusion.** Across five axes now measured against non-VSA baselines - ingest, memory, query latency, chain discovery, analogy, and federated merge - the HRR substrate does not win on any of them, and on two it is beaten by roughly twenty lines of dictionary code. The contribution of this work is the layer *above* the substrate: the provenance graph, calibrated confidence, IDK as a first-class state, the six-gate induction filter, negative facts, contradiction resolution, and replayable decision records. None of those require holographic reduced representations. A faithful reimplementation on an exact index would, on present evidence, be smaller, faster, and equally auditable. We think that is worth stating plainly in the paper that proposed the substrate.
+
+### 5.11 Reproducibility
 
 All numbers in §5 are reproducible from the public repository, and the canonical output of every study is committed under `data/`:
 
 | Result | Script | Data file |
 |---|---|---|
 | §5.0 baselines (dict, networkx) | `scripts/baseline_study.py` | `data/baseline_study.json` |
+| §5.10 substrate justification | `scripts/substrate_justification_study.py` | `data/substrate_justification_study.json` |
 | §5.1 induction precision | `scripts/chain_induction_failure_analysis.py` | `data/chain_induction_failures.json` |
 | §5.2 chain depth | `scripts/chain_depth_study.py` (+ calibrated column from the §5.3 script) | `data/chain_depth_study.json` |
 | §5.3 confidence calibration | `scripts/confidence_calibration_study.py` | `data/confidence_calibration_study.json` |
@@ -478,7 +510,9 @@ A user owns their own KB. The KB lives on their device. Facts go in, answers com
 
 ### 8.4 Federated knowledge bases
 
-Multiple parties each have their own KB; merging is a per-shard bundle sum with provenance preserved. Source tags survive the merge (`source="multi"` on collision), so a merged agent can still cite which contributor said what. Because all agents derive symbol and role vectors from the same name-hashing scheme, no entity-alignment step is needed. This is appealing for medical or legal networks where parties want shared reasoning without ceding control over their own data.
+Multiple parties each have their own KB; merging is a per-shard bundle sum with provenance preserved. Source tags survive the merge (`source="multi"` on collision), so a merged agent can still cite which contributor said what. This is appealing for medical or legal networks where parties want shared reasoning without ceding control over their own data.
+
+**We withdraw the claim that "no entity-alignment step is needed."** It was true but vacuous, and section 5.10 shows why: name-hashed vectors need no alignment only because both parties already use identical identifiers - which is equally true of merging two dictionaries. When identifiers actually diverge, which is the only situation entity alignment exists to address, `hash("nyc") != hash("new_york_city")` and the bundle sum resolves nothing. Measured: after merging a renamed party's KB, cross-name resolution is 0.0% for a dict and 1.0% for RCK, and the 1.0% is bundle crosstalk rather than alignment - a false positive, which is worse than the honest zero. Federated merge is a genuine capability; it is not a property the substrate provides that a plain index lacks.
 
 ### 8.5 Research substrate
 

@@ -157,7 +157,10 @@ capability on a real 716-fact commonsense KB.
 - **Rule instantiation** (N-clause bodies, forward chaining).
 - **Rule composition**: `R1; R2` → longer rules without new searches.
 - **Analogical reasoning**: `A:B::C:?` with calibrated Bayesian
-  probabilities. 93.9% accuracy on the commonsense benchmark.
+  probabilities. 93.9% accuracy on the commonsense benchmark - though a
+  twenty-line symbolic solver scores higher on the same probes
+  (paper 5.10), so treat this as a working feature rather than a reason
+  to prefer the vector substrate.
 - **Causal chains**: downstream effects and root-cause walks.
 - **Counterfactuals**: `with agent.counterfactual([...])` for
   what-if exploration that rolls back on exit.
