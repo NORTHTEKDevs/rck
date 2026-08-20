@@ -97,12 +97,24 @@ def bench_dict(facts, sample, valid) -> dict:
     }
 
 
-def bench_rck(facts, sample, valid) -> dict:
+def bench_rck(facts, sample, valid, *, backend: str = "hrr") -> dict:
+    """The reasoning layer (ConsciousAgent) over either substrate.
+
+    [Phase 2] `backend="dict"` is the third row Task 5 adds: the SAME
+    reasoning layer (tell/ask_with_idk, provenance, IDK detection --
+    everything `bench_dict` above does NOT have) running on the exact-
+    index substrate instead of HRR. That makes the comparison "the same
+    reasoning layer on two substrates" rather than "a full agent vs a
+    bare index" -- the framing the paper needs. System name stays
+    "rck" for backend="hrr" (existing readers of
+    data/baseline_study.json see an unchanged key for that row) and is
+    "rck-dict" for the new one.
+    """
     from rck.conscious_agent import ConsciousAgent
 
     base = rss_mb()
     t0 = time.perf_counter()
-    agent = ConsciousAgent(expected_facts=len(facts) * 2)
+    agent = ConsciousAgent(expected_facts=len(facts) * 2, backend=backend)
     for s, r, o in facts:
         agent.tell(s, r, o)
     ingest = time.perf_counter() - t0
@@ -124,7 +136,7 @@ def bench_rck(facts, sample, valid) -> dict:
             idk_ok += 1
 
     return {
-        "system": "rck",
+        "system": "rck" if backend == "hrr" else f"rck-{backend}",
         "ingest_s": round(ingest, 3),
         "rss_mb": round(mem, 1),
         "recall_at_1": round(hits / len(sample), 4),
@@ -240,7 +252,12 @@ def main() -> None:
         sample = random.Random(1).sample(facts, min(N_RECALL_PROBES, len(facts)))
 
         print(f"\n=== {n:,} facts: storage + retrieval ===")
-        for fn in (bench_dict, bench_rck):
+        benches = [
+            bench_dict,
+            lambda f, s, v: bench_rck(f, s, v, backend="hrr"),
+            lambda f, s, v: bench_rck(f, s, v, backend="dict"),
+        ]
+        for fn in benches:
             row = fn(facts, sample, valid)
             row["facts"] = n
             results["storage"].append(row)

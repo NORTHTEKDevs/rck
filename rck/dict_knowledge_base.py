@@ -62,7 +62,17 @@ class _DictShard:
 
     def __init__(self) -> None:
         self._facts_list: list[dict[str, Hashable]] = []
-        self._by_role_value: dict[tuple[str, Hashable], list[int]] = {}
+        # Sets, not lists: query()'s intersection step needs O(1)
+        # membership on whichever bucket turns out larger. A common
+        # relation (e.g. "isa") can appear in a large fraction of the
+        # KB, so its bucket is large; storing lists made every query
+        # against it re-materialize a fresh set from that large list
+        # (measured: baseline_study.py's dict-backend query_median grew
+        # from competitive to 3x HRR's between 10k and 100k facts before
+        # this fix -- see docs/plans/2026-08-19-dict-backend.md Task 5).
+        # Sets don't preserve insertion order; the final `sorted(common)`
+        # in query() restores it by fact index, which IS insertion order.
+        self._by_role_value: dict[tuple[str, Hashable], set[int]] = {}
 
     # `_facts` is a property (not a plain list attribute) so an
     # external direct reassignment -- `shard._facts = keep`, exactly
@@ -84,7 +94,7 @@ class _DictShard:
 
     def _index_add(self, i: int, fact: dict[str, Hashable]) -> None:
         for role, value in fact.items():
-            self._by_role_value.setdefault((role, value), []).append(i)
+            self._by_role_value.setdefault((role, value), set()).add(i)
 
     # ---- core ops -----------------------------------------------------
 
@@ -109,15 +119,18 @@ class _DictShard:
         if not known:
             candidate_idxs: Iterable[int] = range(len(self._facts_list))
         else:
-            sets = [self._by_role_value.get((role, value), [])
+            sets = [self._by_role_value.get((role, value), set())
                     for role, value in known.items()]
             if any(not s for s in sets):
                 candidate_idxs = []
             else:
                 sets.sort(key=len)
+                # Already sets -- `&=` lets CPython iterate whichever
+                # operand is smaller internally, so this never re-scans
+                # a large bucket just because it appears on the right.
                 common = set(sets[0])
                 for s in sets[1:]:
-                    common &= set(s)
+                    common &= s
                     if not common:
                         break
                 candidate_idxs = sorted(common)
