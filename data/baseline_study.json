@@ -1,0 +1,46 @@
+{
+  "seed": 0,
+  "storage": [
+    {
+      "system": "dict",
+      "ingest_s": 0.002,
+      "rss_mb": 1.1,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.0003,
+      "query_p95_ms": 0.0005,
+      "idk_rate": 1.0,
+      "facts": 10000
+    },
+    {
+      "system": "rck",
+      "ingest_s": 2.208,
+      "rss_mb": 165.3,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.3138,
+      "query_p95_ms": 0.9154,
+      "idk_rate": 1.0,
+      "n_shards": 2048,
+      "facts": 10000
+    }
+  ],
+  "chains": [
+    {
+      "system": "networkx",
+      "build_s": 0.022,
+      "rss_mb": 5.5,
+      "discovery_rate": 1.0,
+      "median_ms": 0.0046,
+      "facts": 10000,
+      "n_probes": 30
+    },
+    {
+      "system": "rck",
+      "build_s": 2.157,
+      "rss_mb": 156.3,
+      "discovery_rate": 0.7333,
+      "median_ms": 11.7762,
+      "facts": 10000,
+      "n_probes": 30
+    }
+  ]
+}

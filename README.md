@@ -253,6 +253,15 @@ v15.3): 100,000 facts answers as fast as 700. 100,000 facts is the
 largest publicly benchmarked configuration; millions should follow
 the same shard arithmetic but are unverified.
 
+**Read that table as substrate validation, not as a competitive
+result.** A plain `dict[(S, R)] -> [O]` index on the same data ingests
+~300x faster, uses ~75x less memory, answers ~1,200x faster, and
+matches recall exactly (`scripts/baseline_study.py`, paper 5.0). What
+RCK adds is the layer above the substrate - provenance, calibrated
+IDK, induction, negation, contradiction resolution, federated merge -
+none of which a dict does. What it does not currently add is faster or
+smaller storage.
+
 ---
 
 ## Limits & honest caveats

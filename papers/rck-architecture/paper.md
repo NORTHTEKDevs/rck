@@ -202,6 +202,42 @@ Three consequences, all measured. Per-query cost becomes independent of vocabula
 
 All numbers come from scripts in `scripts/`, run on a commodity laptop (single CPU thread, Python 3.11+ - measured on 3.14, D=4096, default shard sizing). Data files in `data/` are committed to the repository, so every table below has both a regeneration path and a canonical artifact. Absolute latencies are machine-dependent; machine-independent counters (query counts, accuracy, yields) are reported alongside.
 
+### 5.0 Baselines: what the substrate costs
+
+Through v15.3 every study in this section measured RCK against RCK. That left the first question any reader asks unanswered: *why not just use a hash map, or a graph library?* This section answers it, on identical data with identical protocols. Reproduction: `python scripts/baseline_study.py` -> `data/baseline_study.json`.
+
+**Storage and retrieval** (the axis of section 5.6), on the same committed ConceptNet subset, 1,000 sampled recall probes with valid-object-set labeling, 300 never-stored IDK probes:
+
+| Facts | System | Ingest | RSS | recall@1 | Query median |
+|---:|---|---:|---:|---:|---:|
+| 10,000 | dict | **0.002 s** | **1.0 MB** | 1.0000 | **0.0003 ms** |
+| 10,000 | RCK | 2.204 s | 164.8 MB | 1.0000 | 0.2929 ms |
+| 30,000 | dict | **0.012 s** | **3.4 MB** | 1.0000 | **0.0003 ms** |
+| 30,000 | RCK | 5.055 s | 365.7 MB | 1.0000 | 0.2774 ms |
+| 100,000 | dict | **0.036 s** | **10.2 MB** | 1.0000 | **0.0004 ms** |
+| 100,000 | RCK | 10.804 s | 769.0 MB | 1.0000 | 0.4849 ms |
+
+At 100,000 facts a six-line `dict[(S, R)] -> [O]` index ingests ~300x faster, uses ~75x less memory, answers ~1,200x faster, and matches recall exactly. **On this axis the HRR substrate is strictly dominated.** Section 5.6's headline - 100,000 facts at 100.0% recall and sub-millisecond queries - should therefore be read as evidence that *sharding keeps the substrate viable at scale*, not as a competitive result. It is a substrate-validity finding. We had presented it as more than that.
+
+**Two-hop chain discovery** (the axis of section 5.5), 30 probes whose two-hop path provably exists, on 10,000 facts:
+
+| System | Build | RSS | Discovery rate | Median |
+|---|---:|---:|---:|---:|
+| networkx | **0.015 s** | **5.1 MB** | **1.0000** | **0.0050 ms** |
+| RCK | 2.176 s | 170.8 MB | 0.7333 | 14.0021 ms |
+
+Here RCK loses on completeness as well as cost: it finds 73% of chains that provably exist, against 100%.
+
+**Reading these tables fairly.** Three caveats, all of which cut against over-reading the comparison:
+
+1. *The chain task is not identical.* `networkx.shortest_path` finds **any** path through the graph; `agent.discover` finds a **typed relation chain** that the induction gates can then act on. networkx is solving a strictly easier problem, so its 100% is not directly RCK's 73% on the same task. The latency and memory gaps are real regardless.
+2. *The dict's recall@1 is 100% by construction.* An exact index cannot lose information, so this is a floor, not an achievement. It is exactly the point: the substrate pays memory and latency for an approximation that, at these scales, buys no retrieval accuracy.
+3. *Neither comparator does the work the rest of this paper is about.* No provenance graph, no calibrated confidence, no IDK state, no chain induction, no negative facts, no contradiction resolution, no federated merge. A dict is not a competing system; it is a measurement of what the substrate costs.
+
+**What this does and does not imply.** It does not imply RCK is pointless - the reasoning and auditability layer above the substrate is the contribution, and no baseline here replicates it. It does imply that the substrate is currently a **cost centre rather than a differentiator**, and that two properties which could justify it - federated merge without entity alignment (section 8.4), and analogy as native vector algebra (section 5.7) - have never been benchmarked against a non-VSA alternative. Until they are, the honest claim is that RCK's reasoning layer would likely run on a plain index, and we have not shown otherwise.
+
+*Configuration note:* RCK is provisioned here as `expected_facts = 2 x |facts|` because `tell()` symmetrizes inverse relations, so the stored fact count is roughly double the input. That yields a higher shard count, and therefore higher RSS, than section 5.6's `scale_study.py` path (769 MB vs 535 MB at 100,000). Both are real measurements of different configurations; neither supersedes the other.
+
 ### 5.1 Chain-induction precision
 
 We ran the chain-induction diagnostic against a combined knowledge base assembled from all four bundled KBs (commonsense, extended, ultra, massive) - 5,991 raw triples that expand to 7,080 stored facts after inverse-relation symmetrization, across 256 auto-sized shards. We generated 400 two-hop transitive probes. Reproduction: `python scripts/chain_induction_failure_analysis.py`.
@@ -326,6 +362,7 @@ All numbers in §5 are reproducible from the public repository, and the canonica
 
 | Result | Script | Data file |
 |---|---|---|
+| §5.0 baselines (dict, networkx) | `scripts/baseline_study.py` | `data/baseline_study.json` |
 | §5.1 induction precision | `scripts/chain_induction_failure_analysis.py` | `data/chain_induction_failures.json` |
 | §5.2 chain depth | `scripts/chain_depth_study.py` (+ calibrated column from the §5.3 script) | `data/chain_depth_study.json` |
 | §5.3 confidence calibration | `scripts/confidence_calibration_study.py` | `data/confidence_calibration_study.json` |
@@ -360,7 +397,9 @@ All scripts run from the repository root with no external services and no GPU. E
 
 **NARS.** NARS (Wang 2006) shares with RCK the commitment to non-axiomatic, evidence-based reasoning with explicit confidence, with a more principled truth-value algebra and a far more developed inference rule set. RCK trades that theoretical maturity for HRR-substrate cheapness and empirically-derived gates. Cross-pollination is an open direction we'd welcome - NARS-style truth values on RCK's substrate, or RCK-style filter empirics in NARS's engine.
 
-**Knowledge graphs and graph databases.** Graph databases (Neo4j, RDF stores) provide discrete, queryable, editable triples but no reasoning beyond what the query language exposes. RCK adds the HRR substrate (cheap fuzzy retrieval), the derivation pipeline (chain induction, rule extraction, cascade), and the provenance graph. A graph database is roughly RCK without the substrate or the reasoning layer.
+**Knowledge graphs and graph databases.** Graph databases (Neo4j, RDF stores) provide discrete, queryable, editable triples but no reasoning beyond what the query language exposes. RCK adds the derivation pipeline (chain induction, rule extraction, cascade) and the provenance graph.
+
+An earlier revision continued: *"RCK adds the HRR substrate (cheap fuzzy retrieval) ... a graph database is roughly RCK without the substrate or the reasoning layer."* We withdraw the first half. Section 5.0 measures it: against a plain index the substrate is ~300x slower to build, ~75x larger, and ~1,200x slower per query at 100,000 facts, at identical recall - and against `networkx` it discovers fewer of the chains that provably exist. "Cheap fuzzy retrieval" was an assertion we had never tested, and on these measurements it is not cheap and its fuzziness buys no accuracy. The honest statement is narrower: **RCK's contribution is the reasoning and auditability layer, and that layer does not currently require the HRR substrate.** Whether the substrate earns its place rests on properties we have not yet benchmarked against a non-VSA alternative - federated merge without entity alignment, and analogy as native vector algebra.
 
 **Neuro-symbolic systems.** DeepProbLog (Manhaeve et al. 2018) embeds neural perception into logical programs; the logic is expressive but the system is large and Prolog-centric. RCK takes the opposite direction: embed symbolic knowledge management into a neural-shaped substrate that's small and fast.
 
