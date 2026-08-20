@@ -56,15 +56,14 @@ def propagate_negations(kb: ShardedKnowledgeBase,
 
     # Find every stored negative fact.
     negative_facts: list[tuple[str, str, str]] = []
-    for shard in kb._shards:
-        for fact in shard.facts():
-            r = str(fact.get("R", "")).lower()
-            if is_negative(r):
-                negative_facts.append((
-                    str(fact.get("S", "")).lower(),
-                    r,
-                    str(fact.get("O", "")).lower(),
-                ))
+    for fact in kb.all_facts():
+        r = str(fact.get("R", "")).lower()
+        if is_negative(r):
+            negative_facts.append((
+                str(fact.get("S", "")).lower(),
+                r,
+                str(fact.get("O", "")).lower(),
+            ))
 
     # For each negative, find members of that subject via lifting relations.
     for parent, neg_r, obj in negative_facts:

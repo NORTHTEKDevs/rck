@@ -248,11 +248,10 @@ def _enumerate_relations(kb: ShardedKnowledgeBase) -> list[str]:
     # The codebook holds atoms but doesn't separate roles from fillers.
     # We use the stored facts list per shard.
     relations: set[str] = set()
-    for shard in kb._shards:
-        for fact in shard.facts():
-            r = fact.get("R")
-            if r is not None:
-                relations.add(str(r))
+    for fact in kb.all_facts():
+        r = fact.get("R")
+        if r is not None:
+            relations.add(str(r))
     return sorted(relations)
 
 

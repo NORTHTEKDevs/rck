@@ -7,12 +7,14 @@ v1 archives by ignoring unknown keys.
 """
 from __future__ import annotations
 
+import io
 import json
 from pathlib import Path
 
 import numpy as np
 
 from rck.agent import RCKAgent
+from rck.atomic import atomic_write_bytes, atomic_write_text
 
 
 SCHEMA_VERSION = 1
@@ -44,7 +46,7 @@ def save(agent: RCKAgent, path: str | Path) -> None:
         "symbol_ids": {_sym_to_json(s): i for s, i in agent._symbol_to_id.items()},
         "position": agent._position,
     }
-    (path.with_suffix(".json")).write_text(json.dumps(meta, indent=2))
+    atomic_write_text(path.with_suffix(".json"), json.dumps(meta, indent=2))
 
     # Arrays.
     arrays: dict[str, np.ndarray] = {
@@ -80,7 +82,9 @@ def save(agent: RCKAgent, path: str | Path) -> None:
         arrays[f"col_{k}_lsm_P"] = col.lsm._P
         arrays[f"col_{k}_lsm_state"] = col.lsm._state
 
-    np.savez_compressed(path.with_suffix(".npz"), **arrays)
+    buf = io.BytesIO()
+    np.savez_compressed(buf, **arrays)
+    atomic_write_bytes(path.with_suffix(".npz"), buf.getvalue())
 
 
 def load(path: str | Path) -> RCKAgent:
@@ -91,6 +95,9 @@ def load(path: str | Path) -> RCKAgent:
     hyper = meta["hyper"]
     agent = RCKAgent(**hyper)
 
+    # Close the NpzFile explicitly (not just let it be GC'd) -- on Windows
+    # an open zip-file handle makes a later os.replace of this same path
+    # raise PermissionError [WinError 5].
     arrs = np.load(path.with_suffix(".npz"))
     # Restore codebook.
     symbols = [_sym_from_json(s) for s in meta["symbols"]]
@@ -144,6 +151,7 @@ def load(path: str | Path) -> RCKAgent:
         col.lsm._P = arrs[f"col_{k}_lsm_P"].astype(np.float32)
         col.lsm._state = arrs[f"col_{k}_lsm_state"].astype(np.float32)
 
+    arrs.close()
     return agent
 
 

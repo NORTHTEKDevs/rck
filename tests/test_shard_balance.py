@@ -23,6 +23,10 @@ def test_report_returns_basic_structure():
 def test_report_overloaded_flagged():
     """Cram many facts into a small shard count and check overloaded list."""
     kb = ShardedKnowledgeBase(dim=4096, n_shards=2, seed=0)
+    # auto_reshard would grow this KB out of the overloaded state before we
+    # could observe it. Reporting still has to work for KBs that opt out or
+    # are restored from a checkpoint, which is what this test covers.
+    kb.auto_reshard = False
     # Use distinct subjects so the bundle accumulates per shard.
     triples = [(f"s_{i}", "isa", f"o_{i}") for i in range(200)]
     bulk_load_triples(kb, triples)
@@ -33,10 +37,13 @@ def test_report_overloaded_flagged():
 
 def test_report_suggests_reshard_when_overloaded():
     kb = ShardedKnowledgeBase(dim=4096, n_shards=2, seed=0)
+    kb.auto_reshard = False   # see test_report_overloaded_flagged
     bulk_load_triples(kb, [(f"s_{i}", "isa", f"o_{i}") for i in range(200)])
     r = report(kb)
-    if r.overloaded:
-        assert "reshard" in r.suggested_action
+    # Unconditional: with auto_reshard off this KB is definitely overloaded, so
+    # an `if r.overloaded` guard here would let the assert pass vacuously.
+    assert r.overloaded
+    assert "reshard" in r.suggested_action
 
 
 def test_report_sparse_shards_with_balanced_kb():

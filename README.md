@@ -1,12 +1,13 @@
-# RCK — Resonant Cognitive Kernel
+# RCK - Resonant Cognitive Kernel
 
-> **An auditable, hallucination-free alternative to LLMs.**
-> RCK reasons in explicit chains, learns by deriving (not retraining),
-> runs on CPU, and shows you the receipts for every answer.
-> 100,000 real-world facts in 535 MB: sub-millisecond queries,
-> 100.0% recall@1, one CPU thread.
+> **A reasoning system that cannot fabricate, and can prove it.**
+> RCK answers only from facts it was given, shows the derivation tree
+> behind every answer, says "I don't know" as a first-class state, and
+> replays any past decision byte-identically years later.
+> Not a language model, and not a faster database - see
+> [How it compares](#how-it-compares).
 
-[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-757%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.3.1-blue)](CHANGELOG.md)
+[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-833%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.3.1-blue)](CHANGELOG.md)
 
 ---
 
@@ -16,7 +17,7 @@ RCK was designed and built by Kristian Baer in close collaboration
 with Anthropic's Claude. Architectural choices were made by the author
 after research; implementation and drafting were AI-assisted. Every
 empirical claim in the [paper](papers/rck-architecture/) is
-reproducible from this repo — each number in §5 traces to a script in
+reproducible from this repo - each number in §5 traces to a script in
 `scripts/` and a JSON output in `data/`. The author welcomes scrutiny,
 issues, and corrections.
 
@@ -32,21 +33,34 @@ reasons over them with an explicit, inspectable pipeline:
 multi-hop chains, rule extraction, fact induction, conflict resolution,
 counterfactual exploration, all auditable through a provenance graph.
 
-The result is an agent that:
+### How it compares
 
-| | LLM | RCK |
-|---|---|---|
-| Says "I don't know" when it doesn't | ✗ | ✓ |
-| Shows you why it knows something | ✗ | ✓ |
-| Lets you edit a single fact | ✗ | ✓ |
-| Resolves contradictions between sources | ✗ | ✓ |
-| Learns from a new fact in O(1) | ✗ | ✓ |
-| Runs on a laptop CPU | ✗ | ✓ |
-| Costs ~$0 to operate | ✗ | ✓ |
-| Reasons 30+ hops deep | ✗ | ✓ |
+An earlier version of this table compared RCK against a bare LLM and
+claimed LLMs cannot run on a laptop CPU or operate for ~$0. Both are
+false - local models do exactly that - and the honest comparison is
+against **LLM + RAG** and a **graph database**, which are what someone
+would actually reach for. RCK loses two rows here, and they are shown.
 
-It's small (126 modules, ~18.8k lines of plain numpy Python). It's
-testable (**757 passing tests**). It's research-grade but
+| | LLM | LLM + RAG | Graph DB | RCK |
+|---|:--:|:--:|:--:|:--:|
+| Open-domain answers, fluent prose | yes | yes | no | no |
+| Cites a source for an answer | no | yes | yes | yes |
+| Derivation tree, not a generated rationale | no | no | no | **yes** |
+| Cannot state a fact it was never given | no | no | yes | **yes** |
+| Structural "I don't know" | no | no | yes | **yes** |
+| Same answer, byte-identical, years later | no | no | yes | **yes** |
+| Edit or retract one fact, no retraining | no | yes | yes | yes |
+| Derives *new* facts from stored ones | no | no | no | **yes** |
+| Resolves contradictions by source priority | no | no | no | **yes** |
+| Fast, compact storage | n/a | yes | yes | **no** |
+
+The last row is measured, not conceded for politeness: a plain `dict`
+index beats RCK's substrate on ingest, memory, and query latency at
+identical recall (see [Performance](#performance)). The rows in bold
+are what RCK is actually for.
+
+It's small (130 modules, ~16.8k lines of plain numpy Python). It's
+testable (**833 passing tests**). It's research-grade but
 production-shaped.
 
 <p align="center">
@@ -78,7 +92,7 @@ pytest -q
 Optional extras: `[mcp]` for the MCP server, `[polisher]` for the
 PyTorch surface-form polisher. On a base install their test modules
 skip cleanly; install `".[dev,mcp,polisher]"` to run the full
-757-test suite.
+833-test suite.
 
 ---
 
@@ -120,7 +134,7 @@ capability on a real 716-fact commonsense KB.
 
 ### Reasoning
 - **Direct retrieval** with calibrated `KNOWN / AMBIGUOUS / IDK` states.
-- **Multi-hop chain walking** — argmax answers stay correct to 50+
+- **Multi-hop chain walking** - argmax answers stay correct to 50+
   hops; the default geometric-mean rule reports moderate-or-better
   confidence to 30+ hops, and the v15.2 `calibrated_product` rule
   reports honest probabilities (a clean 50-hop chain ≈ 0.98,
@@ -128,12 +142,12 @@ capability on a real 716-fact commonsense KB.
 - **Chain discovery** via BFS over the HRR graph (~21ms on the
   bundled 716-fact KB, 30ms median on ConceptNet-100k; a per-shard
   live-relation index cuts 31-66% of queries, 1.4-2.8× faster).
-- **Scale** (v15.3): 100,000 real ConceptNet facts — 6.6s ingest,
+- **Scale** (v15.3): 100,000 real ConceptNet facts - 6.6s ingest,
   100.0% recall@1, 0.33ms median query, 535 MB, single thread.
   Shard-local cleanup makes per-query cost independent of
   vocabulary size (paper §4.5, §5.6).
 - **Fact induction**: confident chains become new direct edges behind
-  a six-gate filter stack — 31/31 manually-validated inductions on
+  a six-gate filter stack - 31/31 manually-validated inductions on
   the 400-probe study (the earlier v15.0 "~87% precision" framing
   measured HRR-roundtrip stability, not semantic correctness, and is
   retracted and decomposed honestly in the paper, §5.1).
@@ -143,7 +157,10 @@ capability on a real 716-fact commonsense KB.
 - **Rule instantiation** (N-clause bodies, forward chaining).
 - **Rule composition**: `R1; R2` → longer rules without new searches.
 - **Analogical reasoning**: `A:B::C:?` with calibrated Bayesian
-  probabilities. 93.9% accuracy on the commonsense benchmark.
+  probabilities. 93.9% accuracy on the commonsense benchmark - though a
+  twenty-line symbolic solver scores higher on the same probes
+  (paper 5.10), so treat this as a working feature rather than a reason
+  to prefer the vector substrate.
 - **Causal chains**: downstream effects and root-cause walks.
 - **Counterfactuals**: `with agent.counterfactual([...])` for
   what-if exploration that rolls back on exit.
@@ -157,7 +174,7 @@ capability on a real 716-fact commonsense KB.
   collisions.
 - **Belief revision** with source-priority resolution
   (`user > multi > external > induced > rule > unknown`).
-- **Negative facts** (`agent.deny(...)`) — positive certainty about
+- **Negative facts** (`agent.deny(...)`) - positive certainty about
   non-membership, distinct from IDK.
 - **Negation propagation** through `isa` / `partof` lifting relations.
 - **Hierarchical abstraction**: lift shared sibling facts to the parent.
@@ -168,14 +185,32 @@ capability on a real 716-fact commonsense KB.
 - **Calibration tally**: `record_truth(...)` feeds ground truth back
   into per-relation accuracy stats.
 - **Score calibration** (v15.2): isotonic cosine→P(correct) mapping
-  (`rck.score_calibration`) — raw cosines are similarity features,
+  (`rck.score_calibration`) - raw cosines are similarity features,
   not probabilities (held-out Brier 0.568 raw vs 0.0038 calibrated).
 - **Chain cache** (LRU, versioned, auto-invalidated on KB writes).
 - **Skill clustering** + **promotion to rules**.
 - **Episodic consolidation** (a "dreaming" pass that pre-warms stable
   query paths).
-- **Persistence**: `agent.save_state(dir)` writes skills, provenance,
-  query memory; `load_state` restores them.
+- **Persistence**: `save_session(agent, dir)` / `load_session(dir)` write
+  and restore the whole agent, including the derivation history.
+  (`agent.save_state(dir)` persists only skills, provenance and query
+  memory - not the knowledge base.)
+
+### Durability & audit
+- **Crash-safe writes**: every persistence path goes through an atomic
+  temp-file + fsync + rename, so a process killed mid-write leaves the
+  previous file intact rather than a truncated one.
+- **Write-ahead log**: `ConsciousAgent(wal_path=...)` logs every KB
+  mutation; `agent.recover()` replays it after a crash. Hooked at the
+  knowledge base, so bulk ingestion and derived facts are covered too,
+  not just `tell()`.
+- **`agent.checkpoint(dir)`** - durable snapshot, then truncate the log.
+- **Decision replay**: `record_decision(agent, query, role)` pins an
+  answer to a content hash of the exact substrate state that produced
+  it. `replay(record, snapshot_dir)` re-runs it and returns `VERIFIED`,
+  `DIVERGED`, or `STATE_MISMATCH` - the last meaning the knowledge base
+  has moved, in which case the query is never re-run. Verified
+  byte-identical across processes; across machines is untested.
 
 ### Multi-agent
 - **Federated merge**: `agent.merge_from(other)` combines two agents'
@@ -185,25 +220,32 @@ capability on a real 716-fact commonsense KB.
 - **Diff**: see what one agent knows that another doesn't.
 
 ### Analytics
-- **`agent.status_report()`** — full state dashboard.
-- **`agent.find_gaps(subject)`** — relations peers have but subject is
+
+Read-only introspection. `status_report` and `shard_balance` are part of
+the supported API; the rest of this section is convenience tooling
+outside `ConsciousAgent.PUBLIC_API` and may change without a deprecation
+cycle.
+
+- **`agent.status_report()`** - full state dashboard.
+- **`agent.shard_balance()`** - capacity-cliff monitoring, including
+  shards pinned over the cliff by a single hot `(subject, relation)` key.
+- **`agent.find_gaps(subject)`** - relations peers have but subject is
   missing.
-- **`agent.similar_entities(subject)`** — Jaccard overlap of (R, O)
+- **`agent.similar_entities(subject)`** - Jaccard overlap of (R, O)
   attribute sets.
-- **`agent.concept_density()`** — fact-count histogram + stub detection.
-- **`agent.relation_cooccurrence()`** — which relations cluster together.
-- **`agent.rank_subjects()`** — composite importance ranking.
-- **`agent.shard_balance()`** — capacity-cliff monitoring.
+- **`agent.concept_density()`** - fact-count histogram + stub detection.
+- **`agent.relation_cooccurrence()`** - which relations cluster together.
+- **`agent.rank_subjects()`** - composite importance ranking.
 
 ### Operations
-- **`agent.maintain(checkpoint_dir=...)`** — one-call nightly pass:
+- **`agent.maintain(checkpoint_dir=...)`** - one-call nightly pass:
   cascade induction → rule cascade → negation propagation → conflict
   resolution → skill promotion → episodic consolidation → cache
   pre-warm → optional checkpoint.
-- **`agent.what_if_user_says(text)`** — Open IE → counterfactual
+- **`agent.what_if_user_says(text)`** - Open IE → counterfactual
   preview → rollback. "Should I tell the agent X?"
-- **`agent.what_changes(facts)`** — same preview, structured input.
-- **`agent.delta_replay(facts)`** — step-by-step what each new fact
+- **`agent.what_changes(facts)`** - same preview, structured input.
+- **`agent.delta_replay(facts)`** - step-by-step what each new fact
   unlocks.
 
 ---
@@ -239,7 +281,7 @@ machine-dependent:
 | Cascading induction (4 rounds) | ~3 s |
 | `agent.maintain()` full pass | ~5 s |
 
-At scale (ConceptNet English, single CPU thread, auto-sharded —
+At scale (ConceptNet English, single CPU thread, auto-sharded - 
 `scripts/scale_study.py`, subset committed in `data/`):
 
 | Facts | Ingest | RSS | recall@1 | Query median | 2-hop discovery |
@@ -252,6 +294,15 @@ Query cost is independent of vocabulary size (shard-local cleanup,
 v15.3): 100,000 facts answers as fast as 700. 100,000 facts is the
 largest publicly benchmarked configuration; millions should follow
 the same shard arithmetic but are unverified.
+
+**Read that table as substrate validation, not as a competitive
+result.** A plain `dict[(S, R)] -> [O]` index on the same data ingests
+~300x faster, uses ~75x less memory, answers ~1,200x faster, and
+matches recall exactly (`scripts/baseline_study.py`, paper 5.0). What
+RCK adds is the layer above the substrate - provenance, calibrated
+IDK, induction, negation, contradiction resolution, federated merge -
+none of which a dict does. What it does not currently add is faster or
+smaller storage.
 
 ---
 
@@ -266,9 +317,21 @@ the same shard arithmetic but are unverified.
   ingestion answer in `docs/guide/07-faq.md`.
 * **No "knows the whole internet" out of the box**. You feed it facts
   and it grows. The cost gap vs LLMs is 4-5 orders of magnitude.
-* **Capacity cliff** at ~80 facts/shard for D=4096. Auto-shard sizing
-  handles this; you just have to call `expected_facts=N` at agent
-  construction or call `agent.shard_balance()` for diagnostics.
+* **Capacity cliff** at ~80 facts/shard for D=4096 (per-dimension; 60 at
+  D=2048, 320 at D=16384). The KB now reshards itself when a shard
+  crosses the cliff, so `expected_facts=N` is a hint rather than a
+  contract and outgrowing it no longer silently degrades recall.
+  One case resharding cannot fix: facts route on `hash(S, R)`, so a
+  single `(subject, relation)` pair holding more than `target_fill`
+  facts is pinned to one shard at any shard count. `agent.shard_balance()`
+  reports it rather than hiding it.
+* **The substrate costs more than it saves.** Measured against a plain
+  `dict` index at equal recall, it is slower to build, larger, and
+  slower per query (paper 5.0). RCK's contribution is the reasoning and
+  auditability layer above it; that layer does not currently *require*
+  the HRR substrate. Two properties that could justify it - federated
+  merge without entity alignment, and analogy as native vector algebra -
+  have not yet been benchmarked against a non-VSA alternative.
 * **Stories are hard**. RCK is good at structured knowledge, not at
   narrative or creative writing. That's not what it's for.
 
@@ -277,7 +340,7 @@ the same shard arithmetic but are unverified.
 ## Project layout
 
 ```
-rck/                   # the library (126 modules)
+rck/                   # the library (130 modules)
   conscious_agent.py   # the agent that wires everything together
   knowledge_base.py    # sharded HRR memory + live-relation index
   chain_walker.py
@@ -294,12 +357,16 @@ rck/                   # the library (126 modules)
   explain_why.py
   provenance.py
   query_memory.py
+  atomic.py            # crash-safe writes
+  wal.py               # write-ahead log
+  replay.py            # DecisionRecord + replay()
+  snapshot_hash.py     # content hash of substrate state
   ...
 docs/
   guide/               # tutorials (start here)
   design/              # architectural design docs
 examples/              # runnable demos
-tests/                 # 757 tests
+tests/                 # 833 tests
 scripts/               # benchmark + ingestion scripts
 ```
 
@@ -307,7 +374,14 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.3.1** — current. 757 passing tests. API stable.
+* **v15.3.1** released; **v16.0 in progress** on `feat/online-resharding`
+  (online resharding, crash-safe durability + WAL, decision replay, and a
+  frozen public API). 833 passing tests.
+* **The supported API is 27 methods** on `ConsciousAgent` - see
+  `ConsciousAgent.PUBLIC_API`. The class has 70 public methods; the other
+  43 are internal and may change without a deprecation cycle. Names
+  re-exported from the package root but outside `rck.__all__` now emit a
+  `DeprecationWarning` pointing at their real module.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
 * Apache 2.0 licensed.
 

@@ -1,0 +1,2983 @@
+{
+  "mode": "cumulative",
+  "kb_facts": 340,
+  "n": 368,
+  "by_k": {
+    "2": {
+      "n": 96,
+      "sym": 96,
+      "rck": 92,
+      "found": 96
+    },
+    "3": {
+      "n": 64,
+      "sym": 64,
+      "rck": 57,
+      "found": 64
+    },
+    "4": {
+      "n": 72,
+      "sym": 72,
+      "rck": 72,
+      "found": 72
+    },
+    "5": {
+      "n": 64,
+      "sym": 64,
+      "rck": 64,
+      "found": 64
+    },
+    "6": {
+      "n": 72,
+      "sym": 72,
+      "rck": 72,
+      "found": 72
+    }
+  },
+  "rows": [
+    {
+      "id": "great-great-great-great-granddaughter_k6_0",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_1",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_4",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_7",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_3",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_3",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": "aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_5",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_4",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": "sister",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_1",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_6",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_4",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_7",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_6",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_1",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_5",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_5",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_0",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_3",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": "nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_7",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_2",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_3",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_1",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_5",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_4",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-granddaughter_k6_1",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_2",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-granddaughter_k6_5",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_5",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_2",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_6",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_3",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_1",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_5",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_1",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_5",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_3",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_1",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": "niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-granddaughter_k6_7",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_2",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_0",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_5",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_3",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_4",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_6",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_4",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_1",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_2",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_0",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_5",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_2",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_0",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_2",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_4",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_1",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_0",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": "brother",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_6",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_2",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_5",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_5",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_1",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_0",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_0",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_0",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_4",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_4",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_3",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_2",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_0",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_3",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_1",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_0",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_6",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_5",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_4",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_7",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_6",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_7",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_6",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_4",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_1",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_1",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_3",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_2",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_6",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_7",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_0",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-granddaughter_k6_6",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_4",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_1",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_4",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_5",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_6",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_3",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_7",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_3",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_0",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_2",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_3",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_4",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_2",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_7",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_2",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_7",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_5",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_6",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_3",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_3",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_6",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_0",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_6",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_2",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_4",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_4",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_1",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_2",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_1",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_2",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_3",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_6",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_6",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_7",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_4",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_6",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_4",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_5",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_2",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_4",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_1",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_5",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_0",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_1",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_3",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": "niece",
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_4",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-granddaughter_k6_4",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_6",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_2",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_0",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_1",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_0",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": "niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_3",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_1",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": "brother",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_1",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": "nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_6",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_7",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_0",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_6",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": "sister",
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_0",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_7",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_1",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_4",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_3",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_3",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_5",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_1",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_1",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_0",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_2",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_5",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_0",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_7",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_2",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_6",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_3",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_3",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_3",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_4",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_5",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_7",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_7",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_0",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_7",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_4",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_2",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_7",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_5",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_7",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_0",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_3",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_1",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": "aunt",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_1",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_6",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_7",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_2",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_0",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_1",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_1",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_7",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": "sister",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_7",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_3",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_5",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-granddaughter_k6_3",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_4",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_1",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_5",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_4",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_2",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_4",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_2",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_6",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-grandson_k3_7",
+      "k": 3,
+      "truth": "great-grandson",
+      "symbolic": "great-grandson",
+      "rck": "great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_6",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_2",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_1",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_5",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": "sister",
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_3",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_6",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_2",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_2",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_5",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_3",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_5",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": "niece",
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_7",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_5",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_2",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_5",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_7",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_2",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_1",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_3",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_4",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_7",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_3",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_2",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_2",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_3",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_5",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_4",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": "nephew",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_0",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_7",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_2",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_1",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_0",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_2",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_7",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_5",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_7",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_0",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_7",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": "aunt",
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_1",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_3",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_5",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_2",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_6",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandson_k6_7",
+      "k": 6,
+      "truth": "great-great-great-great-grandson",
+      "symbolic": "great-great-great-great-grandson",
+      "rck": "great-great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_3",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_0",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_3",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_0",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_1",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_4",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_5",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_6",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_3",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-nephew_k5_1",
+      "k": 5,
+      "truth": "great-great-nephew",
+      "symbolic": "great-great-nephew",
+      "rck": "great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_4",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_7",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_7",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_1",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_6",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_7",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_6",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-niece_k5_2",
+      "k": 5,
+      "truth": "great-great-niece",
+      "symbolic": "great-great-niece",
+      "rck": "great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-aunt_k4_4",
+      "k": 4,
+      "truth": "great-aunt",
+      "symbolic": "great-aunt",
+      "rck": "great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_0",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-niece_k4_0",
+      "k": 4,
+      "truth": "great-niece",
+      "symbolic": "great-niece",
+      "rck": "great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_6",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "uncle_k3_4",
+      "k": 3,
+      "truth": "uncle",
+      "symbolic": "uncle",
+      "rck": "uncle",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_5",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": "aunt",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_7",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_3",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_0",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_4",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_4",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_3",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_3",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_0",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": "sister",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_0",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_0",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_6",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_3",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": "brother",
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_7",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_2",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": "niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_6",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_2",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_3",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_6",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_0",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_4",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_4",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_6",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_5",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": "brother",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_2",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_2",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_5",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_5",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandmother_k5_7",
+      "k": 5,
+      "truth": "great-great-great-grandmother",
+      "symbolic": "great-great-great-grandmother",
+      "rck": "great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandfather_k5_3",
+      "k": 5,
+      "truth": "great-great-great-grandfather",
+      "symbolic": "great-great-great-grandfather",
+      "rck": "great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_2",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_6",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": "aunt",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_5",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_0",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_0",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_0",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "aunt_k3_2",
+      "k": 3,
+      "truth": "aunt",
+      "symbolic": "aunt",
+      "rck": "aunt",
+      "discovered": true
+    },
+    {
+      "id": "son-in-law_k2_1",
+      "k": 2,
+      "truth": "son-in-law",
+      "symbolic": "son-in-law",
+      "rck": "son-in-law",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_0",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_5",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_5",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": "nephew",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_2",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_3",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_6",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_1",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "niece_k3_7",
+      "k": 3,
+      "truth": "niece",
+      "symbolic": "niece",
+      "rck": "niece",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_0",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandfather_k6_3",
+      "k": 6,
+      "truth": "great-great-great-great-grandfather",
+      "symbolic": "great-great-great-great-grandfather",
+      "rck": "great-great-great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_1",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-aunt_k5_5",
+      "k": 5,
+      "truth": "great-great-aunt",
+      "symbolic": "great-great-aunt",
+      "rck": "great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_5",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandmother_k4_3",
+      "k": 4,
+      "truth": "great-great-grandmother",
+      "symbolic": "great-great-grandmother",
+      "rck": "great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "grandson_k2_1",
+      "k": 2,
+      "truth": "grandson",
+      "symbolic": "grandson",
+      "rck": "grandson",
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_1",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-grandmother_k6_1",
+      "k": 6,
+      "truth": "great-great-great-great-grandmother",
+      "symbolic": "great-great-great-great-grandmother",
+      "rck": "great-great-great-great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "brother_k2_2",
+      "k": 2,
+      "truth": "brother",
+      "symbolic": "brother",
+      "rck": "brother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_1",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-niece_k6_6",
+      "k": 6,
+      "truth": "great-great-great-niece",
+      "symbolic": "great-great-great-niece",
+      "rck": "great-great-great-niece",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_4",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-grandmother_k3_7",
+      "k": 3,
+      "truth": "great-grandmother",
+      "symbolic": "great-grandmother",
+      "rck": "great-grandmother",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_4",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-grandfather_k3_7",
+      "k": 3,
+      "truth": "great-grandfather",
+      "symbolic": "great-grandfather",
+      "rck": "great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "grandfather_k2_6",
+      "k": 2,
+      "truth": "grandfather",
+      "symbolic": "grandfather",
+      "rck": "grandfather",
+      "discovered": true
+    },
+    {
+      "id": "great-uncle_k4_2",
+      "k": 4,
+      "truth": "great-uncle",
+      "symbolic": "great-uncle",
+      "rck": "great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-great-granddaughter_k6_2",
+      "k": 6,
+      "truth": "great-great-great-great-granddaughter",
+      "symbolic": "great-great-great-great-granddaughter",
+      "rck": "great-great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_4",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandson_k4_4",
+      "k": 4,
+      "truth": "great-great-grandson",
+      "symbolic": "great-great-grandson",
+      "rck": "great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "cousin_k4_7",
+      "k": 4,
+      "truth": "cousin",
+      "symbolic": "cousin",
+      "rck": "cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-grandfather_k4_7",
+      "k": 4,
+      "truth": "great-great-grandfather",
+      "symbolic": "great-great-grandfather",
+      "rck": "great-great-grandfather",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_6",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-uncle_k5_0",
+      "k": 5,
+      "truth": "great-great-uncle",
+      "symbolic": "great-great-uncle",
+      "rck": "great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "great-nephew_k4_6",
+      "k": 4,
+      "truth": "great-nephew",
+      "symbolic": "great-nephew",
+      "rck": "great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_7",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_6",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_6",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_7",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "daughter-in-law_k2_5",
+      "k": 2,
+      "truth": "daughter-in-law",
+      "symbolic": "daughter-in-law",
+      "rck": "daughter-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_6",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_4",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_0",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "mother-in-law_k2_5",
+      "k": 2,
+      "truth": "mother-in-law",
+      "symbolic": "mother-in-law",
+      "rck": "mother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_1",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": "sister",
+      "discovered": true
+    },
+    {
+      "id": "brother-in-law_k2_5",
+      "k": 2,
+      "truth": "brother-in-law",
+      "symbolic": "brother-in-law",
+      "rck": "brother-in-law",
+      "discovered": true
+    },
+    {
+      "id": "great-granddaughter_k3_4",
+      "k": 3,
+      "truth": "great-granddaughter",
+      "symbolic": "great-granddaughter",
+      "rck": "great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_7",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": null,
+      "discovered": true
+    },
+    {
+      "id": "grandmother_k2_6",
+      "k": 2,
+      "truth": "grandmother",
+      "symbolic": "grandmother",
+      "rck": "grandmother",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-grandson_k5_4",
+      "k": 5,
+      "truth": "great-great-great-grandson",
+      "symbolic": "great-great-great-grandson",
+      "rck": "great-great-great-grandson",
+      "discovered": true
+    },
+    {
+      "id": "sister_k2_3",
+      "k": 2,
+      "truth": "sister",
+      "symbolic": "sister",
+      "rck": "sister",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_0",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "nephew_k3_6",
+      "k": 3,
+      "truth": "nephew",
+      "symbolic": "nephew",
+      "rck": "nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_7",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-granddaughter_k4_0",
+      "k": 4,
+      "truth": "great-great-granddaughter",
+      "symbolic": "great-great-granddaughter",
+      "rck": "great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "second cousin_k6_5",
+      "k": 6,
+      "truth": "second cousin",
+      "symbolic": "second cousin",
+      "rck": "second cousin",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-uncle_k6_5",
+      "k": 6,
+      "truth": "great-great-great-uncle",
+      "symbolic": "great-great-great-uncle",
+      "rck": "great-great-great-uncle",
+      "discovered": true
+    },
+    {
+      "id": "sister-in-law_k2_1",
+      "k": 2,
+      "truth": "sister-in-law",
+      "symbolic": "sister-in-law",
+      "rck": "sister-in-law",
+      "discovered": true
+    },
+    {
+      "id": "granddaughter_k2_4",
+      "k": 2,
+      "truth": "granddaughter",
+      "symbolic": "granddaughter",
+      "rck": "granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_4",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-granddaughter_k5_6",
+      "k": 5,
+      "truth": "great-great-great-granddaughter",
+      "symbolic": "great-great-great-granddaughter",
+      "rck": "great-great-great-granddaughter",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-aunt_k6_2",
+      "k": 6,
+      "truth": "great-great-great-aunt",
+      "symbolic": "great-great-great-aunt",
+      "rck": "great-great-great-aunt",
+      "discovered": true
+    },
+    {
+      "id": "great-great-great-nephew_k6_0",
+      "k": 6,
+      "truth": "great-great-great-nephew",
+      "symbolic": "great-great-great-nephew",
+      "rck": "great-great-great-nephew",
+      "discovered": true
+    },
+    {
+      "id": "father-in-law_k2_3",
+      "k": 2,
+      "truth": "father-in-law",
+      "symbolic": "father-in-law",
+      "rck": "father-in-law",
+      "discovered": true
+    }
+  ]
+}

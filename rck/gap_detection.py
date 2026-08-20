@@ -70,17 +70,16 @@ def _relations_with_facts(kb: ShardedKnowledgeBase,
     """Count which relations each subject has at least one fact for."""
     subject_set = {s.lower() for s in subjects}
     counts: Counter = Counter()
-    for shard in kb._shards:
-        for fact in shard.facts():
-            s = str(fact.get("S", "")).lower()
-            if s not in subject_set:
-                continue
-            r = str(fact.get("R", "")).lower()
-            if r.startswith("not_"):
-                continue
-            if r == "isa":
-                continue
-            counts[r] += 1
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")).lower()
+        if s not in subject_set:
+            continue
+        r = str(fact.get("R", "")).lower()
+        if r.startswith("not_"):
+            continue
+        if r == "isa":
+            continue
+        counts[r] += 1
     return counts
 
 
@@ -96,13 +95,12 @@ def _common_objects_for(kb: ShardedKnowledgeBase, subjects: Iterable[str],
     for `relation`?"""
     subj_set = {s.lower() for s in subjects}
     counter: Counter = Counter()
-    for shard in kb._shards:
-        for fact in shard.facts():
-            if str(fact.get("S", "")).lower() not in subj_set:
-                continue
-            if str(fact.get("R", "")).lower() != relation:
-                continue
-            counter[str(fact.get("O", "")).lower()] += 1
+    for fact in kb.all_facts():
+        if str(fact.get("S", "")).lower() not in subj_set:
+            continue
+        if str(fact.get("R", "")).lower() != relation:
+            continue
+        counter[str(fact.get("O", "")).lower()] += 1
     return counter
 
 

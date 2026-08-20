@@ -118,9 +118,8 @@ def explain(
     observed_value = observed_value.lower()
     # Sweep across all relations in the KB.
     relations: set[str] = set()
-    for shard in kb._shards:
-        for fact in shard._facts:
-            relations.add(str(fact.get("R", "")))
+    for fact in kb.all_facts():
+        relations.add(str(fact.get("R", "")))
     candidates: list[AbductiveCandidate] = []
     for rel in relations:
         candidates.extend(

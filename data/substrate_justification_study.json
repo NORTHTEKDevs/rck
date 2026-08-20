@@ -1,0 +1,61 @@
+{
+  "kb_triples": 486,
+  "analogy": [
+    {
+      "system": "symbolic (dict + set logic)",
+      "relation_accuracy": 1.0,
+      "exact_answer_accuracy": 0.97,
+      "valid_set_accuracy": 1.0,
+      "total_s": 0.0,
+      "ms_per_probe": 0.0005,
+      "n_probes": 100
+    },
+    {
+      "system": "rck (HRR vector algebra)",
+      "relation_accuracy": 0.89,
+      "exact_answer_accuracy": 0.95,
+      "valid_set_accuracy": 0.96,
+      "total_s": 0.2724,
+      "ms_per_probe": 2.7241,
+      "n_probes": 100
+    }
+  ],
+  "merge": {
+    "shared_naming": [
+      {
+        "system": "dict merge",
+        "merge_s": 0.00014,
+        "post_merge_recall": 1.0
+      },
+      {
+        "system": "rck bundle-sum merge",
+        "merge_s": 0.00491,
+        "post_merge_recall": 0.97
+      }
+    ],
+    "divergent_naming": [
+      {
+        "system": "dict merge",
+        "merge_s": 0.00011,
+        "post_merge_recall": 1.0
+      },
+      {
+        "system": "rck bundle-sum merge",
+        "merge_s": 0.00352,
+        "post_merge_recall": 0.975
+      }
+    ],
+    "cross_name_resolution": [
+      {
+        "system": "dict merge",
+        "merge_s": 0.00013,
+        "post_merge_recall": 0.0
+      },
+      {
+        "system": "rck bundle-sum merge",
+        "merge_s": 0.00561,
+        "post_merge_recall": 0.01
+      }
+    ]
+  }
+}

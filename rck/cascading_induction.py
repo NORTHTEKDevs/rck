@@ -65,10 +65,9 @@ def _candidate_pairs(kb: ShardedKnowledgeBase,
     current KB state. Targets that already have a direct (start, ?, X)
     edge to them are skipped (no new induction possible)."""
     by_subject: dict[str, list[tuple[str, str]]] = {}
-    for shard in kb._shards:
-        for fact in shard.facts():
-            s = str(fact["S"]); r = str(fact["R"]); o = str(fact["O"])
-            by_subject.setdefault(s, []).append((r, o))
+    for fact in kb.all_facts():
+        s = str(fact["S"]); r = str(fact["R"]); o = str(fact["O"])
+        by_subject.setdefault(s, []).append((r, o))
 
     probes: list[tuple[str, str]] = []
     for s, edges in by_subject.items():

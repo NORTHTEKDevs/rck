@@ -26,11 +26,27 @@ would break.
 from __future__ import annotations
 
 import hashlib
+import logging
 from dataclasses import dataclass, field
 from typing import Hashable, Iterable
 
 from rck.codebook import Codebook
 from rck.relational import RelationalMemory
+from rck.shard_sizing import TARGET_MAX_FILL_BY_DIM, recommend_shards as _recommend_shards
+from rck.wal import WriteAheadLog
+
+_logger = logging.getLogger(__name__)
+
+# Hard ceiling on auto-growth, matching shard_sizing.recommend_shards'
+# own max_shards clamp. Guarantees the reshard loop terminates.
+_MAX_SHARDS = 4096
+
+# How far auto-growth may overshoot recommend_shards(). The recommendation
+# assumes a 1.25x load-skew safety factor that real multi-valued data
+# exceeds; 8x is what 5,000 ConceptNet facts need to put every shard under
+# the cliff (256 recommended -> 2048 actual, 100.0% recall@1). Bounding the
+# overshoot stops the KB from chasing an unsplittable key collision forever.
+_GROWTH_OVERSHOOT = 8
 
 
 def _shard_index(subject: str, relation: str, n_shards: int) -> int:
@@ -46,8 +62,10 @@ class RelationIndex:
 
     Built from the shards' symbolic fact logs, so it is correct under
     every mutation path (store, forget, shard-level federated merge,
-    session load) at the moment it is built. It does NOT track later
-    writes -- rebuild after mutating the KB. Chain discovery builds a
+    session load, reshard) at the moment it is built. It does NOT track
+    later writes -- rebuild after mutating the KB. Note `store()` may
+    trigger a reshard implicitly (see `ShardedKnowledgeBase.store`), which
+    also invalidates any previously built index. Chain discovery builds a
     fresh one per call by default, which costs one O(total_facts) scan
     (the same scan discovery already needed to enumerate relations) and
     in exchange skips every HRR query against a (subject, relation)
@@ -104,12 +122,23 @@ class ShardedKnowledgeBase:
     dim: int = 4096
     n_shards: int = 64
     seed: int = 0
+    auto_reshard: bool = True
+    target_fill: int | None = None   # None -> per-dim cliff from shard_sizing
+    # Optional write-ahead log. Hooked at store()/forget() -- the level
+    # EVERY mutation path funnels through (tell, deny, induce, merge_from,
+    # maintain's cascades, bulk_ingest's direct kb.store calls) -- not at
+    # ConsciousAgent.tell(), which only some of those paths call.
+    # Default None: no WAL, no new files, no behaviour change.
+    wal: WriteAheadLog | None = None
 
     codebook: Codebook = field(default=None, init=False)
     _shards: list[RelationalMemory] = field(default_factory=list, init=False)
     _fact_count: int = field(default=0, init=False)
 
     def __post_init__(self) -> None:
+        if self.target_fill is None:
+            self.target_fill = TARGET_MAX_FILL_BY_DIM.get(
+                self.dim, max(20, self.dim // 50))
         self.codebook = Codebook(dim=self.dim, seed=self.seed)
         # All shards share the same role embedding because they share `seed`
         # and the role-HVs are derived from name-hash, not insertion order.
@@ -123,12 +152,62 @@ class ShardedKnowledgeBase:
 
     # ---- core ops ----------------------------------------------------------
 
-    def store(self, fact: dict[str, Hashable]) -> None:
-        """Store a fact in the shard determined by (S, R)."""
+    def store(self, fact: dict[str, Hashable], *, _log: bool = True) -> None:
+        """Store a fact in the shard determined by (S, R).
+
+        May trigger a blocking O(N) reshard (see `reshard()`) when the
+        written-to shard crosses `target_fill` and resharding could
+        actually relieve it (see `_maybe_reshard`).
+
+        `_log=False` is for internal use by `recover()`: it applies a
+        fact that came FROM the WAL, so re-appending it would duplicate
+        the entry (and double-bundle it on the next recovery).
+        """
         s, r = str(fact.get("S", "")), str(fact.get("R", ""))
         idx = _shard_index(s, r, self.n_shards)
         self._shards[idx].store(self.codebook, fact)
         self._fact_count += 1
+        if self.wal is not None and _log:
+            self.wal.append("store", dict(fact))
+        if self.auto_reshard and self._shards[idx].size() > self.target_fill:
+            self._maybe_reshard(idx)
+
+    def _maybe_reshard(self, idx: int) -> None:
+        """Grow the shard count when shard `idx` can actually be relieved.
+
+        `_shard_index` routes on (S, R) alone, so every fact sharing one key
+        is pinned to the same shard at every `n_shards`. If a single key
+        already exceeds `target_fill`, resharding cannot split it, and
+        retrying would double `n_shards` on every later write forever.
+        Growth is therefore gated on the shard being *splittable*, and hard
+        capped at `_MAX_SHARDS`, so the loop always terminates.
+
+        `recommend_shards` bakes in only a 1.25x safety factor, which real
+        skewed data (multi-valued relations) exceeds -- stopping there left
+        11/256 shards over the cliff on 5,000 ConceptNet facts. So growth
+        overshoots the recommendation, but by a bounded factor.
+
+        KNOWN LIMITATION: two distinct (S, R) keys that each hold close to
+        `target_fill` facts AND collide under `blake2b(S||R) % n` cannot be
+        separated by resharding at all. Chasing such a pair costs a full
+        O(N) re-bundle per doubling and never converges, so growth stops at
+        `_GROWTH_OVERSHOOT` x the recommendation and leaves the shard
+        overloaded. `shard_balance()` still reports it, so it stays visible
+        rather than silent.
+        """
+        recommended = _recommend_shards(self._fact_count, dim=self.dim).n_shards
+        ceiling = min(_MAX_SHARDS, _GROWTH_OVERSHOOT * recommended)
+        if self.n_shards >= ceiling:
+            return
+        counts: dict[tuple[str, str], int] = {}
+        for f in self._shards[idx].facts():
+            key = (str(f.get("S", "")), str(f.get("R", "")))
+            counts[key] = counts.get(key, 0) + 1
+        if counts and max(counts.values()) > self.target_fill:
+            # Pinned by a single hot key: a hard capacity ceiling, not a
+            # sizing problem. More shards cannot split one key.
+            return
+        self.reshard(min(max(self.n_shards * 2, recommended), ceiling))
 
     def store_many(self, facts: Iterable[dict[str, Hashable]]) -> int:
         count = 0
@@ -136,6 +215,38 @@ class ShardedKnowledgeBase:
             self.store(f)
             count += 1
         return count
+
+    def reshard(self, n_shards: int | None = None) -> dict:
+        """Re-bundle every stored fact into a new shard array.
+
+        Facts are retained per shard (`RelationalMemory._facts`), so this is a
+        pure re-route: nothing is re-derived and nothing is lost. The codebook
+        is reused -- resharding changes routing, never symbol encoding.
+        """
+        if n_shards is None:
+            n_shards = _recommend_shards(self._fact_count, dim=self.dim).n_shards
+        if n_shards == self.n_shards:
+            return {"n_shards": self.n_shards, "facts": self._fact_count,
+                    "resharded": False}
+
+        facts = [f for shard in self._shards for f in shard.facts()]
+        new_shards = [
+            RelationalMemory(dim=self.dim, seed=self.seed,
+                             role_names=("S", "R", "O", "B"))
+            for _ in range(n_shards)
+        ]
+        for f in facts:
+            idx = _shard_index(str(f.get("S", "")), str(f.get("R", "")), n_shards)
+            # Direct write: self.store() would re-increment _fact_count.
+            new_shards[idx].store(self.codebook, f)
+
+        self._shards = new_shards
+        old_n_shards = self.n_shards
+        self.n_shards = n_shards
+        stats = {"n_shards": n_shards, "facts": len(facts), "resharded": True}
+        _logger.debug("reshard: n_shards %d -> %d, facts=%d",
+                       old_n_shards, n_shards, len(facts))
+        return stats
 
     def relation_index(self) -> RelationIndex:
         """Fresh snapshot of live relations per shard (see RelationIndex)."""
@@ -250,17 +361,28 @@ class ShardedKnowledgeBase:
         results = self.query(known, unknown_role, top_k=1)
         return (results[0] if results else (None, 0.0))
 
-    def forget(self, fact: dict[str, Hashable]) -> None:
+    def forget(self, fact: dict[str, Hashable], *, _log: bool = True) -> None:
         s, r = str(fact.get("S", "")), str(fact.get("R", ""))
         idx = _shard_index(s, r, self.n_shards)
         self._shards[idx].forget(self.codebook, fact)
         self._fact_count = max(0, self._fact_count - 1)
+        if self.wal is not None and _log:
+            self.wal.append("forget", dict(fact))
 
     # ---- introspection -----------------------------------------------------
 
     def size(self) -> int:
         """Total facts stored across all shards."""
         return self._fact_count
+
+    def all_facts(self) -> list[dict[str, Hashable]]:
+        """Every stored fact, in shard order then insertion order.
+
+        The substrate-agnostic way to enumerate the KB. Reasoning modules
+        must use this rather than reaching into `_shards`, so the layer
+        can run on a non-HRR backend.
+        """
+        return [f for shard in self._shards for f in shard.facts()]
 
     def shard_sizes(self) -> list[int]:
         return [s.size() for s in self._shards]

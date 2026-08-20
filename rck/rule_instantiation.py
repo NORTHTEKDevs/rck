@@ -53,12 +53,11 @@ class InstantiatedFact:
 def _iter_facts(kb: ShardedKnowledgeBase, relation: str | None = None
                 ) -> Iterable[tuple[str, str, str]]:
     """Yield every stored (s, r, o) optionally filtered by relation."""
-    for shard in kb._shards:
-        for fact in shard.facts():
-            s = str(fact.get("S", "")); r = str(fact.get("R", "")); o = str(fact.get("O", ""))
-            if relation is not None and r != relation:
-                continue
-            yield s, r, o
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")); r = str(fact.get("R", "")); o = str(fact.get("O", ""))
+        if relation is not None and r != relation:
+            continue
+        yield s, r, o
 
 
 def instantiate_rule(kb: ShardedKnowledgeBase, rule: Rule,

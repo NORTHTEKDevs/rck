@@ -29,7 +29,13 @@ from rck.knowledge_base import ShardedKnowledgeBase
 
 # We keep beliefs in their own KB so they cannot displace ground-truth
 # facts during HRR cleanup.
-def make_belief_kb(dim: int = 4096, n_shards: int = 64, seed: int = 0) -> ShardedKnowledgeBase:
+def make_belief_kb(dim: int = 4096, n_shards: int = 64, seed: int = 0,
+                   backend: str = "hrr") -> ShardedKnowledgeBase:
+    """`backend="dict"` builds the exact-index belief KB instead (Phase 2).
+    Default unchanged, so every existing HRR-only caller is unaffected."""
+    if backend == "dict":
+        from rck.dict_knowledge_base import DictKnowledgeBase
+        return DictKnowledgeBase(dim=dim, seed=seed)
     return ShardedKnowledgeBase(dim=dim, n_shards=n_shards, seed=seed)
 
 

@@ -44,11 +44,10 @@ def detect_contradictions(kb: ShardedKnowledgeBase,
     """Find (S, R) pairs where two distinct O values both have high
     confidence. These are contradictions worth flagging."""
     pairs: dict[tuple[str, str], list[tuple[str, float]]] = defaultdict(list)
-    for shard in kb._shards:
-        for fact in shard._facts:
-            s = str(fact.get("S", "")); r = str(fact.get("R", ""))
-            o = str(fact.get("O", ""))
-            pairs[(s, r)].append((o, 1.0))  # presence-based; refine via provenance
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")); r = str(fact.get("R", ""))
+        o = str(fact.get("O", ""))
+        pairs[(s, r)].append((o, 1.0))  # presence-based; refine via provenance
     contradictions: list[dict] = []
     for (s, r), values in pairs.items():
         if len(values) < 2:
@@ -96,20 +95,18 @@ def generate_abstractions(kb: ShardedKnowledgeBase,
     child_facts_by_parent: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
     # First, find all parent-child relations.
     parents_of: dict[str, list[str]] = defaultdict(list)
-    for shard in kb._shards:
-        for fact in shard._facts:
-            r = str(fact.get("R", ""))
-            if r in ("isa", "kind", "category"):
-                parents_of[str(fact.get("S", ""))].append(str(fact.get("O", "")))
-    for shard in kb._shards:
-        for fact in shard._facts:
-            s = str(fact.get("S", ""))
-            r = str(fact.get("R", ""))
-            o = str(fact.get("O", ""))
-            if r in ("isa", "kind", "category"):
-                continue
-            for parent in parents_of.get(s, []):
-                child_facts_by_parent[parent].append((s, r, o))
+    for fact in kb.all_facts():
+        r = str(fact.get("R", ""))
+        if r in ("isa", "kind", "category"):
+            parents_of[str(fact.get("S", ""))].append(str(fact.get("O", "")))
+    for fact in kb.all_facts():
+        s = str(fact.get("S", ""))
+        r = str(fact.get("R", ""))
+        o = str(fact.get("O", ""))
+        if r in ("isa", "kind", "category"):
+            continue
+        for parent in parents_of.get(s, []):
+            child_facts_by_parent[parent].append((s, r, o))
 
     abstractions: list[tuple[str, str, str]] = []
     for parent, items in child_facts_by_parent.items():

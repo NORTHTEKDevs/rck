@@ -1,0 +1,121 @@
+{
+  "seed": 0,
+  "storage": [
+    {
+      "system": "dict",
+      "ingest_s": 0.002,
+      "rss_mb": 1.0,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.0003,
+      "query_p95_ms": 0.0006,
+      "idk_rate": 1.0,
+      "facts": 10000
+    },
+    {
+      "system": "rck",
+      "ingest_s": 2.206,
+      "rss_mb": 165.4,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.3019,
+      "query_p95_ms": 0.9757,
+      "idk_rate": 1.0,
+      "n_shards": 2048,
+      "facts": 10000
+    },
+    {
+      "system": "rck-dict",
+      "ingest_s": 0.171,
+      "rss_mb": 43.1,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.17475,
+      "query_p95_ms": 0.3383,
+      "idk_rate": 1.0,
+      "n_shards": 1,
+      "facts": 10000
+    },
+    {
+      "system": "dict",
+      "ingest_s": 0.022,
+      "rss_mb": 3.4,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.0002,
+      "query_p95_ms": 0.0005,
+      "idk_rate": 1.0,
+      "facts": 30000
+    },
+    {
+      "system": "rck",
+      "ingest_s": 5.377,
+      "rss_mb": 365.7,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.3004,
+      "query_p95_ms": 0.5665,
+      "idk_rate": 1.0,
+      "n_shards": 4096,
+      "facts": 30000
+    },
+    {
+      "system": "rck-dict",
+      "ingest_s": 0.244,
+      "rss_mb": 79.4,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.163,
+      "query_p95_ms": 0.3161,
+      "idk_rate": 1.0,
+      "n_shards": 1,
+      "facts": 30000
+    },
+    {
+      "system": "dict",
+      "ingest_s": 0.045,
+      "rss_mb": 10.1,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.0005,
+      "query_p95_ms": 0.0009,
+      "idk_rate": 1.0,
+      "facts": 100000
+    },
+    {
+      "system": "rck",
+      "ingest_s": 11.252,
+      "rss_mb": 765.5,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.53825,
+      "query_p95_ms": 1.3616,
+      "idk_rate": 1.0,
+      "n_shards": 4096,
+      "facts": 100000
+    },
+    {
+      "system": "rck-dict",
+      "ingest_s": 1.079,
+      "rss_mb": 274.2,
+      "recall_at_1": 1.0,
+      "query_median_ms": 0.1684,
+      "query_p95_ms": 0.3229,
+      "idk_rate": 1.0,
+      "n_shards": 1,
+      "facts": 100000
+    }
+  ],
+  "chains": [
+    {
+      "system": "networkx",
+      "build_s": 0.015,
+      "rss_mb": 1.2,
+      "discovery_rate": 1.0,
+      "median_ms": 0.0052,
+      "facts": 10000,
+      "n_probes": 30
+    },
+    {
+      "system": "rck",
+      "build_s": 2.307,
+      "rss_mb": 155.4,
+      "discovery_rate": 0.7333,
+      "median_ms": 12.9661,
+      "facts": 10000,
+      "n_probes": 30
+    }
+  ]
+}

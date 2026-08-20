@@ -21,52 +21,76 @@ See the paper in papers/rck-architecture/.)
 
 __version__ = "15.3.1"
 
-from rck.codebook import Codebook
-from rck.vsa import bind, bundle, permute, unbind, cosine, binarize
-from rck.pcn import PCNEncoder
-from rck.lsm import LiquidStateMachine
-from rck.tsetlin import TsetlinLayer
-from rck.workspace import GlobalWorkspace
-from rck.fep import ActiveInference
-from rck.columns import ColumnEnsemble
-from rck.bigram import BigramMemory
-from rck.relational import RelationalMemory
-from rck.compose import CompositionalReasoner
-from rck.agent import RCKAgent
-from rck.generative import GenerativeRCK
-from rck.knowledge_base import ShardedKnowledgeBase
+import warnings
+
 from rck.conscious_agent import ConsciousAgent
-from rck.bulk_ingest import (
-    bulk_load_jsonl, bulk_load_csv, bulk_load_triples, auto_symmetrize,
-)
-from rck.personality import Personality
-from rck.actions import ActionRegistry, make_default_registry
-from rck.corrections import detect_correction
-from rck.open_ie import extract_triples_from_text
+from rck.knowledge_base import ShardedKnowledgeBase
+from rck.replay import DecisionRecord, record_decision, replay
+from rck.snapshot_hash import state_hash
+from rck.session import save_session, load_session
+from rck.bulk_ingest import bulk_load_jsonl, bulk_load_csv, bulk_load_triples
 
 __all__ = [
-    "Codebook",
-    "bind", "bundle", "permute", "unbind", "cosine", "binarize",
-    "PCNEncoder",
-    "LiquidStateMachine",
-    "TsetlinLayer",
-    "GlobalWorkspace",
-    "ActiveInference",
-    "ColumnEnsemble",
-    "BigramMemory",
-    "RelationalMemory",
-    "CompositionalReasoner",
-    "RCKAgent",
-    "GenerativeRCK",
-    "ShardedKnowledgeBase",
     "ConsciousAgent",
+    "ShardedKnowledgeBase",
+    "DecisionRecord",
+    "record_decision",
+    "replay",
+    "state_hash",
+    "save_session",
+    "load_session",
     "bulk_load_jsonl",
     "bulk_load_csv",
     "bulk_load_triples",
-    "auto_symmetrize",
-    "Personality",
-    "ActionRegistry",
-    "make_default_registry",
-    "detect_correction",
-    "extract_triples_from_text",
 ]
+
+# Everything below this line used to be re-exported from the package
+# root. It is not deleted -- it stays fully reachable by importing the
+# module directly (`from rck.vsa import bind`), which is the
+# supported path and emits no warning. Accessing it through
+# `rck.<name>` still works, for backward compatibility, but now warns:
+# the top-level namespace advertises the product surface (above), not
+# the research substrate.
+#
+# Built programmatically from the pre-subtraction `rck/__init__.py`
+# (29 names in the old __all__, minus the 11 that stayed frozen above)
+# via `inspect.getmodule` -- see docs/plans/2026-08-19-api-subtraction.md.
+_DEMOTED = {
+    "ActionRegistry": "rck.actions",
+    "ActiveInference": "rck.fep",
+    "BigramMemory": "rck.bigram",
+    "Codebook": "rck.codebook",
+    "ColumnEnsemble": "rck.columns",
+    "CompositionalReasoner": "rck.compose",
+    "GenerativeRCK": "rck.generative",
+    "GlobalWorkspace": "rck.workspace",
+    "LiquidStateMachine": "rck.lsm",
+    "PCNEncoder": "rck.pcn",
+    "Personality": "rck.personality",
+    "RCKAgent": "rck.agent",
+    "RelationalMemory": "rck.relational",
+    "TsetlinLayer": "rck.tsetlin",
+    "auto_symmetrize": "rck.bulk_ingest",
+    "bind": "rck.vsa",
+    "binarize": "rck.vsa",
+    "bundle": "rck.vsa",
+    "cosine": "rck.vsa",
+    "detect_correction": "rck.corrections",
+    "extract_triples_from_text": "rck.open_ie",
+    "make_default_registry": "rck.actions",
+    "permute": "rck.vsa",
+    "unbind": "rck.vsa",
+}
+
+
+def __getattr__(name):
+    if name in _DEMOTED:
+        warnings.warn(
+            f"rck.{name} is not part of the public API and will stop being "
+            f"re-exported from the package root. Import it directly: "
+            f"from {_DEMOTED[name]} import {name}",
+            DeprecationWarning, stacklevel=2,
+        )
+        import importlib
+        return getattr(importlib.import_module(_DEMOTED[name]), name)
+    raise AttributeError(f"module 'rck' has no attribute {name!r}")

@@ -187,21 +187,22 @@ class QueryMemory:
     def save(self, path: str | Path) -> int:
         """Serialise the log to a JSONL file. One episode per line.
         Returns the number of episodes written."""
+        from rck.atomic import atomic_write_text
         path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            for e in self._entries:
-                rec = {
-                    "timestamp": e.timestamp,
-                    "known": {str(k): str(v) for k, v in e.known.items()},
-                    "unknown_role": e.unknown_role,
-                    "state": e.state,
-                    "top_symbol": (None if e.top_symbol is None
-                                   else str(e.top_symbol)),
-                    "top_score": e.top_score,
-                    "notes": e.notes,
-                }
-                f.write(json.dumps(rec) + "\n")
+        lines = []
+        for e in self._entries:
+            rec = {
+                "timestamp": e.timestamp,
+                "known": {str(k): str(v) for k, v in e.known.items()},
+                "unknown_role": e.unknown_role,
+                "state": e.state,
+                "top_symbol": (None if e.top_symbol is None
+                               else str(e.top_symbol)),
+                "top_score": e.top_score,
+                "notes": e.notes,
+            }
+            lines.append(json.dumps(rec))
+        atomic_write_text(path, "".join(line + "\n" for line in lines))
         return len(self._entries)
 
     def load(self, path: str | Path, *, replace: bool = False) -> int:

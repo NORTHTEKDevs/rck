@@ -51,14 +51,13 @@ def rank_subjects(kb: ShardedKnowledgeBase,
     object_counts: defaultdict[str, int] = defaultdict(int)
     derivation_counts: defaultdict[str, int] = defaultdict(int)
 
-    for shard in kb._shards:
-        for fact in shard.facts():
-            s = str(fact.get("S", "")).lower()
-            o = str(fact.get("O", "")).lower()
-            if s:
-                fact_counts[s] += 1
-            if o:
-                object_counts[o] += 1
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")).lower()
+        o = str(fact.get("O", "")).lower()
+        if s:
+            fact_counts[s] += 1
+        if o:
+            object_counts[o] += 1
 
     if provenance is not None:
         for _key, rec in provenance._records.items():

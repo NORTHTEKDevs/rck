@@ -84,13 +84,48 @@ def merge_agents(target: "ConsciousAgent",
             report.provenance_reinforced += 1
 
     # ---- knowledge base ------------------------------------------------
-    # Per-shard bundle addition. Assumes same shard count and dim.
+    # [R2] Mixed-backend merge (HRR <- dict or dict <- HRR) is not
+    # meaningful -- summing an HRR bundle tensor into an exact index, or
+    # vice versa, has no defined semantics. Raise BEFORE the shape check
+    # below so a coincidental n_shards/dim mismatch never masks this
+    # (a dict backend always has n_shards=1, so it would otherwise just
+    # silently no-op against any multi-shard HRR agent instead of
+    # surfacing the real error).
+    if type(target.knowledge) is not type(source.knowledge):
+        raise TypeError(
+            f"cannot merge {type(source.knowledge).__name__} into "
+            f"{type(target.knowledge).__name__}: mixed-backend merge is "
+            "not meaningful (summing an HRR bundle into an exact index, "
+            "or vice versa, has no defined semantics)"
+        )
+    # Per-shard merge. Assumes same shard count and dim (always true for
+    # two dict-backend agents: n_shards is always 1 there).
+    # `RelationalMemory.merge` bypasses `ShardedKnowledgeBase.store()`
+    # entirely (it sums the shard's `_memory` tensor directly), so the
+    # store()-level WAL hook never sees these facts. Bundle-summing a
+    # shard IS mathematically equivalent to storing each of its facts
+    # individually (bundling is just repeated vector addition), so we
+    # log one explicit "store" WAL event per merged fact -- this is the
+    # "log an explicit merge event" option from the durability plan's
+    # Task 4, not the "document as not crash-safe" fallback.
+    #
+    # [R2] _DictShard.merge() dedup-unions and returns only the facts it
+    # actually added (RelationalMemory.merge() returns None, unchanged);
+    # using that return value keeps both the WAL log and the fact-count
+    # increment truthful under dedup instead of over-counting by
+    # `source.knowledge.size()` (which would double-count skipped dupes).
     if (target.knowledge.n_shards == source.knowledge.n_shards
             and target.knowledge.dim == source.knowledge.dim):
+        merged_count = 0
         for i, src_shard in enumerate(source.knowledge._shards):
-            target.knowledge._shards[i].merge(src_shard)
-        report.kb_facts_merged = source.knowledge.size()
-        target.knowledge._fact_count += source.knowledge.size()
+            merge_result = target.knowledge._shards[i].merge(src_shard)
+            added = merge_result if merge_result is not None else src_shard.facts()
+            if target.knowledge.wal is not None:
+                for f in added:
+                    target.knowledge.wal.append("store", dict(f))
+            merged_count += len(added)
+        report.kb_facts_merged = merged_count
+        target.knowledge._fact_count += merged_count
 
     # Cache: incoming facts may have created shorter chains.
     if target.chain_cache is not None:

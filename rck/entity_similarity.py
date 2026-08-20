@@ -32,14 +32,13 @@ class SimilarEntity:
 
 def _subject_attrs(kb: ShardedKnowledgeBase) -> dict[str, set[tuple[str, str]]]:
     attrs: defaultdict[str, set[tuple[str, str]]] = defaultdict(set)
-    for shard in kb._shards:
-        for fact in shard.facts():
-            s = str(fact.get("S", "")).lower()
-            r = str(fact.get("R", "")).lower()
-            o = str(fact.get("O", "")).lower()
-            if r == "isa" or r.startswith("not_"):
-                continue
-            attrs[s].add((r, o))
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")).lower()
+        r = str(fact.get("R", "")).lower()
+        o = str(fact.get("O", "")).lower()
+        if r == "isa" or r.startswith("not_"):
+            continue
+        attrs[s].add((r, o))
     return attrs
 
 

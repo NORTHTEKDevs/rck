@@ -67,21 +67,18 @@ def find_provenance_gaps(provenance: ProvenanceStore,
                          top_n: int = 20) -> list[ActiveLearningCandidate]:
     """Facts in the KB that have no provenance record at all."""
     out: list[ActiveLearningCandidate] = []
-    for shard in kb._shards:
-        for fact in shard._facts:
-            s = str(fact.get("S", "")); r = str(fact.get("R", ""))
-            o = str(fact.get("O", ""))
-            if provenance.get(s, r, o) is None:
-                out.append(ActiveLearningCandidate(
-                    question=f"Can you confirm: is the {r.replace('_', ' ')} "
-                             f"of {s.replace('_', ' ')} equal to "
-                             f"{o.replace('_', ' ')}?",
-                    reason="no recorded provenance",
-                    expected_info_gain=0.5,
-                    subject=s, relation=r,
-                ))
-            if len(out) >= top_n * 2:
-                break
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")); r = str(fact.get("R", ""))
+        o = str(fact.get("O", ""))
+        if provenance.get(s, r, o) is None:
+            out.append(ActiveLearningCandidate(
+                question=f"Can you confirm: is the {r.replace('_', ' ')} "
+                         f"of {s.replace('_', ' ')} equal to "
+                         f"{o.replace('_', ' ')}?",
+                reason="no recorded provenance",
+                expected_info_gain=0.5,
+                subject=s, relation=r,
+            ))
         if len(out) >= top_n * 2:
             break
     return out[:top_n]

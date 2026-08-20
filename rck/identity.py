@@ -19,6 +19,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from rck.atomic import atomic_write_text
 from rck.knowledge_base import ShardedKnowledgeBase
 
 
@@ -94,7 +95,7 @@ class IdentityStore:
             "topics_of_interest": dict(profile.topics_of_interest),
             "preferences": dict(profile.preferences),
         }
-        path.write_text(json.dumps(data, indent=2))
+        atomic_write_text(path, json.dumps(data, indent=2))
         return path
 
     def load(self, user_id: str) -> UserProfile:

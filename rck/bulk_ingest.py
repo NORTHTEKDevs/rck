@@ -148,20 +148,19 @@ def auto_symmetrize(kb: ShardedKnowledgeBase) -> int:
     """
     added = 0
     seen: set[tuple[str, str, str]] = set()
-    for shard in kb._shards:
-        for fact in list(shard._facts):  # snapshot
-            s = str(fact.get("S", "")).lower()
-            r = str(fact.get("R", "")).lower()
-            o = str(fact.get("O", "")).lower()
-            if not (s and r and o):
-                continue
-            inv = inverse_relation(r)
-            if not inv:
-                continue
-            key = (o, inv, s)
-            if key in seen:
-                continue
-            seen.add(key)
-            kb.store({"S": o, "R": inv, "O": s})
-            added += 1
+    for fact in kb.all_facts():
+        s = str(fact.get("S", "")).lower()
+        r = str(fact.get("R", "")).lower()
+        o = str(fact.get("O", "")).lower()
+        if not (s and r and o):
+            continue
+        inv = inverse_relation(r)
+        if not inv:
+            continue
+        key = (o, inv, s)
+        if key in seen:
+            continue
+        seen.add(key)
+        kb.store({"S": o, "R": inv, "O": s})
+        added += 1
     return added

@@ -125,25 +125,26 @@ class ProvenanceStore:
         """Persist the store to a JSONL file."""
         import json
         from pathlib import Path
+        from rck.atomic import atomic_write_text
         path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
+        lines = []
         n = 0
-        with open(path, "w", encoding="utf-8") as f:
-            for (s, r, o), rec in self._records.items():
-                obj = {
-                    "subject": s,
-                    "relation": r,
-                    "object": o,
-                    "source": rec.source,
-                    "timestamp": rec.timestamp,
-                    "confidence": rec.confidence,
-                    "count": rec.count,
-                    "last_seen": rec.last_seen,
-                    "tags": sorted(rec.tags),
-                    "derivation": [list(d) for d in rec.derivation],
-                }
-                f.write(json.dumps(obj) + "\n")
-                n += 1
+        for (s, r, o), rec in self._records.items():
+            obj = {
+                "subject": s,
+                "relation": r,
+                "object": o,
+                "source": rec.source,
+                "timestamp": rec.timestamp,
+                "confidence": rec.confidence,
+                "count": rec.count,
+                "last_seen": rec.last_seen,
+                "tags": sorted(rec.tags),
+                "derivation": [list(d) for d in rec.derivation],
+            }
+            lines.append(json.dumps(obj))
+            n += 1
+        atomic_write_text(path, "".join(line + "\n" for line in lines))
         return n
 
     def load(self, path, *, replace: bool = False) -> int:

@@ -86,33 +86,31 @@ def detect_conflicts(kb: ShardedKnowledgeBase,
     # only; the negation check handles the not_* counterpart.
     sr_pairs: set[tuple[str, str]] = set()
     if subjects is None:
-        for shard in kb._shards:
-            for fact in shard.facts():
-                s = str(fact.get("S", "")).lower()
-                r = str(fact.get("R", "")).lower()
-                if is_negative(r):
-                    # For a stored (X, not_R, Y) we still need to test
-                    # the POSITIVE side, so add (s, denegate(r)).
-                    positive = denegate(r)
-                    sr_pairs.add((s, positive))
-                elif cfg.is_functional(r):
-                    sr_pairs.add((s, r))
-                else:
-                    # Always check for direct negation conflicts even on
-                    # non-functional relations.
-                    sr_pairs.add((s, r))
+        for fact in kb.all_facts():
+            s = str(fact.get("S", "")).lower()
+            r = str(fact.get("R", "")).lower()
+            if is_negative(r):
+                # For a stored (X, not_R, Y) we still need to test
+                # the POSITIVE side, so add (s, denegate(r)).
+                positive = denegate(r)
+                sr_pairs.add((s, positive))
+            elif cfg.is_functional(r):
+                sr_pairs.add((s, r))
+            else:
+                # Always check for direct negation conflicts even on
+                # non-functional relations.
+                sr_pairs.add((s, r))
     else:
         for s in subjects:
             s_l = str(s).lower()
-            for shard in kb._shards:
-                for fact in shard.facts():
-                    if str(fact.get("S", "")).lower() != s_l:
-                        continue
-                    r = str(fact.get("R", "")).lower()
-                    if is_negative(r):
-                        sr_pairs.add((s_l, denegate(r)))
-                    else:
-                        sr_pairs.add((s_l, r))
+            for fact in kb.all_facts():
+                if str(fact.get("S", "")).lower() != s_l:
+                    continue
+                r = str(fact.get("R", "")).lower()
+                if is_negative(r):
+                    sr_pairs.add((s_l, denegate(r)))
+                else:
+                    sr_pairs.add((s_l, r))
 
     conflicts: list[Conflict] = []
     for s, r in sr_pairs:

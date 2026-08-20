@@ -106,11 +106,76 @@ from rck.theory_of_mind import (
 )
 from rck.think_aloud import narrate, narrate_no_match
 from rck.tokenizer import sentences, tokenize
+from rck.wal import WriteAheadLog
 
 
 @dataclass
 class ConsciousAgent:
-    """Top-level RCK agent with sharded KB + self-model + introspection."""
+    """Top-level RCK agent with sharded KB + self-model + introspection.
+
+    Public API (see `PUBLIC_API`), grouped by what it is for:
+
+    * knowledge      -- `tell`, `deny`, `correct`
+    * answering      -- `ask_with_idk`, `explain_why`
+    * multi-hop      -- `discover`, `reason`, `induce`
+    * rules          -- `extract_rules`, `instantiate_rules`,
+                        `cascade_instantiate_rules`, `compose_rules`
+    * analogy        -- `analogy`
+    * causal         -- `downstream_effects`, `root_causes`
+    * reconciliation -- `detect_conflicts`, `resolve_conflicts`
+    * multi-agent    -- `merge_from`
+    * what-if        -- `counterfactual`, `what_if_user_says`,
+                        `what_changes`, `delta_replay`
+    * operations     -- `maintain`, `status_report`, `checkpoint`,
+                        `recover`, `shard_balance`
+
+    Everything else on this class is internal and may change without a
+    deprecation cycle.
+    """
+
+    #: The stable, supported API. Everything else on this class is
+    #: internal: it may change without a deprecation cycle.
+    #:
+    #: The rule: this surface is exactly what the README advertises and the
+    #: guides teach. Two drafts got it wrong by guessing instead. The first
+    #: froze `discover` but not `reason` -- they are the two halves of
+    #: multi-hop (`discover` finds a chain when you do not know the relation
+    #: path, `reason` walks one when you do), so the quickstart and the
+    #: full-stack demo were left calling an unfrozen method. The second
+    #: still omitted the rule, analogy, and causal calls that
+    #: docs/guide/03-reasoning.md teaches and the README sells. A frozen
+    #: surface that excludes advertised headline features is a fiction, so
+    #: tests/test_public_api.py now checks the guides, not just the README.
+    PUBLIC_API = (
+        # knowledge
+        "tell", "deny", "correct",
+        # answering
+        "ask_with_idk", "explain_why",
+        # multi-hop
+        "discover", "reason", "induce",
+        # rules
+        "extract_rules", "instantiate_rules", "cascade_instantiate_rules",
+        "compose_rules",
+        # analogy + causal
+        "analogy", "downstream_effects", "root_causes",
+        # reconciliation + multi-agent
+        "detect_conflicts", "resolve_conflicts", "merge_from",
+        # operations
+        "maintain", "status_report", "checkpoint", "recover",
+        # `shard_balance` is operationally load-bearing, not an analytics
+        # nicety: it is the only way to see a shard pinned over the
+        # capacity cliff by a single hot (S, R) key, which resharding
+        # cannot fix. The README cites it in that caveat.
+        "shard_balance",
+        # what-if: advertised in the README's capability list, so frozen
+        # by the same rule. The analytics helpers (find_gaps,
+        # similar_entities, concept_density, relation_cooccurrence,
+        # rank_subjects) are NOT frozen -- they are read-only convenience
+        # tooling, and the README labels them as unsupported rather than
+        # pretending otherwise.
+        "counterfactual", "what_if_user_says", "what_changes",
+        "delta_replay",
+    )
 
     dim: int = 4096
     n_shards: int = 64
@@ -119,6 +184,16 @@ class ConsciousAgent:
     # If set, overrides `n_shards` using the capacity-cliff recommendation
     # from `rck.shard_sizing` for the given expected fact count.
     expected_facts: int | None = None
+    # If set, enables the write-ahead log on both KBs. `knowledge` gets
+    # `wal_path` itself; `beliefs` gets a sibling "<stem>.beliefs<suffix>"
+    # path -- separate logs because they are separate KBs (Trap 4: a
+    # single shared log can't tell which KB a replayed entry belongs to).
+    # Default None: no WAL, no new files, no behaviour change.
+    wal_path: str | Path | None = None
+    # "hrr" (default, unchanged) or "dict" -- the exact-index Phase 2
+    # backend. Selects both `knowledge` and `beliefs`' substrate. See
+    # docs/plans/2026-08-19-dict-backend.md.
+    backend: str = "hrr"
 
     knowledge: ShardedKnowledgeBase = field(default=None, init=False)
     beliefs: ShardedKnowledgeBase = field(default=None, init=False)
@@ -138,8 +213,27 @@ class ConsciousAgent:
         if self.expected_facts is not None:
             rec = recommend_shards(self.expected_facts, dim=self.dim)
             self.n_shards = rec.n_shards
-        self.knowledge = ShardedKnowledgeBase(dim=self.dim, n_shards=self.n_shards, seed=self.seed)
-        self.beliefs = make_belief_kb(dim=self.dim, n_shards=self.n_shards // 2 or 8, seed=self.seed + 1)
+        knowledge_wal = None
+        beliefs_wal = None
+        if self.wal_path is not None:
+            wal_path = Path(self.wal_path)
+            knowledge_wal = WriteAheadLog(wal_path)
+            beliefs_path = wal_path.with_name(
+                wal_path.stem + ".beliefs" + wal_path.suffix)
+            beliefs_wal = WriteAheadLog(beliefs_path)
+        if self.backend not in ("hrr", "dict"):
+            raise ValueError(
+                f"unknown backend {self.backend!r}; expected 'hrr' or 'dict'")
+        if self.backend == "dict":
+            from rck.dict_knowledge_base import DictKnowledgeBase
+            self.knowledge = DictKnowledgeBase(dim=self.dim, seed=self.seed,
+                                                wal=knowledge_wal)
+        else:
+            self.knowledge = ShardedKnowledgeBase(dim=self.dim, n_shards=self.n_shards,
+                                                   seed=self.seed, wal=knowledge_wal)
+        self.beliefs = make_belief_kb(dim=self.dim, n_shards=self.n_shards // 2 or 8,
+                                      seed=self.seed + 1, backend=self.backend)
+        self.beliefs.wal = beliefs_wal
         self.lm = RCKAgent(
             vocab_size=8192, hv_dim=self.dim, n_columns=2, reservoir_dim=128,
             n_clauses=16, fep_rank=64, bigram_order=2, seed=self.seed + 2,
@@ -1095,6 +1189,52 @@ class ConsciousAgent:
             "query_memory": self.load_query_memory(d / "query_memory.jsonl",
                                                     replace=replace),
         }
+
+    def checkpoint(self, dir_path: str | Path) -> dict:
+        """Durable checkpoint: a real KB-inclusive snapshot, WAL truncated
+        only after that snapshot is confirmed written.
+
+        [R2 -- the critical fix] `save_state()` writes only skills /
+        provenance / query_memory JSONL and explicitly does NOT persist
+        the HRR knowledge base (see its docstring). `save_state()` +
+        `wal.truncate()` would therefore erase the only other durable
+        record of every fact, with a normal-looking return dict and no
+        exception. `checkpoint()` uses `rck.session.save_session` --
+        the one persister that writes the KB -- and truncates the WAL(s)
+        only after `save_session` returns successfully.
+        """
+        from rck.session import save_session
+        result = save_session(self, dir_path)
+        if self.knowledge is not None and self.knowledge.wal is not None:
+            self.knowledge.wal.truncate()
+        if self.beliefs is not None and self.beliefs.wal is not None:
+            self.beliefs.wal.truncate()
+        return result
+
+    def recover(self) -> dict:
+        """Replay each KB's write-ahead log on top of current in-memory
+        state. Call on a freshly constructed agent (same `wal_path`) after
+        a crash, before any snapshot was taken -- or after loading a
+        snapshot, to replay whatever was told since that checkpoint.
+
+        Uses `_log=False` so replayed facts are NOT re-appended to the
+        WAL (that would duplicate every entry and double-bundle it on
+        the next recovery). Returns a per-KB count of entries replayed.
+        """
+        replayed = {"knowledge": 0, "beliefs": 0}
+        for name, kb in (("knowledge", self.knowledge), ("beliefs", self.beliefs)):
+            if kb is None or kb.wal is None:
+                continue
+            for entry in kb.wal.replay():
+                op, fact = entry["op"], entry["fact"]
+                if op == "store":
+                    kb.store(fact, _log=False)
+                elif op == "forget":
+                    kb.forget(fact, _log=False)
+                else:
+                    raise ValueError(f"unknown WAL op {op!r}")
+                replayed[name] += 1
+        return replayed
 
     def save_provenance(self, path: str | Path) -> int:
         """Persist the ProvenanceStore to JSONL."""
