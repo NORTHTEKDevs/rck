@@ -1,4 +1,4 @@
-# RCK — Resonant Cognitive Kernel
+# RCK - Resonant Cognitive Kernel
 
 > **An auditable, hallucination-free alternative to LLMs.**
 > RCK reasons in explicit chains, learns by deriving (not retraining),
@@ -6,7 +6,7 @@
 > 100,000 real-world facts in 535 MB: sub-millisecond queries,
 > 100.0% recall@1, one CPU thread.
 
-[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-757%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.3.1-blue)](CHANGELOG.md)
+[![CI](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml/badge.svg)](https://github.com/NORTHTEKDevs/rck/actions/workflows/test.yml) [![tests](https://img.shields.io/badge/tests-820%20passing-brightgreen)](#) [![python](https://img.shields.io/badge/python-3.11%2B-blue)](#) [![license](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-15.3.1-blue)](CHANGELOG.md)
 
 ---
 
@@ -16,7 +16,7 @@ RCK was designed and built by Kristian Baer in close collaboration
 with Anthropic's Claude. Architectural choices were made by the author
 after research; implementation and drafting were AI-assisted. Every
 empirical claim in the [paper](papers/rck-architecture/) is
-reproducible from this repo — each number in §5 traces to a script in
+reproducible from this repo - each number in §5 traces to a script in
 `scripts/` and a JSON output in `data/`. The author welcomes scrutiny,
 issues, and corrections.
 
@@ -45,8 +45,8 @@ The result is an agent that:
 | Costs ~$0 to operate | ✗ | ✓ |
 | Reasons 30+ hops deep | ✗ | ✓ |
 
-It's small (126 modules, ~18.8k lines of plain numpy Python). It's
-testable (**757 passing tests**). It's research-grade but
+It's small (130 modules, ~16.8k lines of plain numpy Python). It's
+testable (**820 passing tests**). It's research-grade but
 production-shaped.
 
 <p align="center">
@@ -120,7 +120,7 @@ capability on a real 716-fact commonsense KB.
 
 ### Reasoning
 - **Direct retrieval** with calibrated `KNOWN / AMBIGUOUS / IDK` states.
-- **Multi-hop chain walking** — argmax answers stay correct to 50+
+- **Multi-hop chain walking** - argmax answers stay correct to 50+
   hops; the default geometric-mean rule reports moderate-or-better
   confidence to 30+ hops, and the v15.2 `calibrated_product` rule
   reports honest probabilities (a clean 50-hop chain ≈ 0.98,
@@ -128,12 +128,12 @@ capability on a real 716-fact commonsense KB.
 - **Chain discovery** via BFS over the HRR graph (~21ms on the
   bundled 716-fact KB, 30ms median on ConceptNet-100k; a per-shard
   live-relation index cuts 31-66% of queries, 1.4-2.8× faster).
-- **Scale** (v15.3): 100,000 real ConceptNet facts — 6.6s ingest,
+- **Scale** (v15.3): 100,000 real ConceptNet facts - 6.6s ingest,
   100.0% recall@1, 0.33ms median query, 535 MB, single thread.
   Shard-local cleanup makes per-query cost independent of
   vocabulary size (paper §4.5, §5.6).
 - **Fact induction**: confident chains become new direct edges behind
-  a six-gate filter stack — 31/31 manually-validated inductions on
+  a six-gate filter stack - 31/31 manually-validated inductions on
   the 400-probe study (the earlier v15.0 "~87% precision" framing
   measured HRR-roundtrip stability, not semantic correctness, and is
   retracted and decomposed honestly in the paper, §5.1).
@@ -157,7 +157,7 @@ capability on a real 716-fact commonsense KB.
   collisions.
 - **Belief revision** with source-priority resolution
   (`user > multi > external > induced > rule > unknown`).
-- **Negative facts** (`agent.deny(...)`) — positive certainty about
+- **Negative facts** (`agent.deny(...)`) - positive certainty about
   non-membership, distinct from IDK.
 - **Negation propagation** through `isa` / `partof` lifting relations.
 - **Hierarchical abstraction**: lift shared sibling facts to the parent.
@@ -168,7 +168,7 @@ capability on a real 716-fact commonsense KB.
 - **Calibration tally**: `record_truth(...)` feeds ground truth back
   into per-relation accuracy stats.
 - **Score calibration** (v15.2): isotonic cosine→P(correct) mapping
-  (`rck.score_calibration`) — raw cosines are similarity features,
+  (`rck.score_calibration`) - raw cosines are similarity features,
   not probabilities (held-out Brier 0.568 raw vs 0.0038 calibrated).
 - **Chain cache** (LRU, versioned, auto-invalidated on KB writes).
 - **Skill clustering** + **promotion to rules**.
@@ -185,25 +185,25 @@ capability on a real 716-fact commonsense KB.
 - **Diff**: see what one agent knows that another doesn't.
 
 ### Analytics
-- **`agent.status_report()`** — full state dashboard.
-- **`agent.find_gaps(subject)`** — relations peers have but subject is
+- **`agent.status_report()`** - full state dashboard.
+- **`agent.find_gaps(subject)`** - relations peers have but subject is
   missing.
-- **`agent.similar_entities(subject)`** — Jaccard overlap of (R, O)
+- **`agent.similar_entities(subject)`** - Jaccard overlap of (R, O)
   attribute sets.
-- **`agent.concept_density()`** — fact-count histogram + stub detection.
-- **`agent.relation_cooccurrence()`** — which relations cluster together.
-- **`agent.rank_subjects()`** — composite importance ranking.
-- **`agent.shard_balance()`** — capacity-cliff monitoring.
+- **`agent.concept_density()`** - fact-count histogram + stub detection.
+- **`agent.relation_cooccurrence()`** - which relations cluster together.
+- **`agent.rank_subjects()`** - composite importance ranking.
+- **`agent.shard_balance()`** - capacity-cliff monitoring.
 
 ### Operations
-- **`agent.maintain(checkpoint_dir=...)`** — one-call nightly pass:
+- **`agent.maintain(checkpoint_dir=...)`** - one-call nightly pass:
   cascade induction → rule cascade → negation propagation → conflict
   resolution → skill promotion → episodic consolidation → cache
   pre-warm → optional checkpoint.
-- **`agent.what_if_user_says(text)`** — Open IE → counterfactual
+- **`agent.what_if_user_says(text)`** - Open IE → counterfactual
   preview → rollback. "Should I tell the agent X?"
-- **`agent.what_changes(facts)`** — same preview, structured input.
-- **`agent.delta_replay(facts)`** — step-by-step what each new fact
+- **`agent.what_changes(facts)`** - same preview, structured input.
+- **`agent.delta_replay(facts)`** - step-by-step what each new fact
   unlocks.
 
 ---
@@ -239,7 +239,7 @@ machine-dependent:
 | Cascading induction (4 rounds) | ~3 s |
 | `agent.maintain()` full pass | ~5 s |
 
-At scale (ConceptNet English, single CPU thread, auto-sharded —
+At scale (ConceptNet English, single CPU thread, auto-sharded - 
 `scripts/scale_study.py`, subset committed in `data/`):
 
 | Facts | Ingest | RSS | recall@1 | Query median | 2-hop discovery |
@@ -277,7 +277,7 @@ the same shard arithmetic but are unverified.
 ## Project layout
 
 ```
-rck/                   # the library (126 modules)
+rck/                   # the library (130 modules)
   conscious_agent.py   # the agent that wires everything together
   knowledge_base.py    # sharded HRR memory + live-relation index
   chain_walker.py
@@ -299,7 +299,7 @@ docs/
   guide/               # tutorials (start here)
   design/              # architectural design docs
 examples/              # runnable demos
-tests/                 # 757 tests
+tests/                 # 820 tests
 scripts/               # benchmark + ingestion scripts
 ```
 
@@ -307,7 +307,7 @@ scripts/               # benchmark + ingestion scripts
 
 ## Status
 
-* **v15.3.1** — current. 757 passing tests. API stable.
+* **v15.3.1** - current. 820 passing tests. API stable.
 * Active research. PRs welcome (see `CONTRIBUTING.md`).
 * Apache 2.0 licensed.
 
