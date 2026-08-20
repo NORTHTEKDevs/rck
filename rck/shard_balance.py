@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 
 from rck.knowledge_base import ShardedKnowledgeBase
 from rck.shard_sizing import TARGET_MAX_FILL_BY_DIM, recommend_shards
+from rck.dict_knowledge_base import DictKnowledgeBase
 
 if TYPE_CHECKING:
     pass
@@ -62,12 +63,25 @@ class ShardBalanceReport:
         return "\n".join(lines)
 
 
-def report(kb: ShardedKnowledgeBase, *,
+def report(kb: "ShardedKnowledgeBase | DictKnowledgeBase", *,
             sparse_ratio: float = 0.1) -> ShardBalanceReport:
-    """Build a ShardBalanceReport from the current KB."""
+    """Build a ShardBalanceReport from the current KB.
+
+    [Phase 2] The dict backend (DictKnowledgeBase) has exactly one
+    pseudo-shard and an exact index -- there is no capacity cliff to
+    partition around and no reshard that could relieve anything, so it
+    is reported honestly: no overload, no sparse flag, no suggestion,
+    regardless of how many facts that one shard holds.
+    """
     fills = kb.shard_sizes()
     n_shards = kb.n_shards
     dim = kb.dim
+    if isinstance(kb, DictKnowledgeBase):
+        return ShardBalanceReport(
+            n_shards=n_shards, dim=dim, fills=list(fills),
+            target_fill=0, overloaded=[], sparse=[],
+            suggested_n_shards=n_shards, suggested_action="",
+        )
     target_fill = TARGET_MAX_FILL_BY_DIM.get(dim, max(20, dim // 50))
     overloaded = [i for i, f in enumerate(fills) if f > target_fill]
     sparse_threshold = max(1, int(target_fill * sparse_ratio))

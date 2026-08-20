@@ -315,3 +315,77 @@ def test_query_shard_subset_out_of_range_raises():
 def test_codebook_is_none_on_dict_backend():
     kb = _kb()
     assert kb.codebook is None
+
+
+# =============================================================================
+# Task 2: backend selection on ConsciousAgent
+# =============================================================================
+
+from rck.conscious_agent import ConsciousAgent
+from rck.knowledge_base import ShardedKnowledgeBase
+
+
+def test_default_backend_is_hrr_and_unchanged():
+    agent = ConsciousAgent(dim=256, n_shards=4, install_self=False)
+    assert agent.backend == "hrr"
+    assert isinstance(agent.knowledge, ShardedKnowledgeBase)
+    assert isinstance(agent.beliefs, ShardedKnowledgeBase)
+
+
+def test_dict_backend_builds_dict_knowledge_and_beliefs():
+    agent = ConsciousAgent(dim=256, n_shards=4, backend="dict", install_self=False)
+    assert isinstance(agent.knowledge, DictKnowledgeBase)
+    assert isinstance(agent.beliefs, DictKnowledgeBase)
+
+
+def test_dict_backend_tell_and_ask_roundtrip():
+    agent = ConsciousAgent(dim=256, backend="dict", install_self=False)
+    agent.tell("france", "capital", "paris")
+    ans, score = agent.knowledge.answer({"S": "france", "R": "capital"}, "O")
+    assert ans == "paris"
+    assert score == 1.0
+
+
+def test_dict_backend_belief_kb_roundtrip():
+    agent = ConsciousAgent(dim=256, backend="dict", install_self=False)
+    agent.tell_belief("bob", "france", "capital", "lyon")
+    from rck.theory_of_mind import what_does_x_think
+    results = what_does_x_think(agent.beliefs, "bob", "france", "capital")
+    assert results == [("lyon", 1.0)]
+
+
+def test_dict_backend_wal_path_wires_both_kbs(tmp_path):
+    agent = ConsciousAgent(dim=256, backend="dict", install_self=False,
+                            wal_path=tmp_path / "agent.wal")
+    assert agent.knowledge.wal is not None
+    assert agent.beliefs.wal is not None
+    agent.tell("a", "isa", "b")
+    assert agent.knowledge.wal.path.exists()
+
+
+def test_invalid_backend_raises_value_error():
+    with pytest.raises(ValueError):
+        ConsciousAgent(dim=256, backend="quantum", install_self=False)
+
+
+def test_shard_balance_on_dict_backend_reports_no_cliff_no_crash():
+    agent = ConsciousAgent(dim=256, backend="dict", install_self=False)
+    for i in range(500):  # well past any HRR target_fill for dim=256
+        agent.tell(f"s{i}", "isa", f"o{i}")
+    rep = agent.shard_balance()
+    assert rep.n_shards == 1
+    assert rep.overloaded == []
+    assert rep.suggested_action == ""
+    assert rep.fills == [1000]  # tell() auto-symmetrizes isa -> hassubtype
+
+
+def test_shard_balance_on_hrr_backend_still_flags_overload():
+    """Regression guard: the dict special-case in shard_balance.report()
+    must not blunt the existing HRR overload detection."""
+    agent = ConsciousAgent(dim=256, n_shards=1, backend="hrr", install_self=False,
+                            expected_facts=None)
+    agent.knowledge.auto_reshard = False  # force overload instead of growing
+    for i in range(500):
+        agent.knowledge.store({"S": f"s{i}", "R": "r", "O": f"o{i}"})
+    rep = agent.shard_balance()
+    assert rep.overloaded == [0]

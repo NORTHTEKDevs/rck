@@ -190,6 +190,10 @@ class ConsciousAgent:
     # single shared log can't tell which KB a replayed entry belongs to).
     # Default None: no WAL, no new files, no behaviour change.
     wal_path: str | Path | None = None
+    # "hrr" (default, unchanged) or "dict" -- the exact-index Phase 2
+    # backend. Selects both `knowledge` and `beliefs`' substrate. See
+    # docs/plans/2026-08-19-dict-backend.md.
+    backend: str = "hrr"
 
     knowledge: ShardedKnowledgeBase = field(default=None, init=False)
     beliefs: ShardedKnowledgeBase = field(default=None, init=False)
@@ -217,9 +221,18 @@ class ConsciousAgent:
             beliefs_path = wal_path.with_name(
                 wal_path.stem + ".beliefs" + wal_path.suffix)
             beliefs_wal = WriteAheadLog(beliefs_path)
-        self.knowledge = ShardedKnowledgeBase(dim=self.dim, n_shards=self.n_shards,
-                                               seed=self.seed, wal=knowledge_wal)
-        self.beliefs = make_belief_kb(dim=self.dim, n_shards=self.n_shards // 2 or 8, seed=self.seed + 1)
+        if self.backend not in ("hrr", "dict"):
+            raise ValueError(
+                f"unknown backend {self.backend!r}; expected 'hrr' or 'dict'")
+        if self.backend == "dict":
+            from rck.dict_knowledge_base import DictKnowledgeBase
+            self.knowledge = DictKnowledgeBase(dim=self.dim, seed=self.seed,
+                                                wal=knowledge_wal)
+        else:
+            self.knowledge = ShardedKnowledgeBase(dim=self.dim, n_shards=self.n_shards,
+                                                   seed=self.seed, wal=knowledge_wal)
+        self.beliefs = make_belief_kb(dim=self.dim, n_shards=self.n_shards // 2 or 8,
+                                      seed=self.seed + 1, backend=self.backend)
         self.beliefs.wal = beliefs_wal
         self.lm = RCKAgent(
             vocab_size=8192, hv_dim=self.dim, n_columns=2, reservoir_dim=128,
