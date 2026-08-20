@@ -69,15 +69,48 @@ SUBSTRATE_OWNED = {
     "sparse_relational.py", "capacity_profiler.py", "snapshot_hash.py",
     "session.py",
     # generative subsystem, HRR-only by design (agent.py's char-LM /
-    # RCKAgent path, not ConsciousAgent's reasoning path)
+    # RCKAgent path, not ConsciousAgent's reasoning path). Includes the
+    # v7 polisher's training-data generators, which enumerate kb._shards
+    # directly to build synthetic training corpora -- training-pipeline
+    # code, not reasoning, so this plan does not touch it.
     "agent.py", "compose.py", "generative.py", "bigram.py", "fep.py",
     "server.py", "gen_server.py", "mcp_server.py",
+    "multi_task_corpus.py", "polisher_training.py",
 }
 
 # Modules that legitimately need shard-level access; each entry needs a
-# reason in the comment above it, and Phase 2 gives them a backend hook.
+# reason, and Phase 2 gives them a backend hook.
 ALLOWED_EXCEPTIONS = {
-    # filled in once Task 2's migration is complete
+    # Shard-to-shard HRR bundle merge: RelationalMemory.merge() sums two
+    # shards' _memory tensors directly and requires matching shard count
+    # + dim between the two KBs. Not expressible as fact-level
+    # enumeration -- this *is* the substrate-specific operation.
+    "federated_merge.py",
+    # compress_duplicates() writes `shard._facts = keep` directly, per
+    # shard -- a write to shard internals, not a read, and it bypasses
+    # store()/forget() entirely. detect_contradictions() and
+    # generate_abstractions() in the same file were migrated to
+    # all_facts(); this one function could not be.
+    "dreaming.py",
+    # detect_global_gaps() samples entities with an early-exit break that
+    # fires once per shard (after each shard's fact loop, not after each
+    # fact), so which entities get collected before the sample_size*5 cap
+    # depends on shard boundaries. _relations_for_subjects() in the same
+    # file was migrated to all_facts(); this one function could not be
+    # without changing which entities get sampled.
+    "curiosity.py",
+    # _related_entities()'s incoming-facts loop breaks once
+    # max_each*10 is reached, but the break only exits the *current*
+    # shard's inner loop (there is no matching break on the outer shard
+    # loop), so the exact set collected depends on shard boundaries.
+    # Migrating to a flat kb.all_facts() loop with a single break would
+    # stop scanning at a different point for the same KB under a
+    # different shard count -- a real, if obscure, behaviour change.
+    "research.py",
+    # summarize_subject() has the identical per-shard early-exit quirk
+    # as research.py above (break only exits the current shard's loop
+    # once max_facts is reached), for the same reason.
+    "subject_summary.py",
 }
 
 
@@ -86,11 +119,22 @@ def test_reasoning_layer_does_not_reach_into_shards():
 
     Paper 5.0/5.10 measure that the substrate does not earn its place;
     this test is what keeps the layer portable off it.
+
+    Checks for `._shards` (attribute access on the private shard-list),
+    not a bare "_shards" substring. A naive substring check is unreliable
+    here: this codebase alone has "n_shards" (the public shard-count
+    field that legitimately stays on the KnowledgeBackend interface),
+    "recommend_shards" (a public function in shard_sizing.py),
+    "sparse_shards" and "max_shards" (local names in shard_balance.py /
+    shard_sizing.py) -- all literal substring matches for "_shards" that
+    have nothing to do with reaching into shard internals. The genuine
+    coupling this test guards against always takes the form
+    `<something>._shards`, e.g. `kb._shards` or `source.knowledge._shards`.
     """
     offenders = []
     for path in (REPO_ROOT / "rck").rglob("*.py"):
         if path.name in SUBSTRATE_OWNED or path.name in ALLOWED_EXCEPTIONS:
             continue
-        if "_shards" in path.read_text(encoding="utf-8"):
+        if "._shards" in path.read_text(encoding="utf-8"):
             offenders.append(path.name)
     assert not offenders, f"reasoning modules reaching into _shards: {offenders}"
