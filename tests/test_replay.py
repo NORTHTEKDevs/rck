@@ -1,4 +1,4 @@
-"""Tests for rck.replay: DecisionRecord (Task 2), replay() (Task 3),
+﻿"""Tests for rck.replay: DecisionRecord (Task 2), replay() (Task 3),
 and the end-to-end audit scenario (Task 4).
 
 See docs/plans/2026-08-19-replay.md.
@@ -44,7 +44,7 @@ def test_decision_record_json_roundtrip_is_lossless():
     a.induce("dog", "animal")
     rec = record_decision(a, {"S": "dog", "R": "isa"}, "O")
 
-    restored = DecisionRecord.from_json(json.loads(json.dumps(rec.to_json())))
+    restored = DecisionRecord.from_dict(json.loads(json.dumps(rec.to_dict())))
     assert restored == rec
 
 
@@ -53,7 +53,7 @@ def test_top_score_survives_as_exact_float():
     a.tell("dog", "isa", "mammal")
     rec = record_decision(a, {"S": "dog", "R": "isa"}, "O")
 
-    restored = DecisionRecord.from_json(json.loads(json.dumps(rec.to_json())))
+    restored = DecisionRecord.from_dict(json.loads(json.dumps(rec.to_dict())))
     # Exact bit-identity is the product claim -- not isclose().
     assert restored.answer["top_score"] == rec.answer["top_score"]
 
@@ -66,7 +66,7 @@ def test_idk_record_has_no_derivation_and_still_roundtrips():
 
     assert rec.answer["top_symbol"] is None
     assert rec.derivation is None
-    restored = DecisionRecord.from_json(json.loads(json.dumps(rec.to_json())))
+    restored = DecisionRecord.from_dict(json.loads(json.dumps(rec.to_dict())))
     assert restored == rec
 
 
@@ -211,3 +211,29 @@ def test_audit_scenario_multi_hop_replay_then_state_mismatch(tmp_path):
         "a record replayed against a moved snapshot must report "
         "STATE_MISMATCH, not silently verify or diverge"
     )
+
+
+def test_record_survives_a_real_file_roundtrip(tmp_path):
+    """The durable path, which is the whole point of a decision record.
+
+    to_dict/from_dict convert to and from DICTS; save/load are the file
+    API. They were originally named to_json/from_json, which invited
+    `from_json(open(f).read())` -- that looks obviously correct and
+    raises. This test pins the API a real auditor would reach for.
+    """
+    from rck.conscious_agent import ConsciousAgent
+    from rck.replay import DecisionRecord, record_decision
+
+    agent = ConsciousAgent(expected_facts=100)
+    agent.tell("dog", "isa", "mammal")
+    rec = record_decision(agent, {"S": "dog", "R": "isa"}, "O")
+
+    p = tmp_path / "decision.json"
+    rec.save(p)
+    restored = DecisionRecord.load(p)
+
+    assert restored.state_hash == rec.state_hash
+    assert restored.answer["top_score"] == rec.answer["top_score"], \
+        "score must survive the file roundtrip EXACTLY -- bit-identity is the claim"
+    assert restored.answer["top_symbol"] == rec.answer["top_symbol"]
+    assert restored.rck_version == rec.rck_version

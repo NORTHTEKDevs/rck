@@ -1,4 +1,4 @@
-"""Decision replay: pin an answer to the exact substrate state that
+﻿"""Decision replay: pin an answer to the exact substrate state that
 produced it, then re-execute later and compare exactly.
 
 [R2] Design note -- a record without its snapshot is not replayable.
@@ -46,7 +46,7 @@ class DecisionRecord:
     seed: int
     created_at: float = field(default_factory=time.time)
 
-    def to_json(self) -> dict:
+    def to_dict(self) -> dict:
         return {
             "rck_version": self.rck_version,
             "state_hash": self.state_hash,
@@ -59,7 +59,7 @@ class DecisionRecord:
         }
 
     @classmethod
-    def from_json(cls, data: dict) -> "DecisionRecord":
+    def from_dict(cls, data: dict) -> "DecisionRecord":
         return cls(
             rck_version=str(data["rck_version"]),
             state_hash=str(data["state_hash"]),
@@ -72,12 +72,12 @@ class DecisionRecord:
         )
 
     def save(self, path: str | Path) -> None:
-        atomic_write_json(path, self.to_json(), indent=2, sort_keys=True)
+        atomic_write_json(path, self.to_dict(), indent=2, sort_keys=True)
 
     @classmethod
     def load(cls, path: str | Path) -> "DecisionRecord":
         data = json.loads(Path(path).read_text(encoding="utf-8"))
-        return cls.from_json(data)
+        return cls.from_dict(data)
 
 
 def _node_to_dict(node: ExplanationNode) -> dict:
