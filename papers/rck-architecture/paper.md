@@ -397,7 +397,32 @@ A fair reading of the implementation: `solve_analogy` queries the KB for `(a, ?,
 
 **Conclusion.** Across five axes now measured against non-VSA baselines - ingest, memory, query latency, chain discovery, analogy, and federated merge - the HRR substrate does not win on any of them, and on two it is beaten by roughly twenty lines of dictionary code. The contribution of this work is the layer *above* the substrate: the provenance graph, calibrated confidence, IDK as a first-class state, the six-gate induction filter, negative facts, contradiction resolution, and replayable decision records. None of those require holographic reduced representations. A faithful reimplementation on an exact index would, on present evidence, be smaller, faster, and equally auditable. We think that is worth stating plainly in the paper that proposed the substrate.
 
-### 5.11 Reproducibility
+### 5.11 First external-style benchmark: kinship chains
+
+Every study above this point evaluates RCK on probes RCK's own repository constructs. This one uses a **CLUTRR-style** task (Sinha et al. 2019): given a chain of kinship facts, infer the relation between the endpoints. The official CLUTRR data is distributed through an interactive download we could not script, so the benchmark is **locally generated** from a family tree plus a kinship composition table - which is how CLUTRR itself is produced - and **scores here are not comparable to published CLUTRR numbers**. 368 examples, chain lengths k=2..6, seed 20260819.
+
+A symbolic control composes the same table over the same revealed edges and must score 100%; it does, which is the harness's correctness check rather than a result.
+
+**The setup matters more than the score.** Run one way, RCK scores 100% at every depth. Run another, it does not, and the difference is entirely how the knowledge base is built:
+
+| k | n | symbolic control | RCK, isolated KB | RCK, shared KB |
+|---:|---:|---:|---:|---:|
+| 2 | 96 | 100.0% | 100.0% | 95.8% |
+| 3 | 64 | 100.0% | 100.0% | 89.1% |
+| 4 | 72 | 100.0% | 100.0% | 100.0% |
+| 5 | 64 | 100.0% | 100.0% | 100.0% |
+| 6 | 72 | 100.0% | 100.0% | 100.0% |
+| **all** | **368** | **100.0%** | **100.0%** | **97.0%** |
+
+*Isolated* gives each example a fresh agent holding only that example's 2-6 edges. We report it because it is what the obvious harness does, but it is close to vacuous: with nothing in the KB but the answer chain, there is no competing path to be wrong about. *Shared* puts all 340 unique edges in one KB and asks every query against it - entities recur, and thousands of alternative paths exist.
+
+Two honest readings. First, **the degradation is at short chains, not long ones** - 89.1% at k=3 against 100% at k=6 - which inverts the intuition that longer inference is harder. Short queries admit more spurious connections between two entities; long ones are more constrained. Second, RCK **found a path in 368/368 cases even when wrong**: every one of the 11 shared-KB failures is a path that connects the endpoints but does not compose to any valid kinship term. That is the same failure mode section 5.1's six-gate filter exists to catch - structurally valid, semantically meaningless - showing up here as a retrieval result rather than an induction candidate.
+
+**A reproducibility defect found in building this.** The generator seeds `random.Random(seed)`, which is not sufficient: it selects a lowest common ancestor with `min(common, key=...)` over a `set`, and ties were broken by string hash order, which `PYTHONHASHSEED` randomises per process. The "seeded" generator therefore produced a different dataset in every run - 344, 348 and 350 unique edges across three processes. Both call sites now tie-break on the node id, and `tests/test_clutrr_study.py` runs the generator in three subprocesses and asserts one hash. We record it because section 5.12 claims fixed seeds make accuracy numbers reproduce exactly, and for this study that claim was false until it was fixed.
+
+Reproduction: `python scripts/clutrr_style_study.py` (isolated) and `python scripts/clutrr_hard_study.py` (shared; `--isolated` reproduces the easy mode through the same code path).
+
+### 5.12 Reproducibility
 
 All numbers in §5 are reproducible from the public repository, and the canonical output of every study is committed under `data/`:
 
@@ -405,6 +430,9 @@ All numbers in §5 are reproducible from the public repository, and the canonica
 |---|---|---|
 | §5.0 baselines (dict, networkx) | `scripts/baseline_study.py` | `data/baseline_study.json` |
 | §5.10 substrate justification | `scripts/substrate_justification_study.py` | `data/substrate_justification_study.json` |
+| §5.10 analogy generalisation | `scripts/analogy_generalization_study.py` | `data/analogy_generalization_study.json` |
+| §5.11 kinship chains (isolated) | `scripts/clutrr_style_study.py` | `data/clutrr_style_study.json` |
+| §5.11 kinship chains (shared KB) | `scripts/clutrr_hard_study.py` | `data/clutrr_hard_study.json` |
 | §5.1 induction precision | `scripts/chain_induction_failure_analysis.py` | `data/chain_induction_failures.json` |
 | §5.2 chain depth | `scripts/chain_depth_study.py` (+ calibrated column from the §5.3 script) | `data/chain_depth_study.json` |
 | §5.3 confidence calibration | `scripts/confidence_calibration_study.py` | `data/confidence_calibration_study.json` |
