@@ -43,22 +43,33 @@ import numpy as np
 
 def state_hash(agent) -> str:
     """SHA-256 hex digest over everything that can change an
-    `ask_with_idk` answer."""
+    `ask_with_idk` answer.
+
+    [Phase 2] On backend="dict" there is no `_memory` tensor -- the hash
+    is hyper (now including "backend") plus the canonical fact list
+    only. The two backends therefore hash DIFFERENTLY for the same
+    logical facts. That is correct, not a bug: a DecisionRecord pins a
+    substrate state, and the substrates genuinely differ (see
+    tests/test_snapshot_hash.py for the explicit cross-backend
+    inequality assertion).
+    """
     h = hashlib.sha256()
 
     hyper = {
         "dim": agent.dim,
         "seed": agent.seed,
         "n_shards": agent.knowledge.n_shards,
+        "backend": agent.backend,
     }
     h.update(json.dumps(hyper, sort_keys=True).encode("utf-8"))
 
-    for shard in agent.knowledge._shards:
-        mem = shard._memory
-        assert mem.dtype == np.float32, (
-            f"_memory dtype drifted from float32: {mem.dtype}")
-        mem = np.ascontiguousarray(mem)
-        h.update(mem.tobytes())
+    if agent.backend != "dict":
+        for shard in agent.knowledge._shards:
+            mem = shard._memory
+            assert mem.dtype == np.float32, (
+                f"_memory dtype drifted from float32: {mem.dtype}")
+            mem = np.ascontiguousarray(mem)
+            h.update(mem.tobytes())
 
     for shard in agent.knowledge._shards:
         for fact in shard._facts:

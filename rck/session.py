@@ -25,38 +25,50 @@ SCHEMA_VERSION = 2
 
 
 def save_session(agent: ConsciousAgent, path: str | Path) -> dict:
-    """Persist the entire ConsciousAgent state to a directory."""
+    """Persist the entire ConsciousAgent state to a directory.
+
+    [Phase 2] On backend="dict" there is no codebook and no `_memory`
+    tensor to pack -- the exact index IS the fact list, already
+    captured below via `shard_facts`/`meta["belief_facts"]`. No .npz
+    files are written for a dict-backend session; `load_session`
+    branches on `meta["backend"]` and never looks for them there.
+    """
     path = Path(path)
     path.mkdir(parents=True, exist_ok=True)
+    is_dict = agent.backend == "dict"
 
-    # Knowledge shards -- pack codebook + each shard's memory.
-    cb = agent.knowledge.codebook
-    sym_list = list(cb._atoms.keys())
-    cb_matrix = (np.stack([cb._atoms[s] for s in sym_list], axis=0)
-                 if sym_list else np.empty((0, cb.dim), dtype=np.int8))
-    shard_mems = np.stack([s._memory for s in agent.knowledge._shards], axis=0)
+    sym_list: list = []
+    bb_syms: list = []
+    if not is_dict:
+        # Knowledge shards -- pack codebook + each shard's memory.
+        cb = agent.knowledge.codebook
+        sym_list = list(cb._atoms.keys())
+        cb_matrix = (np.stack([cb._atoms[s] for s in sym_list], axis=0)
+                     if sym_list else np.empty((0, cb.dim), dtype=np.int8))
+        shard_mems = np.stack([s._memory for s in agent.knowledge._shards], axis=0)
+
+        knowledge_buf = io.BytesIO()
+        np.savez_compressed(
+            knowledge_buf,
+            codebook_matrix=cb_matrix,
+            shard_mems=shard_mems,
+        )
+        atomic_write_bytes(path / "knowledge.npz", knowledge_buf.getvalue())
+
+        # Belief KB (smaller -- same structure).
+        bb_syms = list(agent.beliefs.codebook._atoms.keys())
+        bb_matrix = (np.stack([agent.beliefs.codebook._atoms[s] for s in bb_syms], axis=0)
+                     if bb_syms else np.empty((0, agent.beliefs.dim), dtype=np.int8))
+        bb_mems = np.stack([s._memory for s in agent.beliefs._shards], axis=0)
+        beliefs_buf = io.BytesIO()
+        np.savez_compressed(
+            beliefs_buf,
+            codebook_matrix=bb_matrix,
+            shard_mems=bb_mems,
+        )
+        atomic_write_bytes(path / "beliefs.npz", beliefs_buf.getvalue())
+
     shard_facts = [s._facts for s in agent.knowledge._shards]
-
-    knowledge_buf = io.BytesIO()
-    np.savez_compressed(
-        knowledge_buf,
-        codebook_matrix=cb_matrix,
-        shard_mems=shard_mems,
-    )
-    atomic_write_bytes(path / "knowledge.npz", knowledge_buf.getvalue())
-
-    # Belief KB (smaller -- same structure).
-    bb_syms = list(agent.beliefs.codebook._atoms.keys())
-    bb_matrix = (np.stack([agent.beliefs.codebook._atoms[s] for s in bb_syms], axis=0)
-                 if bb_syms else np.empty((0, agent.beliefs.dim), dtype=np.int8))
-    bb_mems = np.stack([s._memory for s in agent.beliefs._shards], axis=0)
-    beliefs_buf = io.BytesIO()
-    np.savez_compressed(
-        beliefs_buf,
-        codebook_matrix=bb_matrix,
-        shard_mems=bb_mems,
-    )
-    atomic_write_bytes(path / "beliefs.npz", beliefs_buf.getvalue())
 
     # Provenance / skills / query memory. WITHOUT these, explain_why()
     # returns a degenerate "source=unknown (leaf)" node after any reload --
@@ -73,6 +85,7 @@ def save_session(agent: ConsciousAgent, path: str | Path) -> dict:
         "schema": SCHEMA_VERSION,
         "rck_version": _rck_version,
         "saved_at": time.time(),
+        "backend": agent.backend,
         "hyper": {
             "dim": agent.dim,
             # Read the LIVE shard counts, not agent.n_shards / a derived
@@ -114,11 +127,17 @@ def load_session(path: str | Path) -> ConsciousAgent:
     if meta.get("schema") != SCHEMA_VERSION:
         raise ValueError(f"unsupported session schema {meta.get('schema')}")
     hyper = meta["hyper"]
+    # [R2] Thread the backend through explicitly, and set it BEFORE any
+    # backend-dependent branching below runs. Old sessions (pre-Phase-2)
+    # simply lack the "backend" key -- default to "hrr", the only
+    # backend that existed when they were written.
+    backend = meta.get("backend", "hrr")
     agent = ConsciousAgent(
         dim=int(hyper["dim"]),
         n_shards=int(hyper["n_shards"]),
         seed=int(hyper["seed"]),
         install_self=False,
+        backend=backend,
     )
 
     # The belief KB can reshard independently of the knowledge KB, so its
@@ -134,29 +153,37 @@ def load_session(path: str | Path) -> ConsciousAgent:
     # Knowledge. Close the NpzFile explicitly (not just let it be GC'd) --
     # on Windows an open zip-file handle makes a later os.replace of this
     # same path raise PermissionError [WinError 5].
-    with np.load(path / "knowledge.npz") as arr:
-        syms = [_sym_from_json(s) for s in meta["knowledge_symbols"]]
-        cb_matrix = arr["codebook_matrix"]
-        for i, sym in enumerate(syms):
-            agent.knowledge.codebook._atoms[sym] = cb_matrix[i].astype(np.int8)
-        agent.knowledge.codebook._cache_dirty = True
-        shard_mems = arr["shard_mems"]
-        for i, shard in enumerate(agent.knowledge._shards):
-            shard._memory = shard_mems[i].astype(np.float32)
+    #
+    # [R2] dict backend: no codebook, no `_memory` tensor -- the fact
+    # list IS the state. `shard._facts = list(facts)` below still works
+    # unchanged: `_DictShard._facts` is a property whose setter rebuilds
+    # the query index synchronously (Task 1's index invariant), so a
+    # reloaded dict KB is queryable immediately, not just "full".
+    if backend != "dict":
+        with np.load(path / "knowledge.npz") as arr:
+            syms = [_sym_from_json(s) for s in meta["knowledge_symbols"]]
+            cb_matrix = arr["codebook_matrix"]
+            for i, sym in enumerate(syms):
+                agent.knowledge.codebook._atoms[sym] = cb_matrix[i].astype(np.int8)
+            agent.knowledge.codebook._cache_dirty = True
+            shard_mems = arr["shard_mems"]
+            for i, shard in enumerate(agent.knowledge._shards):
+                shard._memory = shard_mems[i].astype(np.float32)
     for i, facts in enumerate(meta["knowledge_facts"]):
         agent.knowledge._shards[i]._facts = list(facts)
     agent.knowledge._fact_count = sum(len(f) for f in meta["knowledge_facts"])
 
     # Beliefs.
-    with np.load(path / "beliefs.npz") as arr_b:
-        bb_syms = [_sym_from_json(s) for s in meta["belief_symbols"]]
-        bb_matrix = arr_b["codebook_matrix"]
-        for i, sym in enumerate(bb_syms):
-            agent.beliefs.codebook._atoms[sym] = bb_matrix[i].astype(np.int8)
-        agent.beliefs.codebook._cache_dirty = True
-        bb_mems = arr_b["shard_mems"]
-        for i, shard in enumerate(agent.beliefs._shards):
-            shard._memory = bb_mems[i].astype(np.float32)
+    if backend != "dict":
+        with np.load(path / "beliefs.npz") as arr_b:
+            bb_syms = [_sym_from_json(s) for s in meta["belief_symbols"]]
+            bb_matrix = arr_b["codebook_matrix"]
+            for i, sym in enumerate(bb_syms):
+                agent.beliefs.codebook._atoms[sym] = bb_matrix[i].astype(np.int8)
+            agent.beliefs.codebook._cache_dirty = True
+            bb_mems = arr_b["shard_mems"]
+            for i, shard in enumerate(agent.beliefs._shards):
+                shard._memory = bb_mems[i].astype(np.float32)
     for i, facts in enumerate(meta["belief_facts"]):
         agent.beliefs._shards[i]._facts = list(facts)
     agent.beliefs._fact_count = sum(len(f) for f in meta["belief_facts"])

@@ -389,3 +389,78 @@ def test_shard_balance_on_hrr_backend_still_flags_overload():
         agent.knowledge.store({"S": f"s{i}", "R": "r", "O": f"o{i}"})
     rep = agent.shard_balance()
     assert rep.overloaded == [0]
+
+
+# =============================================================================
+# Task 4: persistence and hashing
+# =============================================================================
+
+from rck.session import load_session, save_session
+from rck.snapshot_hash import state_hash
+from rck.replay import ReplayStatus, record_decision, replay
+
+
+def test_dict_session_roundtrip_preserves_facts_and_provenance(tmp_path):
+    """Regression for 2b3dfac (facts survived a session roundtrip,
+    provenance/derivation history did not) -- re-asserted on the dict
+    backend, which that commit predates entirely."""
+    a = ConsciousAgent(dim=256, backend="dict", install_self=False)
+    a.tell("dog", "isa", "mammal")
+    a.tell("mammal", "isa", "animal")
+    a.induce("dog", "animal")
+    before = a.explain_why("dog", "isa", "animal").verbalize()
+    assert "source=induced" in before, "setup failed: nothing was derived"
+
+    save_session(a, tmp_path / "s")
+    b = load_session(tmp_path / "s")
+
+    assert isinstance(b.knowledge, DictKnowledgeBase)
+    assert b.knowledge.answer({"S": "dog", "R": "isa"}, "O") == ("mammal", 1.0)
+    assert b.explain_why("dog", "isa", "animal").verbalize() == before, \
+        "explain_why lost the derivation across a dict-backend session roundtrip"
+
+
+def test_dict_session_roundtrip_no_npz_files_written(tmp_path):
+    a = ConsciousAgent(dim=256, backend="dict", install_self=False)
+    a.tell("a", "isa", "b")
+    save_session(a, tmp_path / "s")
+    assert not (tmp_path / "s" / "knowledge.npz").exists()
+    assert not (tmp_path / "s" / "beliefs.npz").exists()
+
+
+def test_dict_checkpoint_roundtrip(tmp_path):
+    a = ConsciousAgent(dim=256, backend="dict", install_self=False,
+                        wal_path=tmp_path / "wal.jsonl")
+    a.tell("dog", "isa", "mammal")
+    a.checkpoint(tmp_path / "snap")
+    b = load_session(tmp_path / "snap")
+    assert b.backend == "dict"
+    assert b.knowledge.answer({"S": "dog", "R": "isa"}, "O") == ("mammal", 1.0)
+
+
+def test_state_hash_stable_per_backend():
+    for backend in ("hrr", "dict"):
+        agent = ConsciousAgent(dim=256, backend=backend, install_self=False)
+        agent.tell("dog", "isa", "mammal")
+        assert state_hash(agent) == state_hash(agent)
+
+
+def test_state_hash_differs_across_backends_for_same_logical_facts():
+    """[R2] The two backends hash DIFFERENTLY for the same logical
+    facts -- correct, not a bug: a DecisionRecord pins a substrate
+    state, and the substrates genuinely differ (dict has no _memory
+    tensor to hash at all)."""
+    hrr = ConsciousAgent(dim=256, n_shards=4, seed=0, backend="hrr", install_self=False)
+    dic = ConsciousAgent(dim=256, seed=0, backend="dict", install_self=False)
+    hrr.tell("dog", "isa", "mammal")
+    dic.tell("dog", "isa", "mammal")
+    assert state_hash(hrr) != state_hash(dic)
+
+
+def test_replay_verified_on_dict(tmp_path):
+    a = ConsciousAgent(dim=256, backend="dict", install_self=False)
+    a.tell("dog", "isa", "mammal")
+    record = record_decision(a, {"S": "dog", "R": "isa"}, "O")
+    save_session(a, tmp_path / "snap")
+    result = replay(record, tmp_path / "snap")
+    assert result.status == ReplayStatus.VERIFIED

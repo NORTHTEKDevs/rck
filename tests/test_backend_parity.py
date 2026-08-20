@@ -27,12 +27,13 @@ If a parity assertion below needs a tolerance or inequality instead of
 exact equality, the docstring says which class it belongs to, or names
 it as a new finding -- never silently.
 
-checkpoint()/load_session() parity is NOT tested here: session.py's
-four `_memory` call sites (rck/session.py:37,52,145,159) do not yet
-support the dict backend at all -- that is Task 4's job. Testing it
-here would be permanently red until Task 4 lands, so that assertion
-was moved to tests/test_dict_backend.py's Task 4 section instead. See
-the final report for this plan-vs-codebase discrepancy.
+checkpoint()/load_session() parity: session.py's four `_memory` call
+sites (rck/session.py:37,52,145,159 as of Task 3) did not support the
+dict backend when this file was first written -- that was Task 4's
+job. The checkpoint/load_session parity assertion therefore lives at
+the bottom of this file, added once Task 4 landed, rather than in its
+thematic position next to the other equality assertions above. See
+the final report for this plan-vs-codebase sequencing note.
 """
 from __future__ import annotations
 
@@ -328,6 +329,33 @@ def test_merge_from_mixed_backend_raises_type_error():
     hrr_agent.tell("bird", "isa", "animal")
     with pytest.raises(TypeError):
         dict_agent.merge_from(hrr_agent)
+
+
+# =============================================================================
+# checkpoint() / load_session() parity (Task 4)
+# =============================================================================
+
+def test_checkpoint_load_session_parity(tmp_path):
+    """Deferred here from the original Task 3 list -- session.py did
+    not support the dict backend until Task 4. Now that it does, both
+    backends must round-trip to the same answer and derivation."""
+    from rck.session import load_session
+    hrr, dic = _twins()
+    _tell_all(hrr, STAIRCASE)
+    _tell_all(dic, STAIRCASE)
+    hrr.induce("a", "c")
+    dic.induce("a", "c")
+
+    hrr.checkpoint(tmp_path / "hrr_snap")
+    dic.checkpoint(tmp_path / "dict_snap")
+    hrr2 = load_session(tmp_path / "hrr_snap")
+    dic2 = load_session(tmp_path / "dict_snap")
+
+    assert hrr2.backend == "hrr"
+    assert dic2.backend == "dict"
+    eh = hrr2.explain_why("a", "isa", "c")
+    ed = dic2.explain_why("a", "isa", "c")
+    assert _tree_shape(eh) == _tree_shape(ed)
 
 
 # =============================================================================
