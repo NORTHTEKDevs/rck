@@ -167,7 +167,17 @@ class RelationalMemory:
         disjoint facts can be combined by adding their memory tensors.
         Role tags MUST match (same dim and same role HVs); we enforce
         equal dim and copy any extra roles from `other`.
+
+        Raises TypeError if `other` is not a `RelationalMemory` (e.g. a
+        dict-backend pseudo-shard) -- summing an exact index's facts
+        into an HRR bundle tensor is not meaningful.
         """
+        if not isinstance(other, RelationalMemory):
+            raise TypeError(
+                f"cannot merge {type(other).__name__} into RelationalMemory: "
+                "mixed-backend merge is not meaningful (summing an exact "
+                "index into an HRR bundle has no defined semantics)"
+            )
         if other.dim != self.dim:
             raise ValueError("dim mismatch")
         for name in other._roles:

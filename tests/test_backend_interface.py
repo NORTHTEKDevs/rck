@@ -68,6 +68,11 @@ SUBSTRATE_OWNED = {
     "knowledge_base.py", "shard_balance.py", "shard_sizing.py",
     "sparse_relational.py", "capacity_profiler.py", "snapshot_hash.py",
     "session.py",
+    # Phase 2: the second backend. dict_knowledge_base.py IS the
+    # substrate (the exact-index analogue of knowledge_base.py) --
+    # its pseudo-shard legitimately owns and reaches into its own
+    # `._shards[0]`, exactly like knowledge_base.py owns `._shards`.
+    "dict_knowledge_base.py",
     # generative subsystem, HRR-only by design (agent.py's char-LM /
     # RCKAgent path, not ConsciousAgent's reasoning path). Includes the
     # v7 polisher's training-data generators, which enumerate kb._shards
