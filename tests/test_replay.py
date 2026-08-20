@@ -142,3 +142,72 @@ def test_idk_answer_replays_to_verified(tmp_path):
 
     result = replay(rec, tmp_path / "snap")
     assert result.status is ReplayStatus.VERIFIED
+
+
+# ---- Task 4: end-to-end audit scenario -----------------------------------
+
+def test_audit_scenario_multi_hop_replay_then_state_mismatch(tmp_path):
+    """The entire feature in one test: an answer is either reproducible
+    against pinned state, or you are told plainly that the state moved.
+
+    Only possible because of the 2b3dfac provenance-persistence fix --
+    if the derivation comparison fails, that fix regressed. Do not
+    weaken this assertion."""
+    # First hop is a lifting relation ("isa"), last hop is one of its
+    # allowed transfers ("has") -- chain_induction stores the shortcut
+    # under "has", NOT "isa", so it never competes with the direct
+    # "dog isa mammal" fact for the same (S, R) query. That keeps which
+    # fact wins the query deterministic instead of an HRR-crosstalk
+    # coin flip between two same-relation candidates.
+    a = _agent()
+    a.tell("dog", "isa", "mammal")
+    a.tell("mammal", "has", "fur")
+    induced = a.induce("dog", "fur")
+    assert induced is not None and induced.verified, \
+        "setup failed: nothing was induced"
+    assert induced.relation == "has"
+
+    rec = record_decision(a, {"S": "dog", "R": "has"}, "O")
+    assert rec.answer["top_symbol"] == "fur"
+    assert rec.derivation is not None
+    assert rec.derivation["source"] == "induced", \
+        "setup failed: recorded answer wasn't the multi-hop induced fact"
+    assert len(rec.derivation["children"]) >= 2, \
+        "setup failed: derivation isn't actually multi-hop"
+
+    a.checkpoint(tmp_path / "snap")
+    rec.save(tmp_path / "record.json")
+
+    # Replay in a FRESH subprocess -- the derivation tree must be
+    # byte-identical across process boundaries, not just in-memory.
+    script = (
+        f"import sys; sys.path.insert(0, {str(REPO_ROOT)!r})\n"
+        "import json\n"
+        "from rck.replay import DecisionRecord, replay\n"
+        f"rec = DecisionRecord.load({str(tmp_path / 'record.json')!r})\n"
+        f"result = replay(rec, {str(tmp_path / 'snap')!r})\n"
+        "print(result.status.value)\n"
+        "print(json.dumps(result.details.get('derivation')))\n"
+    )
+    out = subprocess.run([sys.executable, "-c", script],
+                          capture_output=True, text=True, check=True)
+    lines = out.stdout.strip().splitlines()
+    assert lines[0] == "verified"
+    replayed_derivation = json.loads(lines[1])
+    assert replayed_derivation == rec.derivation, (
+        "derivation tree diverged across a checkpoint -- the 2b3dfac "
+        "provenance-persistence fix regressed; same nodes, same "
+        "sources, same confidences are required"
+    )
+
+    # Mutate the KB via a real user correction, snapshot again, and
+    # replay the SAME record against the NEW snapshot.
+    corr = a.correct("Actually, dog is puppy, not mammal.")
+    assert corr is not None, "setup failed: correction text did not match"
+    a.checkpoint(tmp_path / "snap2")
+
+    result2 = replay(rec, tmp_path / "snap2")
+    assert result2.status is ReplayStatus.STATE_MISMATCH, (
+        "a record replayed against a moved snapshot must report "
+        "STATE_MISMATCH, not silently verify or diverge"
+    )
