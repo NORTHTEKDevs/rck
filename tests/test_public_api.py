@@ -2,7 +2,9 @@
 public API, and that everything else still works via direct module
 import (with a DeprecationWarning at the package root).
 """
+import re
 import warnings
+from pathlib import Path
 
 import pytest
 
@@ -52,3 +54,25 @@ def test_public_api_is_documented_in_the_class_docstring():
     doc = ConsciousAgent.__doc__ or ""
     for name in ConsciousAgent.PUBLIC_API:
         assert name in doc, f"{name} is in PUBLIC_API but undocumented"
+
+
+def _readme_python_blocks():
+    readme = Path(__file__).resolve().parents[1] / "README.md"
+    if not readme.exists():
+        pytest.skip("README.md not found where expected")
+    text = readme.read_text(encoding="utf-8")
+    return re.findall(r"```python\n(.*?)```", text, re.DOTALL)
+
+
+def test_readme_quickstart_only_calls_frozen_agent_methods():
+    blocks = _readme_python_blocks()
+    if not blocks:
+        pytest.skip("no python fenced blocks found in README.md")
+    calls = set()
+    for block in blocks:
+        calls.update(re.findall(r"\bagent\.(\w+)\(", block))
+    assert calls, "expected at least one agent.<name>( call in the README demo"
+    non_frozen = calls - set(ConsciousAgent.PUBLIC_API)
+    assert not non_frozen, (
+        f"README quickstart calls non-frozen agent methods: {non_frozen}"
+    )
