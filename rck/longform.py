@@ -51,12 +51,11 @@ def _facts_about(kb: ShardedKnowledgeBase, entity: str, min_conf: float = 0.10):
     """Return all (relation, object, confidence) for the entity."""
     facts: list[tuple[str, str, float]] = []
     entity = entity.lower()
-    for shard in kb._shards:
-        for fact in shard._facts:
-            if str(fact.get("S", "")).lower() != entity:
-                continue
-            r = str(fact.get("R", "")); o = str(fact.get("O", ""))
-            facts.append((r, o, 1.0))
+    for fact in kb.all_facts():
+        if str(fact.get("S", "")).lower() != entity:
+            continue
+        r = str(fact.get("R", "")); o = str(fact.get("O", ""))
+        facts.append((r, o, 1.0))
     return facts
 
 
